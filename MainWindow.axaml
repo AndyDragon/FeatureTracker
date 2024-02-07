@@ -4,7 +4,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="FeatureTracker.MainWindow"
+        Background="{DynamicResource ThemeBackgroundColor}"
         Title="Feature Tracker">
-    Welcome to Feature Tracker
+
+    <DockPanel Background="Gainsboro">
+        <Border DockPanel.Dock="Bottom" BorderThickness="2" BorderBrush="Black" Background="Gainsboro" CornerRadius="3">
+            <StackPanel Orientation="Horizontal">
+                <Border BorderThickness="1" BorderBrush="Silver" Background="Gainsboro" CornerRadius="2" Margin="8,2,8,2">
+                   <TextBlock Text="Platforms: 3" Margin="8,2,8,2" />
+                </Border>
+                <Border BorderThickness="1" BorderBrush="Silver" Background="Gainsboro" CornerRadius="2" Margin="8,2,8,2">
+                    <TextBlock Text="Pages: 87" Margin="8,2,8,2" />
+                </Border>
+            </StackPanel>
+        </Border>
+        <TextBlock Classes="Heading" Text="Feature Tracker" HorizontalAlignment="Left" DockPanel.Dock="Top" Margin="16,4" FontSize="32" FontWeight="Bold"/>
+        <TextBlock Text="Hi there..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </DockPanel>
+
 </Window>
 

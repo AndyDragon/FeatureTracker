@@ -17,5 +17,6 @@
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="8.0.1" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.8" />
     <PackageReference Include="SQLitePCLRaw.core" Version="2.1.8" />
+    <PackageReference Include="Citrus.Avalonia" Version="2.1.1" />
   </ItemGroup>
 </Project>

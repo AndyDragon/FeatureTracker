@@ -4,7 +4,14 @@
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
-    <Application.Styles>
-        <FluentTheme />
-    </Application.Styles>
+  <Application.Styles>
+    <SimpleTheme />
+    <StyleInclude Source="avares://Citrus.Avalonia/Rust.xaml"/>
+
+    <!-- To use other themes: -->
+    <!-- <StyleInclude Source="avares://Citrus.Avalonia/Sea.xaml"/> -->
+    <!-- <StyleInclude Source="avares://Citrus.Avalonia/Rust.xaml"/> -->
+    <!-- <StyleInclude Source="avares://Citrus.Avalonia/Candy.xaml"/> -->
+    <!-- <StyleInclude Source="avares://Citrus.Avalonia/Magma.xaml"/> -->
+  </Application.Styles>
 </Application>
