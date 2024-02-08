@@ -11,15 +11,25 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        using var connection = new SqliteConnection("Data Source=features.db");
+        DataContext = new DatabaseDataContext();
+    }
+}
+
+public class DatabaseDataContext : INotifyPropertyChanged
+{
+    private readonly SqliteConnection connection;
+
+    public DatabaseDataContext()
+    {
+        connection = new SqliteConnection("Data Source=features.db");
         connection.Open();
 
         var command = connection.CreateCommand();
         command.CommandText =
             @"
-                --DROP TABLE IF EXISTS pages;
-                --DROP TABLE IF EXISTS platforms;
-                --DROP TABLE IF EXISTS features;
+                DROP TABLE IF EXISTS pages;
+                DROP TABLE IF EXISTS platforms;
+                DROP TABLE IF EXISTS features;
 
                 CREATE TABLE IF NOT EXISTS pages (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -146,18 +156,6 @@ public partial class MainWindow : Window
                 ON CONFLICT DO NOTHING;
             ";
         command.ExecuteNonQuery();
-
-        DataContext = new DatabaseDataContext(connection);
-    }
-}
-
-public class DatabaseDataContext : INotifyPropertyChanged
-{
-    private readonly SqliteConnection connection;
-
-    public DatabaseDataContext(SqliteConnection connection)
-    {
-        this.connection = connection;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -217,6 +215,14 @@ public class DatabaseDataContext : INotifyPropertyChanged
                 featuresLoaded = true;
             }
             return features;
+        }
+    }
+
+    public string FeatureCount
+    {
+        get
+        {
+            return Features.Count.ToString();
         }
     }
 }

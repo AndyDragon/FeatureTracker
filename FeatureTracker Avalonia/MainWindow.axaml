@@ -1,0 +1,50 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="using:FeatureTracker"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="FeatureTracker.MainWindow"
+        x:CompileBindings="false"
+        Background="{DynamicResource ThemeBackgroundColor}"
+        Title="Feature Tracker">
+
+    <Design.DataContext>
+        <local:DatabaseDataContext/>
+    </Design.DataContext>
+
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" BorderThickness="0,2,0,0" BorderBrush="Black" Background="Gainsboro">
+            <StackPanel Orientation="Horizontal">
+                <Border BorderThickness="1" BorderBrush="Silver" Background="Transparent" CornerRadius="2" Margin="8,2,8,2">
+                   <TextBlock Text="Platforms: 3" Margin="8,2,8,2" Foreground="{DynamicResource ThemeForegroundColor}" />
+                </Border>
+                <Border BorderThickness="1" BorderBrush="Silver" Background="Transparent" CornerRadius="2" Margin="8,2,8,2">
+                    <TextBlock Text="Pages: 87" Margin="8,2,8,2" />
+                </Border>
+            </StackPanel>
+        </Border>
+        <Border DockPanel.Dock="Top" BorderThickness="0,0,0,2" BorderBrush="Black" Background="Gainsboro">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Classes="Heading" Text="Feature Tracker" Margin="8,4,8,4" HorizontalAlignment="Left" FontSize="32" FontWeight="Bold"/>
+            </StackPanel>
+        </Border>
+        <TabControl>
+          <TabItem Header="Features">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Margin="5" Text="You have"/>
+                <TextBlock Margin="5" Text="{Binding FeatureCount}"/>
+                <TextBlock Margin="5" Text="feature(s)"/>
+            </StackPanel>
+          </TabItem>
+          <TabItem Header="Pages">
+            <TextBlock Margin="5">This is tab 2 content</TextBlock>
+          </TabItem>
+          <TabItem Header="Platforms">
+            <TextBlock Margin="5">This is tab 3 content</TextBlock>
+          </TabItem>
+        </TabControl>
+    </DockPanel>
+
+</Window>
+

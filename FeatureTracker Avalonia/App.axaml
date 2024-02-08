@@ -6,7 +6,7 @@
 
   <Application.Styles>
     <SimpleTheme />
-    <StyleInclude Source="avares://Citrus.Avalonia/Rust.xaml"/>
+    <StyleInclude Source="avares://Citrus.Avalonia/Candy.xaml"/>
 
     <!-- To use other themes: -->
     <!-- <StyleInclude Source="avares://Citrus.Avalonia/Sea.xaml"/> -->
