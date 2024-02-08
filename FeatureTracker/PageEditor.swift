@@ -20,7 +20,7 @@ struct PageEditor: View {
                 TextField("Name: ", text: $page.name)
                 TextField("Notes: ", text: $page.notes, axis: .vertical)
                 Picker("Counts as: ", selection: $page.count) {
-                    ForEach(1..<5) {
+                    ForEach(1..<6) {
                         Text("\($0)").tag($0)
                     }
                 }
@@ -29,7 +29,7 @@ struct PageEditor: View {
             }
             Spacer()
                 .frame(height: 30)
-            Section("Features: (\(page.features!.count) features)") {
+            Section("Features: (\(page.features!.count) feature(s))") {
                 FeatureListing(page: page)
             }
             Spacer()
@@ -38,6 +38,7 @@ struct PageEditor: View {
                 Form {
                     HStack(alignment: .center) {
                         DatePicker("Date: ", selection: $featureDate, displayedComponents: [.date])
+                            .datePickerStyle(.stepperField)
                         Spacer()
                         Toggle("RAW", isOn: $featureRaw)
                     }

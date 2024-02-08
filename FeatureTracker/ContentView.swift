@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var path = [Page]()
     @State private var sortOrder = SortDescriptor(\Page.name)
     @State private var showingRepopulateAlert = false
+    @State private var showingCopiedToClipboardAlert = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -38,12 +39,13 @@ struct ContentView: View {
                     .navigationDestination(for: Page.self, destination: PageEditor.init)
                     .toolbar {
                         Button("Populate defaults", action: { showingRepopulateAlert.toggle() })
+                        Button("Generate report", systemImage: "menucard", action: generateReport)
                         Button("Add page", systemImage: "plus", action: addPage)
                         Menu("Sort", systemImage: "arrow.up.arrow.down") {
                             Picker("Sort", selection: $sortOrder) {
                                 Text("Name").tag(SortDescriptor(\Page.name))
                                 Text("Count").tag(SortDescriptor(\Page.count))
-                                //Text("Features").tag(SortDescriptor(\Page.features.count)) // TODO crashes?
+                                //Text("Features").tag(SortDescriptor(\Page.features?.count))
                             }
                             .pickerStyle(.inline)
                         }
@@ -69,7 +71,19 @@ struct ContentView: View {
             },
             message: { Text("This will remove all features and custom pages and cannot be undone.") }
         )
-        .dialogIcon(nil)
+        .alert(
+            "Copied to clipboard",
+            isPresented: $showingCopiedToClipboardAlert,
+            actions: {
+                Button(action: {
+                    showingCopiedToClipboardAlert.toggle()
+                }) {
+                    Text("OK")
+                        .background(Color.blue)
+                }
+            },
+            message: { Text("Copied the report to the clipboard.") }
+        )
     }
     
     func getTotalFeatures() -> Int {
@@ -112,6 +126,45 @@ struct ContentView: View {
         return "Hall of Fame Member"
     }
     
+    func copyToClipboard(_ text: String) -> Void {
+#if os(iOS)
+            UIPasteboard.general.string = text
+#else
+            let pasteBoard = NSPasteboard.general
+            pasteBoard.clearContents()
+            pasteBoard.writeObjects([text as NSString])
+#endif
+
+    }
+
+    func generateReport() -> Void {
+        var lines = [String]()
+        let totalFeatures = getTotalFeatures()
+        let totalPages = getTotalPages()
+        lines.append("Report of features")
+        lines.append("------------------")
+        lines.append("")
+        lines.append("Total features: \(totalFeatures)")
+        lines.append("")
+        lines.append("Total pages with features: \(totalPages)")
+        lines.append("")
+        lines.append("Membership level: \(getMembership())")
+        for page in pages.sorted(by: { $0.name < $1.name }) {
+            if page.features!.count > 0 {
+                lines.append("")
+                lines.append("Page: \(page.name.uppercased()) (\(page.features!.count) feature(s))")
+                for feature in page.features!.sorted(by: { $0.date < $1.date }) {
+                    lines.append("\tFeature: \(feature.date.formatted(date: .abbreviated, time: .omitted)) on \(feature.raw ? "RAW" : "Snap"):")
+                    lines.append("\t\t\(feature.notes)")
+                }
+            }
+        }
+        var text = ""
+        for line in lines { text = text + line + "\n" }
+        copyToClipboard(text)
+        showingCopiedToClipboardAlert.toggle()
+    }
+    
     func populateDefaultPages() -> Void {
         do {
             try modelContext.delete(model: Page.self)
@@ -119,7 +172,6 @@ struct ContentView: View {
             // do nothing
         }
         let singleFeaturePages = [
-            "abandoned",
             "abandoned",
             "abstract",
             "africa",
