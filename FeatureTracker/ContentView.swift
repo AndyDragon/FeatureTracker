@@ -75,7 +75,7 @@ struct ContentView: View {
     func getTotalFeatures() -> Int {
         var total = 0
         for page in pages {
-            total += page.features.count * page.count
+            total += page.features!.count * page.count
         }
         return total
     }
@@ -83,7 +83,7 @@ struct ContentView: View {
     func getTotalPages() -> Int {
         var total = 0
         for page in pages {
-            total += page.features.isEmpty ? 0 : page.count
+            total += page.features!.isEmpty ? 0 : page.count
         }
         return total
     }

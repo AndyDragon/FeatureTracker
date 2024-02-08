@@ -13,7 +13,7 @@ struct FeatureListing: View {
     
     var body: some View {
         List {
-            ForEach(page.features.sorted { $0.date < $1.date }) { feature in
+            ForEach(page.features!.sorted { $0.date < $1.date }) { feature in
                 HStack {
                     VStack(alignment: .leading) {
                         HStack (alignment: .bottom) {
@@ -37,7 +37,7 @@ struct FeatureListing: View {
     
     func deleteFeatures(_ indexSet: IndexSet) {
         for index in indexSet {
-            page.features.remove(at: index)
+            page.features!.remove(at: index)
         }
     }
 }

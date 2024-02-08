@@ -29,9 +29,9 @@ struct PageListing: View {
                             Text("Notes: " + page.notes)
                         }
                         Spacer()
-                        Text("\(page.features.count) features")
+                        Text("\(page.features!.count) features")
                             .font(.headline)
-                            .foregroundColor(page.features.count > 0 ? .blue : Color(.textColor))
+                            .foregroundColor(page.features!.count > 0 ? .blue : Color(.textColor))
                     }
                 }
             }

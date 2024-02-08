@@ -13,7 +13,7 @@ struct PageEditor: View {
     @State private var featureDate = Date.now
     @State private var featureRaw = false
     @State private var featureNotes = ""
-    
+
     var body: some View {
         VStack {
             Form {
@@ -29,7 +29,7 @@ struct PageEditor: View {
             }
             Spacer()
                 .frame(height: 30)
-            Section("Features: (\($page.features.count) features)") {
+            Section("Features: (\(page.features!.count) features)") {
                 FeatureListing(page: page)
             }
             Spacer()
@@ -50,10 +50,10 @@ struct PageEditor: View {
         .padding()
         .navigationTitle("Page / Challenge details")
     }
-    
+
     func addFeature() -> Void {
         let feature = Feature(date: featureDate, raw: featureRaw, notes: featureNotes)
-        page.features.append(feature)
+        page.features!.append(feature)
         // clear feature editor
         featureDate = .now
         featureRaw = false

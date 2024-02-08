@@ -10,9 +10,10 @@ import SwiftData
 
 @Model
 class Feature {
-    var date: Date
-    var raw: Bool
-    var notes: String
+    var date: Date = Date.now
+    var raw: Bool = false
+    var notes: String = ""
+    var page: Page?
 
     init(date: Date = .now, raw: Bool = false, notes: String = "") {
         self.date = date
