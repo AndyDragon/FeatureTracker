@@ -8,6 +8,12 @@
 import SwiftData
 import SwiftUI
 
+enum BackupOperation {
+    case none,
+         backup,
+         restore
+}
+
 struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     @Query var pages: [Page]
@@ -16,6 +22,9 @@ struct ContentView: View {
     @State private var showingRepopulateAlert = false
     @State private var showingCopiedToClipboardAlert = false
     @State private var clipboardName = ""
+    @State private var exceptionError = ""
+    @State private var backupOperation = BackupOperation.none
+    @State private var showingBackupRestoreErrorAlert = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -89,6 +98,26 @@ struct ContentView: View {
             },
             message: { Text("Copied the \(clipboardName) to the clipboard.") }
         )
+        .alert(
+            backupOperation == .backup
+                ? "ERROR: Failed to backup"
+                : "ERROR: Failed to restore",
+            isPresented: $showingBackupRestoreErrorAlert,
+            actions: {
+                Button(action: {
+                    showingBackupRestoreErrorAlert.toggle()
+                }) {
+                    Text("OK")
+                        .background(Color.blue)
+                }
+            },
+            message: {
+                Text(backupOperation == .backup
+                     ? "Could to backup to the clipboard: \(exceptionError)"
+                     : "Could to restore from the clipboard: \(exceptionError)")
+                .background(Color.red)
+            }
+        )
     }
 
     func getTotalFeatures() -> Int {
@@ -133,11 +162,11 @@ struct ContentView: View {
 
     func copyToClipboard(_ text: String) -> Void {
 #if os(iOS)
-            UIPasteboard.general.string = text
+        UIPasteboard.general.string = text
 #else
-            let pasteBoard = NSPasteboard.general
-            pasteBoard.clearContents()
-            pasteBoard.writeObjects([text as NSString])
+        let pasteBoard = NSPasteboard.general
+        pasteBoard.clearContents()
+        pasteBoard.writeObjects([text as NSString])
 #endif
 
     }
@@ -180,7 +209,9 @@ struct ContentView: View {
             clipboardName = "backup"
             showingCopiedToClipboardAlert.toggle()
         } catch {
-            fatalError(error.localizedDescription)
+            exceptionError = error.localizedDescription
+            backupOperation = .backup
+            showingBackupRestoreErrorAlert.toggle()
         }
     }
 
@@ -199,8 +230,26 @@ struct ContentView: View {
                     modelContext.insert(page)
                 }
             }
+        } catch let DecodingError.dataCorrupted(context) {
+            exceptionError = context.debugDescription
+            backupOperation = .restore
+            showingBackupRestoreErrorAlert.toggle()
+        } catch let DecodingError.keyNotFound(key, context) {
+            exceptionError = "Key '\(key)' not found:" + context.debugDescription
+            backupOperation = .restore
+            showingBackupRestoreErrorAlert.toggle()
+        } catch let DecodingError.valueNotFound(value, context) {
+            exceptionError = "Value '\(value)' not found:" + context.debugDescription
+            backupOperation = .restore
+            showingBackupRestoreErrorAlert.toggle()
+        } catch let DecodingError.typeMismatch(type, context) {
+            exceptionError = "Type '\(type)' mismatch:" + context.debugDescription
+            backupOperation = .restore
+            showingBackupRestoreErrorAlert.toggle()
         } catch {
-            fatalError(error.localizedDescription)
+            exceptionError = error.localizedDescription
+            backupOperation = .restore
+            showingBackupRestoreErrorAlert.toggle()
         }
     }
 
