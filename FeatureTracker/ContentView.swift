@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var sortOrder = SortDescriptor(\Page.name)
     @State private var showingRepopulateAlert = false
     @State private var showingCopiedToClipboardAlert = false
+    @State private var clipboardName = ""
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -49,6 +50,10 @@ struct ContentView: View {
                             }
                             .pickerStyle(.inline)
                         }
+                        Menu("JSON", systemImage: "tray") {
+                            Button("Backup", systemImage: "tray.and.arrow.down", action: backup)
+                            Button("Restore", systemImage: "tray.and.arrow.up", action: restore)
+                        }
                     }
             }
         }
@@ -82,10 +87,10 @@ struct ContentView: View {
                         .background(Color.blue)
                 }
             },
-            message: { Text("Copied the report to the clipboard.") }
+            message: { Text("Copied the \(clipboardName) to the clipboard.") }
         )
     }
-    
+
     func getTotalFeatures() -> Int {
         var total = 0
         for page in pages {
@@ -93,7 +98,7 @@ struct ContentView: View {
         }
         return total
     }
-    
+
     func getTotalPages() -> Int {
         var total = 0
         for page in pages {
@@ -101,7 +106,7 @@ struct ContentView: View {
         }
         return total
     }
-    
+
     func getMembership() -> String {
         let features = getTotalFeatures()
         let pages = getTotalPages()
@@ -125,7 +130,7 @@ struct ContentView: View {
         }
         return "Hall of Fame Member"
     }
-    
+
     func copyToClipboard(_ text: String) -> Void {
 #if os(iOS)
             UIPasteboard.general.string = text
@@ -162,9 +167,43 @@ struct ContentView: View {
         var text = ""
         for line in lines { text = text + line + "\n" }
         copyToClipboard(text)
+        clipboardName = "report"
         showingCopiedToClipboardAlert.toggle()
     }
-    
+
+    func backup() -> Void {
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let json = try encoder.encode(pages)
+            copyToClipboard(String(decoding: json, as: UTF8.self))
+            clipboardName = "backup"
+            showingCopiedToClipboardAlert.toggle()
+        } catch {
+            fatalError(error.localizedDescription)
+        }
+    }
+
+    func restore() -> Void {
+        do {
+            let pasteBoard = NSPasteboard.general
+            let json = pasteBoard.string(forType: .string) ?? ""
+            let loadedPages = try JSONDecoder().decode([Page].self, from: json.data(using: .utf8)!)
+            if loadedPages.count != 0 {
+                do {
+                    try modelContext.delete(model: Page.self)
+                } catch {
+                    // do nothing
+                }
+                for page in loadedPages {
+                    modelContext.insert(page)
+                }
+            }
+        } catch {
+            fatalError(error.localizedDescription)
+        }
+    }
+
     func populateDefaultPages() -> Void {
         do {
             try modelContext.delete(model: Page.self)
@@ -258,14 +297,14 @@ struct ContentView: View {
             "weddings",
             "wildlife",
             "world",
-            "writings",        
+            "writings",
         ]
         for pageName in singleFeaturePages {
             modelContext.insert(Page(name: pageName))
         }
         modelContext.insert(Page(name: "papenoel", count: 3))
     }
-    
+
     func addPage() -> Void {
         let page = Page()
         modelContext.insert(page)
