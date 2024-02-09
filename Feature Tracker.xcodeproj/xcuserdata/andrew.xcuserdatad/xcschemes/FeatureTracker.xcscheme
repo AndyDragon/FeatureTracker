@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "494202AE2B745BEC00227660"
-               BuildableName = "FeatureTracker.app"
-               BlueprintName = "FeatureTracker"
-               ReferencedContainer = "container:FeatureTracker.xcodeproj">
+               BuildableName = "Feature Tracker.app"
+               BlueprintName = "Feature Tracker"
+               ReferencedContainer = "container:Feature Tracker.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -30,9 +30,9 @@
       shouldAutocreateTestPlan = "YES">
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Release"
-      selectedDebuggerIdentifier = ""
-      selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -44,9 +44,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "494202AE2B745BEC00227660"
-            BuildableName = "FeatureTracker.app"
-            BlueprintName = "FeatureTracker"
-            ReferencedContainer = "container:FeatureTracker.xcodeproj">
+            BuildableName = "Feature Tracker.app"
+            BlueprintName = "Feature Tracker"
+            ReferencedContainer = "container:Feature Tracker.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -61,9 +61,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "494202AE2B745BEC00227660"
-            BuildableName = "FeatureTracker.app"
-            BlueprintName = "FeatureTracker"
-            ReferencedContainer = "container:FeatureTracker.xcodeproj">
+            BuildableName = "Feature Tracker.app"
+            BlueprintName = "Feature Tracker"
+            ReferencedContainer = "container:Feature Tracker.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

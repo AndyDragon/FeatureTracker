@@ -19,7 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		494202AF2B745BEC00227660 /* FeatureTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FeatureTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		494202AF2B745BEC00227660 /* Feature Tracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Feature Tracker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		494202B22B745BEC00227660 /* FeatureTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTrackerApp.swift; sourceTree = "<group>"; };
 		494202B42B745BEC00227660 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		494202B62B745BED00227660 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -55,7 +55,7 @@
 		494202B02B745BEC00227660 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				494202AF2B745BEC00227660 /* FeatureTracker.app */,
+				494202AF2B745BEC00227660 /* Feature Tracker.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -89,9 +89,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		494202AE2B745BEC00227660 /* FeatureTracker */ = {
+		494202AE2B745BEC00227660 /* Feature Tracker */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 494202BE2B745BED00227660 /* Build configuration list for PBXNativeTarget "FeatureTracker" */;
+			buildConfigurationList = 494202BE2B745BED00227660 /* Build configuration list for PBXNativeTarget "Feature Tracker" */;
 			buildPhases = (
 				494202AB2B745BEC00227660 /* Sources */,
 				494202AC2B745BEC00227660 /* Frameworks */,
@@ -101,9 +101,9 @@
 			);
 			dependencies = (
 			);
-			name = FeatureTracker;
+			name = "Feature Tracker";
 			productName = FeatureTracker;
-			productReference = 494202AF2B745BEC00227660 /* FeatureTracker.app */;
+			productReference = 494202AF2B745BEC00227660 /* Feature Tracker.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -121,7 +121,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 494202AA2B745BEC00227660 /* Build configuration list for PBXProject "FeatureTracker" */;
+			buildConfigurationList = 494202AA2B745BEC00227660 /* Build configuration list for PBXProject "Feature Tracker" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -134,7 +134,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				494202AE2B745BEC00227660 /* FeatureTracker */,
+				494202AE2B745BEC00227660 /* Feature Tracker */,
 			);
 		};
 /* End PBXProject section */
@@ -356,7 +356,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		494202AA2B745BEC00227660 /* Build configuration list for PBXProject "FeatureTracker" */ = {
+		494202AA2B745BEC00227660 /* Build configuration list for PBXProject "Feature Tracker" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				494202BC2B745BED00227660 /* Debug */,
@@ -365,7 +365,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		494202BE2B745BED00227660 /* Build configuration list for PBXNativeTarget "FeatureTracker" */ = {
+		494202BE2B745BED00227660 /* Build configuration list for PBXNativeTarget "Feature Tracker" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				494202BF2B745BED00227660 /* Debug */,
