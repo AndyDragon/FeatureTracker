@@ -30,13 +30,26 @@ struct ContentView: View {
         NavigationStack(path: $path) {
             VStack {
                 HStack(alignment: .center) {
-                    Text("Total features: \(getTotalFeatures())")
+                    let featuresCount = getFeatures()
+                    let totalFeaturesCount = getTotalFeatures()
+                    if (featuresCount != totalFeaturesCount) {
+                        Text("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
+                    } else {
+                        Text("Total features: \(featuresCount)")
+                        
+                    }
                     Spacer()
                         .frame(width: 8)
                     Text("|")
                     Spacer()
                         .frame(width: 8)
-                    Text("Total pages: \(getTotalPages())")
+                    let pagesCount = getPages()
+                    let totalPagesCount = getTotalPages()
+                    if pagesCount != totalPagesCount {
+                        Text("Total pages: \(pagesCount) (counts as \(totalPagesCount))")
+                    } else {
+                        Text("Total pages: \(pagesCount)")
+                    }
                     Text("|")
                     Spacer()
                         .frame(width: 8)
@@ -70,20 +83,15 @@ struct ContentView: View {
             "Are you sure?",
             isPresented: $showingRepopulateAlert,
             actions: {
-                Button(action: {
-                    showingRepopulateAlert.toggle()
-                }){
-                    Text("No")
-                        .background(Color.blue)
-                }
-                Button(action: {
+                Button(role: .destructive, action: {
                     populateDefaultPages()
                 }) {
                     Text("Yes")
-                        .background(Color.red)
                 }
             },
-            message: { Text("This will remove all features and custom pages and cannot be undone.") }
+            message: {
+                Text("This will remove all features and custom pages and cannot be undone.")
+            }
         )
         .alert(
             "Copied to clipboard",
@@ -93,33 +101,41 @@ struct ContentView: View {
                     showingCopiedToClipboardAlert.toggle()
                 }) {
                     Text("OK")
-                        .background(Color.blue)
                 }
             },
-            message: { Text("Copied the \(clipboardName) to the clipboard.") }
+            message: {
+                Text("Copied the \(clipboardName) to the clipboard.")
+            }
         )
         .alert(
             backupOperation == .backup
-                ? "ERROR: Failed to backup"
-                : "ERROR: Failed to restore",
+            ? "ERROR: Failed to backup"
+            : "ERROR: Failed to restore",
             isPresented: $showingBackupRestoreErrorAlert,
             actions: {
                 Button(action: {
                     showingBackupRestoreErrorAlert.toggle()
                 }) {
                     Text("OK")
-                        .background(Color.blue)
                 }
             },
             message: {
                 Text(backupOperation == .backup
                      ? "Could to backup to the clipboard: \(exceptionError)"
                      : "Could to restore from the clipboard: \(exceptionError)")
-                .background(Color.red)
+                .accentColor(.red)
             }
         )
     }
 
+    func getFeatures() -> Int {
+        var total = 0
+        for page in pages {
+            total += page.features!.count
+        }
+        return total
+    }
+    
     func getTotalFeatures() -> Int {
         var total = 0
         for page in pages {
@@ -128,6 +144,14 @@ struct ContentView: View {
         return total
     }
 
+    func getPages() -> Int {
+        var total = 0
+        for page in pages {
+            total += page.features!.isEmpty ? 0 : 1
+        }
+        return total
+    }
+    
     func getTotalPages() -> Int {
         var total = 0
         for page in pages {
@@ -173,20 +197,34 @@ struct ContentView: View {
 
     func generateReport() -> Void {
         var lines = [String]()
-        let totalFeatures = getTotalFeatures()
-        let totalPages = getTotalPages()
         lines.append("Report of features")
         lines.append("------------------")
         lines.append("")
-        lines.append("Total features: \(totalFeatures)")
+        let featuresCount = getFeatures()
+        let totalFeaturesCount = getTotalFeatures()
+        if (featuresCount != totalFeaturesCount) {
+            lines.append("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
+        } else {
+            lines.append("Total features: \(featuresCount)")
+        }
         lines.append("")
-        lines.append("Total pages with features: \(totalPages)")
+        let pagesCount = getPages()
+        let totalPagesCount = getTotalPages()
+        if (pagesCount != totalPagesCount) {
+            lines.append("Total pages with features: \(pagesCount) (counts as \(totalPagesCount))")
+        } else {
+            lines.append("Total pages with features: \(pagesCount)")
+        }
         lines.append("")
         lines.append("Membership level: \(getMembership())")
         for page in pages.sorted(by: { $0.name < $1.name }) {
             if page.features!.count > 0 {
                 lines.append("")
-                lines.append("Page: \(page.name.uppercased()) (\(page.features!.count) feature(s))")
+                if page.count != 1 {
+                    lines.append("Page: \(page.name.uppercased()) (\(page.features!.count) feature(s), counts as \(page.features!.count * page.count))")
+                } else {
+                    lines.append("Page: \(page.name.uppercased()) (\(page.features!.count) feature(s))")
+                }
                 for feature in page.features!.sorted(by: { $0.date < $1.date }) {
                     lines.append("\tFeature: \(feature.date.formatted(date: .abbreviated, time: .omitted)) on \(feature.raw ? "RAW" : "Snap"):")
                     lines.append("\t\t\(feature.notes)")
@@ -203,8 +241,8 @@ struct ContentView: View {
     func backup() -> Void {
         do {
             let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
-            let json = try encoder.encode(pages)
+            encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+            let json = try encoder.encode(pages.sorted { $0.name < $1.name })
             copyToClipboard(String(decoding: json, as: UTF8.self))
             clipboardName = "backup"
             showingCopiedToClipboardAlert.toggle()
@@ -259,6 +297,7 @@ struct ContentView: View {
         } catch {
             // do nothing
         }
+        // Add regular pages.
         let singleFeaturePages = [
             "abandoned",
             "abstract",
@@ -292,7 +331,6 @@ struct ContentView: View {
             "community_member",
             "country",
             "cuteness",
-            "default",
             "depthoffield",
             "drone",
             "drops",
@@ -351,7 +389,8 @@ struct ContentView: View {
         for pageName in singleFeaturePages {
             modelContext.insert(Page(name: pageName))
         }
-        modelContext.insert(Page(name: "papenoel", count: 3))
+        // Add the multi-count features.
+        modelContext.insert(Page(name: "papanoel", count: 3))
     }
 
     func addPage() -> Void {
