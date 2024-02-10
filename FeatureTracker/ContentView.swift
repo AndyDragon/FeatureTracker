@@ -8,7 +8,7 @@
 import SwiftData
 import SwiftUI
 
-enum BackupOperation {
+enum BackupOperation: Int, Codable, CaseIterable {
     case none,
          backup,
          restore
@@ -18,13 +18,13 @@ struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     @Query var pages: [Page]
     @State private var path = [Page]()
-    @State private var sortOrder = SortDescriptor(\Page.name)
     @State private var showingRepopulateAlert = false
     @State private var showingCopiedToClipboardAlert = false
     @State private var clipboardName = ""
     @State private var exceptionError = ""
     @State private var backupOperation = BackupOperation.none
     @State private var showingBackupRestoreErrorAlert = false
+    @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -36,7 +36,7 @@ struct ContentView: View {
                         Text("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
                     } else {
                         Text("Total features: \(featuresCount)")
-                        
+
                     }
                     Spacer()
                         .frame(width: 8)
@@ -57,7 +57,7 @@ struct ContentView: View {
                     Spacer()
                 }
                 .padding()
-                PageListing(sort: sortOrder)
+                PageListing(sorting: pageSorting)
                     .navigationTitle("Feature Tracker")
                     .navigationDestination(for: Page.self, destination: PageEditor.init)
                     .toolbar {
@@ -65,10 +65,10 @@ struct ContentView: View {
                         Button("Generate report", systemImage: "menucard", action: generateReport)
                         Button("Add page", systemImage: "plus", action: addPage)
                         Menu("Sort", systemImage: "arrow.up.arrow.down") {
-                            Picker("Sort", selection: $sortOrder) {
-                                Text("Name").tag(SortDescriptor(\Page.name))
-                                Text("Count").tag(SortDescriptor(\Page.count))
-                                //Text("Features").tag(SortDescriptor(\Page.features?.count))
+                            Picker("Sort", selection: $pageSorting) {
+                                Text("Name").tag(PageSorting.name)
+                                Text("Count").tag(PageSorting.count)
+                                Text("Features").tag(PageSorting.features)
                             }
                             .pickerStyle(.inline)
                         }
@@ -135,7 +135,7 @@ struct ContentView: View {
         }
         return total
     }
-    
+
     func getTotalFeatures() -> Int {
         var total = 0
         for page in pages {
@@ -151,7 +151,7 @@ struct ContentView: View {
         }
         return total
     }
-    
+
     func getTotalPages() -> Int {
         var total = 0
         for page in pages {
@@ -192,7 +192,13 @@ struct ContentView: View {
         pasteBoard.clearContents()
         pasteBoard.writeObjects([text as NSString])
 #endif
+    }
 
+    func getStringForCount(_ count: Int, _ countLabel: String) -> String {
+        if count == 1 {
+            return "\(count) \(countLabel)"
+        }
+        return "\(count) \(countLabel)s"
     }
 
     func generateReport() -> Void {
@@ -217,13 +223,28 @@ struct ContentView: View {
         }
         lines.append("")
         lines.append("Membership level: \(getMembership())")
-        for page in pages.sorted(by: { $0.name < $1.name }) {
+        for page in pages.sorted(by: { left, right in
+            if pageSorting == .name {
+                return left.name < right.name
+            } else if pageSorting == .count {
+                if left.count == right.count {
+                    return left.name < right.name
+                }
+                return left.count > right.count
+            } else if pageSorting == .features {
+                if left.features?.count == right.features?.count {
+                    return left.name < right.name
+                }
+                return (left.features?.count ?? 0) > (right.features?.count ?? 0);
+            }
+            return left.name < right.name
+        }) {
             if page.features!.count > 0 {
                 lines.append("")
                 if page.count != 1 {
-                    lines.append("Page: \(page.name.uppercased()) (\(page.features!.count) feature(s), counts as \(page.features!.count * page.count))")
+                    lines.append("Page: \(page.name.uppercased()) - \(getStringForCount(page.features!.count, "feature")) (counts as \(page.features!.count * page.count))")
                 } else {
-                    lines.append("Page: \(page.name.uppercased()) (\(page.features!.count) feature(s))")
+                    lines.append("Page: \(page.name.uppercased()) - \(getStringForCount(page.features!.count, "feature"))")
                 }
                 for feature in page.features!.sorted(by: { $0.date < $1.date }) {
                     lines.append("\tFeature: \(feature.date.formatted(date: .abbreviated, time: .omitted)) on \(feature.raw ? "RAW" : "Snap"):")

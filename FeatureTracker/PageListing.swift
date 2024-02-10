@@ -8,13 +8,37 @@
 import SwiftData
 import SwiftUI
 
+enum PageSorting: Int, Codable, CaseIterable {
+    case none,
+         name,
+         count,
+         features
+}
+
+
 struct PageListing: View {
     @Environment(\.modelContext) var modelContext
     @Query var pages: [Page]
+    var sorting = PageSorting.name
 
     var body: some View {
         List {
-            ForEach(pages) { page in
+            ForEach(pages.sorted(by: { left, right in
+                if sorting == .name {
+                    return left.name < right.name
+                } else if sorting == .count {
+                    if left.count == right.count {
+                        return left.name < right.name
+                    }
+                    return left.count > right.count
+                } else if sorting == .features {
+                    if left.features?.count == right.features?.count {
+                        return left.name < right.name
+                    }
+                    return (left.features?.count ?? 0) > (right.features?.count ?? 0);
+                }
+                return left.name < right.name
+            })) { page in
                 NavigationLink(value: page) {
                     HStack {
                         VStack(alignment: .leading) {
@@ -29,7 +53,7 @@ struct PageListing: View {
                             Text("Notes: " + page.notes)
                         }
                         Spacer()
-                        Text("\(page.features!.count) features")
+                        Text("\(getStringForCount(page.features!.count, "feature"))")
                             .font(.headline)
                             .foregroundColor(page.features!.count > 0 ? .blue : Color(.textColor))
                     }
@@ -38,11 +62,18 @@ struct PageListing: View {
             .onDelete(perform: deletePages)
         }
     }
-    
-    init(sort: SortDescriptor<Page>) {
-        _pages = Query(sort: [sort, SortDescriptor(\Page.name)])
+
+    init(sorting: PageSorting) {
+        self.sorting = sorting
     }
-    
+
+    func getStringForCount(_ count: Int, _ countLabel: String) -> String {
+        if count == 1 {
+            return "\(count) \(countLabel)"
+        }
+        return "\(count) \(countLabel)s"
+    }
+
     func deletePages(_ indexSet: IndexSet) {
         for index in indexSet {
             let page = pages[index]
@@ -52,5 +83,5 @@ struct PageListing: View {
 }
 
 #Preview {
-    PageListing(sort: SortDescriptor(\Page.name))
+    PageListing(sorting: .name)
 }
