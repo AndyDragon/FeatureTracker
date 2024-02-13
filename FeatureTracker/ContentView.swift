@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import CloudKitSyncMonitor
 
 enum BackupOperation: Int, Codable, CaseIterable {
     case none,
@@ -24,108 +25,131 @@ struct ContentView: View {
     @State private var exceptionError = ""
     @State private var backupOperation = BackupOperation.none
     @State private var showingBackupRestoreErrorAlert = false
+    @State private var showSyncAccountStatus = false
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
+    @ObservedObject private var syncMonitor = SyncMonitor.shared
 
     var body: some View {
-        NavigationStack(path: $path) {
-            VStack {
-                HStack(alignment: .center) {
-                    let featuresCount = getFeatures()
-                    let totalFeaturesCount = getTotalFeatures()
-                    if (featuresCount != totalFeaturesCount) {
-                        Text("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
-                    } else {
-                        Text("Total features: \(featuresCount)")
-
+        VStack {
+            NavigationStack(path: $path) {
+                VStack {
+                    HStack(alignment: .center) {
+                        let featuresCount = getFeatures()
+                        let totalFeaturesCount = getTotalFeatures()
+                        if (featuresCount != totalFeaturesCount) {
+                            Text("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
+                        } else {
+                            Text("Total features: \(featuresCount)")
+                            
+                        }
+                        Spacer()
+                            .frame(width: 8)
+                        Text("|")
+                        Spacer()
+                            .frame(width: 8)
+                        let pagesCount = getPages()
+                        let totalPagesCount = getTotalPages()
+                        if pagesCount != totalPagesCount {
+                            Text("Total pages: \(pagesCount) (counts as \(totalPagesCount))")
+                        } else {
+                            Text("Total pages: \(pagesCount)")
+                        }
+                        Text("|")
+                        Spacer()
+                            .frame(width: 8)
+                        Text("Membership: \(getMembership())")
+                        Spacer()
                     }
-                    Spacer()
-                        .frame(width: 8)
-                    Text("|")
-                    Spacer()
-                        .frame(width: 8)
-                    let pagesCount = getPages()
-                    let totalPagesCount = getTotalPages()
-                    if pagesCount != totalPagesCount {
-                        Text("Total pages: \(pagesCount) (counts as \(totalPagesCount))")
-                    } else {
-                        Text("Total pages: \(pagesCount)")
-                    }
-                    Text("|")
-                    Spacer()
-                        .frame(width: 8)
-                    Text("Membership: \(getMembership())")
-                    Spacer()
-                }
-                .padding()
-                PageListing(sorting: pageSorting)
-                    .navigationTitle("Feature Tracker")
-                    .navigationDestination(for: Page.self, destination: PageEditor.init)
-                    .toolbar {
-                        Button("Populate defaults", action: { showingRepopulateAlert.toggle() })
-                        Button("Generate report", systemImage: "menucard", action: generateReport)
-                        Button("Add page", systemImage: "plus", action: addPage)
-                        Menu("Sort", systemImage: "arrow.up.arrow.down") {
-                            Picker("Sort", selection: $pageSorting) {
-                                Text("Name").tag(PageSorting.name)
-                                Text("Count").tag(PageSorting.count)
-                                Text("Features").tag(PageSorting.features)
+                    .padding()
+                    PageListing(sorting: pageSorting)
+                        .navigationTitle("Feature Tracker")
+                        .navigationDestination(for: Page.self, destination: PageEditor.init)
+                        .toolbar {
+                            Button("Populate defaults", action: { showingRepopulateAlert.toggle() })
+                            Button("Generate report", systemImage: "menucard", action: generateReport)
+                            Button("Add page", systemImage: "plus", action: addPage)
+                            Menu("Sort", systemImage: "arrow.up.arrow.down") {
+                                Picker("Sort", selection: $pageSorting) {
+                                    Text("Name").tag(PageSorting.name)
+                                    Text("Count").tag(PageSorting.count)
+                                    Text("Features").tag(PageSorting.features)
+                                }
+                                .pickerStyle(.inline)
                             }
-                            .pickerStyle(.inline)
+                            Menu("JSON", systemImage: "tray") {
+                                Button("Backup", systemImage: "tray.and.arrow.down", action: backup)
+                                Button("Restore", systemImage: "tray.and.arrow.up", action: restore)
+                            }
                         }
-                        Menu("JSON", systemImage: "tray") {
-                            Button("Backup", systemImage: "tray.and.arrow.down", action: backup)
-                            Button("Restore", systemImage: "tray.and.arrow.up", action: restore)
-                        }
+                }
+            }
+            .alert(
+                "Are you sure?",
+                isPresented: $showingRepopulateAlert,
+                actions: {
+                    Button(role: .destructive, action: {
+                        populateDefaultPages()
+                    }) {
+                        Text("Yes")
                     }
+                },
+                message: {
+                    Text("This will remove all features and custom pages and cannot be undone.")
+                }
+            )
+            .alert(
+                "Copied to clipboard",
+                isPresented: $showingCopiedToClipboardAlert,
+                actions: {
+                    Button(action: {
+                        showingCopiedToClipboardAlert.toggle()
+                    }) {
+                        Text("OK")
+                    }
+                },
+                message: {
+                    Text("Copied the \(clipboardName) to the clipboard.")
+                }
+            )
+            .alert(
+                backupOperation == .backup
+                ? "ERROR: Failed to backup"
+                : "ERROR: Failed to restore",
+                isPresented: $showingBackupRestoreErrorAlert,
+                actions: {
+                    Button(action: {
+                        showingBackupRestoreErrorAlert.toggle()
+                    }) {
+                        Text("OK")
+                    }
+                },
+                message: {
+                    Text(backupOperation == .backup
+                         ? "Could to backup to the clipboard: \(exceptionError)"
+                         : "Could to restore from the clipboard: \(exceptionError)")
+                    .accentColor(.red)
+                }
+            )
+            HStack {
+                Image(systemName: syncMonitor.syncStateSummary.symbolName)
+                    .foregroundColor(syncMonitor.syncStateSummary.symbolColor)
+                    .help(syncMonitor.syncStateSummary.description)
+                if showSyncAccountStatus {
+                    if case .accountNotAvailable = syncMonitor.syncStateSummary {
+                        Text("Not logged into iCloud account, changes will not be synced to iCloud storage")
+                    }
+                }
+                Spacer()
+            }
+            .padding([.top], 2)
+            .padding([.bottom, .leading], 12)
+            .task {
+                do {
+                    try await Task.sleep(nanoseconds: 5_000_000_000)
+                    showSyncAccountStatus = true
+                } catch {}
             }
         }
-        .alert(
-            "Are you sure?",
-            isPresented: $showingRepopulateAlert,
-            actions: {
-                Button(role: .destructive, action: {
-                    populateDefaultPages()
-                }) {
-                    Text("Yes")
-                }
-            },
-            message: {
-                Text("This will remove all features and custom pages and cannot be undone.")
-            }
-        )
-        .alert(
-            "Copied to clipboard",
-            isPresented: $showingCopiedToClipboardAlert,
-            actions: {
-                Button(action: {
-                    showingCopiedToClipboardAlert.toggle()
-                }) {
-                    Text("OK")
-                }
-            },
-            message: {
-                Text("Copied the \(clipboardName) to the clipboard.")
-            }
-        )
-        .alert(
-            backupOperation == .backup
-            ? "ERROR: Failed to backup"
-            : "ERROR: Failed to restore",
-            isPresented: $showingBackupRestoreErrorAlert,
-            actions: {
-                Button(action: {
-                    showingBackupRestoreErrorAlert.toggle()
-                }) {
-                    Text("OK")
-                }
-            },
-            message: {
-                Text(backupOperation == .backup
-                     ? "Could to backup to the clipboard: \(exceptionError)"
-                     : "Could to restore from the clipboard: \(exceptionError)")
-                .accentColor(.red)
-            }
-        )
     }
 
     func getFeatures() -> Int {

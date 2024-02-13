@@ -15,7 +15,10 @@ struct FeatureTrackerApp: App {
             Page.self,
             Feature.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .private("iCloud.com.andydragon.FeatureTracker"))
         
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
