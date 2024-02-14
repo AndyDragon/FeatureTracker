@@ -10,12 +10,21 @@ import SwiftUI
 
 struct PageEditor: View {
     @Bindable var page: Page
-    @State private var featureDate = Date.now
-    @State private var featureRaw = false
-    @State private var featureNotes = ""
+    @Binding var selectedFeature: Feature?
+    var onDelete: () -> Void
 
     var body: some View {
         VStack {
+            HStack {
+                Text("Page:")
+                    .frame(alignment: .center)
+                    .fontWeight(.bold)
+                Spacer()
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                }
+                .frame(alignment: .center)
+            }.padding([.bottom], 8)
             Form {
                 TextField("Name: ", text: $page.name)
                 TextField("Notes: ", text: $page.notes, axis: .vertical)
@@ -29,46 +38,36 @@ struct PageEditor: View {
             }
             Spacer()
                 .frame(height: 30)
-            Section("Features: (\(page.features!.count) feature(s))") {
-                FeatureListing(page: page)
+            VStack {
+                HStack {
+                    Text("Features: (\(page.features!.count))")
+                        .frame(alignment: .center)
+                        .fontWeight(.bold)
+                    Spacer()
+                    Button(action: {
+                        let feature = Feature()
+                        page.features!.append(feature)
+                        selectedFeature = feature
+                    }) {
+                        Image(systemName: "plus")
+                    }
+                    .frame(alignment: .center)
+                }
+                FeatureListing(page: page, selectedFeature: $selectedFeature)
             }
             Spacer()
                 .frame(height: 30)
-            Section("New feature:") {
-                Form {
-                    HStack(alignment: .center) {
-                        DatePicker("Date: ", selection: $featureDate, displayedComponents: [.date])
-                            .datePickerStyle(.stepperField)
-                        Spacer()
-                        Toggle("RAW", isOn: $featureRaw)
+            VStack {
+                if let feature = selectedFeature {
+                    FeatureEditor(feature: feature) {
+                        selectedFeature = nil
+                        page.features!.remove(element: feature)
                     }
-                    TextField("Notes: ", text: $featureNotes, axis: .vertical)
-                    Button("Add feature", action: addFeature)
                 }
             }
+            .frame(height: 120)
             Spacer()
         }
-        .padding()
-        .navigationTitle("Page / Challenge details")
-    }
-
-    func addFeature() -> Void {
-        let feature = Feature(date: featureDate, raw: featureRaw, notes: featureNotes)
-        page.features!.append(feature)
-        // clear feature editor
-        featureDate = .now
-        featureRaw = false
-        featureNotes = ""
-    }
-}
-
-#Preview {
-    do {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: Page.self, configurations: config)
-        let example = Page(name: "Sample", notes: "This is notes", count: 3)
-        return PageEditor(page: example).modelContainer(container)
-    } catch {
-        fatalError("Failed to create sample page")
+        .padding([.leading, .trailing, .bottom])
     }
 }

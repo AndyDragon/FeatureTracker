@@ -10,15 +10,18 @@ import SwiftUI
 
 struct FeatureListing: View {
     @Bindable var page: Page
+    @Binding var selectedFeature: Feature?
     
     var body: some View {
-        List {
-            ForEach(page.features!.sorted { $0.date < $1.date }) { feature in
+        List(selection: $selectedFeature) {
+            ForEach(page.features!.sorted { $0.date < $1.date }, id: \.self) { feature in
                 HStack {
                     VStack(alignment: .leading) {
                         HStack (alignment: .bottom) {
                             Text(feature.date.formatted(date: .long, time: .omitted))
                                 .font(.headline)
+                                .foregroundColor(.blue)
+                                .brightness(0.3)
                             if feature.raw {
                                 Text("RAW")
                                     .font(.subheadline)
@@ -30,18 +33,18 @@ struct FeatureListing: View {
                     }
                     Spacer()                    
                 }
+                .onTapGesture {
+                    selectedFeature = feature
+                }
             }
             .onDelete(perform: deleteFeatures)
         }
     }
     
     func deleteFeatures(_ indexSet: IndexSet) {
+        selectedFeature = nil
         for index in indexSet {
             page.features!.remove(at: index)
         }
     }
-}
-
-#Preview {
-    FeatureListing(page: Page())
 }

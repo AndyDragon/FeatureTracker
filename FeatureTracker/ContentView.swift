@@ -19,6 +19,8 @@ struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     @Query var pages: [Page]
     @State private var path = [Page]()
+    @State private var selectedPage: Page?
+    @State private var selectedFeature: Feature?
     @State private var showingRepopulateAlert = false
     @State private var showingCopiedToClipboardAlert = false
     @State private var clipboardName = ""
@@ -31,56 +33,69 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            NavigationStack(path: $path) {
-                VStack {
-                    HStack(alignment: .center) {
-                        let featuresCount = getFeatures()
-                        let totalFeaturesCount = getTotalFeatures()
-                        if (featuresCount != totalFeaturesCount) {
-                            Text("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
-                        } else {
-                            Text("Total features: \(featuresCount)")
-                            
+            HStack(alignment: .center) {
+                let featuresCount = getFeatures()
+                let totalFeaturesCount = getTotalFeatures()
+                if (featuresCount != totalFeaturesCount) {
+                    Text("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
+                } else {
+                    Text("Total features: \(featuresCount)")
+                    
+                }
+                Spacer()
+                    .frame(width: 8)
+                Text("|")
+                Spacer()
+                    .frame(width: 8)
+                let pagesCount = getPages()
+                let totalPagesCount = getTotalPages()
+                if pagesCount != totalPagesCount {
+                    Text("Total pages: \(pagesCount) (counts as \(totalPagesCount))")
+                } else {
+                    Text("Total pages: \(pagesCount)")
+                }
+                Text("|")
+                Spacer()
+                    .frame(width: 8)
+                Text("Membership: \(getMembership())")
+                Spacer()
+            }
+            .padding()
+            NavigationSplitView {
+                PageListing(sorting: pageSorting, selectedPage: $selectedPage, selectedFeature: $selectedFeature)
+                    .navigationTitle("Feature Tracker")
+                    .listStyle(.sidebar)
+                    .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+                    .toolbar {
+                        Button("Add page", systemImage: "plus", action: addPage)
+                        Menu("Sort", systemImage: "arrow.up.arrow.down") {
+                            Picker("Sort pages by", selection: $pageSorting) {
+                                Text("Name").tag(PageSorting.name)
+                                Text("Count").tag(PageSorting.count)
+                                Text("Features").tag(PageSorting.features)
+                            }
+                            .pickerStyle(.inline)
                         }
-                        Spacer()
-                            .frame(width: 8)
-                        Text("|")
-                        Spacer()
-                            .frame(width: 8)
-                        let pagesCount = getPages()
-                        let totalPagesCount = getTotalPages()
-                        if pagesCount != totalPagesCount {
-                            Text("Total pages: \(pagesCount) (counts as \(totalPagesCount))")
-                        } else {
-                            Text("Total pages: \(pagesCount)")
-                        }
-                        Text("|")
-                        Spacer()
-                            .frame(width: 8)
-                        Text("Membership: \(getMembership())")
-                        Spacer()
                     }
-                    .padding()
-                    PageListing(sorting: pageSorting)
-                        .navigationTitle("Feature Tracker")
-                        .navigationDestination(for: Page.self, destination: PageEditor.init)
-                        .toolbar {
-                            Button("Populate defaults", action: { showingRepopulateAlert.toggle() })
-                            Button("Generate report", systemImage: "menucard", action: generateReport)
-                            Button("Add page", systemImage: "plus", action: addPage)
-                            Menu("Sort", systemImage: "arrow.up.arrow.down") {
-                                Picker("Sort", selection: $pageSorting) {
-                                    Text("Name").tag(PageSorting.name)
-                                    Text("Count").tag(PageSorting.count)
-                                    Text("Features").tag(PageSorting.features)
-                                }
-                                .pickerStyle(.inline)
-                            }
-                            Menu("JSON", systemImage: "tray") {
-                                Button("Backup", systemImage: "tray.and.arrow.down", action: backup)
-                                Button("Restore", systemImage: "tray.and.arrow.up", action: restore)
+            } detail: {
+                NavigationStack {
+                    ZStack {
+                        if let page = selectedPage {
+                            PageEditor(page: page, selectedFeature: $selectedFeature) {
+                                selectedFeature = nil
+                                selectedPage = nil
+                                modelContext.delete(page)
                             }
                         }
+                    }
+                }
+                .toolbar {
+                    Button("Populate defaults", action: { showingRepopulateAlert.toggle() })
+                    Button("Generate report", systemImage: "menucard", action: generateReport)
+                    Menu("JSON", systemImage: "tray") {
+                        Button("Backup to Clipboard", systemImage: "tray.and.arrow.down", action: backup)
+                        Button("Restore from Clipboard", systemImage: "tray.and.arrow.up", action: restore)
+                    }
                 }
             }
             .alert(
@@ -439,9 +454,11 @@ struct ContentView: View {
     }
 
     func addPage() -> Void {
-        let page = Page()
-        modelContext.insert(page)
-        path = [page]
+        withAnimation {
+            let newPage = Page(name: "new page")
+            modelContext.insert(newPage)
+            selectedPage = newPage
+        }
     }
 }
 

@@ -17,6 +17,8 @@
 		494202C62B74703600227660 /* PageListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202C52B74703600227660 /* PageListing.swift */; };
 		494202C82B74798100227660 /* Feature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202C72B74798100227660 /* Feature.swift */; };
 		494202CC2B747FC300227660 /* FeatureListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202CB2B747FC300227660 /* FeatureListing.swift */; };
+		49B4C4A92B7C4E6D0068B8C9 /* FeatureEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4C4A82B7C4E6D0068B8C9 /* FeatureEditor.swift */; };
+		49B4C4AB2B7C53330068B8C9 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4C4AA2B7C53330068B8C9 /* Helpers.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +34,8 @@
 		494202C72B74798100227660 /* Feature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Feature.swift; sourceTree = "<group>"; };
 		494202CB2B747FC300227660 /* FeatureListing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureListing.swift; sourceTree = "<group>"; };
 		49AD862B2B74AB3B006722B3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		49B4C4A82B7C4E6D0068B8C9 /* FeatureEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureEditor.swift; sourceTree = "<group>"; };
+		49B4C4AA2B7C53330068B8C9 /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +75,8 @@
 				494202C52B74703600227660 /* PageListing.swift */,
 				494202C12B745C4200227660 /* Page.swift */,
 				494202C32B7464DC00227660 /* PageEditor.swift */,
+				49B4C4AA2B7C53330068B8C9 /* Helpers.swift */,
+				49B4C4A82B7C4E6D0068B8C9 /* FeatureEditor.swift */,
 				494202CB2B747FC300227660 /* FeatureListing.swift */,
 				494202C72B74798100227660 /* Feature.swift */,
 				494202B62B745BED00227660 /* Assets.xcassets */,
@@ -165,8 +171,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				494202C82B74798100227660 /* Feature.swift in Sources */,
+				49B4C4A92B7C4E6D0068B8C9 /* FeatureEditor.swift in Sources */,
 				494202B52B745BEC00227660 /* ContentView.swift in Sources */,
 				494202C62B74703600227660 /* PageListing.swift in Sources */,
+				49B4C4AB2B7C53330068B8C9 /* Helpers.swift in Sources */,
 				494202B32B745BEC00227660 /* FeatureTrackerApp.swift in Sources */,
 				494202CC2B747FC300227660 /* FeatureListing.swift in Sources */,
 				494202C22B745C4200227660 /* Page.swift in Sources */,
@@ -305,7 +313,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -339,7 +347,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
 				ENABLE_HARDENED_RUNTIME = YES;

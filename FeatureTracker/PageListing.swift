@@ -20,9 +20,11 @@ struct PageListing: View {
     @Environment(\.modelContext) var modelContext
     @Query var pages: [Page]
     var sorting = PageSorting.name
+    @Binding var selectedPage: Page?
+    @Binding var selectedFeature: Feature?
 
     var body: some View {
-        List {
+        List(selection: $selectedPage) {
             ForEach(pages.sorted(by: { left, right in
                 if sorting == .name {
                     return left.name < right.name
@@ -38,33 +40,35 @@ struct PageListing: View {
                     return (left.features?.count ?? 0) > (right.features?.count ?? 0);
                 }
                 return left.name < right.name
-            })) { page in
-                NavigationLink(value: page) {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            HStack (alignment: .bottom) {
-                                Text(page.name.uppercased())
-                                    .font(.headline)
-                                Text("(counts as \(page.count))")
-                                    .font(.subheadline)
-                                    .padding([.leading], 4)
-                                    .foregroundColor(.gray)
-                            }
-                            Text("Notes: " + page.notes)
+            }), id: \.self) { page in
+                HStack {
+                    VStack(alignment: .leading) {
+                        HStack (alignment: .bottom) {
+                            Text(page.name.uppercased())
+                                .font(.headline)
+                                .foregroundColor(page.features!.count > 0 ? .blue : Color(.textColor))
+                                .brightness(page.features!.count > 0 ? 0.3 : 0)
+                            Text("(counts as \(page.count))")
+                                .font(.subheadline)
+                                .padding([.leading], 4)
+                                .foregroundColor(.gray)
                         }
-                        Spacer()
-                        Text("\(getStringForCount(page.features!.count, "feature"))")
-                            .font(.headline)
-                            .foregroundColor(page.features!.count > 0 ? .blue : Color(.textColor))
+                        Text("Notes: " + page.notes)
                     }
+                    Spacer()
+                    Text("\(getStringForCount(page.features!.count, "feature"))")
+                        .font(.headline)
+                        .foregroundColor(page.features!.count > 0 ? .blue : Color(.textColor))
+                        .brightness(page.features!.count > 0 ? 0.3 : 0)
+                        .frame(alignment: .top)
+                }
+                .onTapGesture {
+                    selectedFeature = nil
+                    selectedPage = page
                 }
             }
             .onDelete(perform: deletePages)
         }
-    }
-
-    init(sorting: PageSorting) {
-        self.sorting = sorting
     }
 
     func getStringForCount(_ count: Int, _ countLabel: String) -> String {
@@ -80,8 +84,4 @@ struct PageListing: View {
             modelContext.delete(page)
         }
     }
-}
-
-#Preview {
-    PageListing(sorting: .name)
 }
