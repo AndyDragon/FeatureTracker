@@ -5,9 +5,10 @@
 //  Created by Andrew Forget on 2024-02-07.
 //
 
+import AlertToast
+import CloudKitSyncMonitor
 import SwiftData
 import SwiftUI
-import CloudKitSyncMonitor
 
 enum BackupOperation: Int, Codable, CaseIterable {
     case none,
@@ -22,12 +23,18 @@ struct ContentView: View {
     @State private var selectedPage: Page?
     @State private var selectedFeature: Feature?
     @State private var showingRepopulateAlert = false
-    @State private var showingCopiedToClipboardAlert = false
-    @State private var clipboardName = ""
     @State private var exceptionError = ""
     @State private var backupOperation = BackupOperation.none
     @State private var showingBackupRestoreErrorAlert = false
     @State private var showSyncAccountStatus = false
+    @State private var toastDuration = 3.0
+    @State private var toastType: AlertToast.AlertType = .regular
+    @State private var toastText = ""
+    @State private var toastSubTitle = ""
+    @State private var showToast = false
+    @State private var deleteAlertText = ""
+    @State private var deleteAlertAction: (() -> Void)? = nil
+    @State private var showDeleteAlert = false
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
     @ObservedObject private var syncMonitor = SyncMonitor.shared
 
@@ -61,6 +68,13 @@ struct ContentView: View {
                 Spacer()
             }
             .padding()
+            .toast(isPresenting: $showToast, duration: toastDuration, tapToDismiss: true, alert: {
+                AlertToast(
+                    displayMode: .hud,
+                    type: toastType,
+                    title: toastText,
+                    subTitle: toastSubTitle)
+            })
             NavigationSplitView {
                 PageListing(sorting: pageSorting, selectedPage: $selectedPage, selectedFeature: $selectedFeature)
                     .navigationTitle("Feature Tracker")
@@ -78,14 +92,32 @@ struct ContentView: View {
                         }
                     }
             } detail: {
-                NavigationStack {
-                    ZStack {
-                        if let page = selectedPage {
-                            PageEditor(page: page, selectedFeature: $selectedFeature) {
+                VStack {
+                    if let page = selectedPage {
+                        PageEditor(page: page, selectedFeature: $selectedFeature, onDelete: {
+                            deleteAlertText = "Are you sure you want to delete this page?"
+                            deleteAlertAction = {
                                 selectedFeature = nil
                                 selectedPage = nil
                                 modelContext.delete(page)
+                                showToast("Deleted page!", "Removed the page and all the features", duration: 15.0)
                             }
+                            showDeleteAlert.toggle()
+                        }, onDeleteFeature: { feature in
+                            deleteAlertText = "Are you sure you want to delete this feature?"
+                            deleteAlertAction = {
+                                selectedFeature = nil
+                                page.features!.remove(element: feature)
+                                showToast("Deleted feature!", "Removed the feature", duration: 15.0)
+                            }
+                            showDeleteAlert.toggle()
+                        })
+                    } else {
+                        HStack {
+                            Spacer()
+                            Text("Select page from the list to edit")
+                                .foregroundColor(.gray)
+                            Spacer()
                         }
                     }
                 }
@@ -113,23 +145,19 @@ struct ContentView: View {
                 }
             )
             .alert(
-                "Copied to clipboard",
-                isPresented: $showingCopiedToClipboardAlert,
+                "Delete confirmation",
+                isPresented: $showDeleteAlert,
                 actions: {
-                    Button(action: {
-                        showingCopiedToClipboardAlert.toggle()
-                    }) {
-                        Text("OK")
+                    Button(role: .destructive, action: deleteAlertAction ?? { }) {
+                        Text("Yes")
                     }
                 },
                 message: {
-                    Text("Copied the \(clipboardName) to the clipboard.")
+                    Text(deleteAlertText)
                 }
             )
             .alert(
-                backupOperation == .backup
-                ? "ERROR: Failed to backup"
-                : "ERROR: Failed to restore",
+                backupOperation == .backup ? "ERROR: Failed to backup" : "ERROR: Failed to restore",
                 isPresented: $showingBackupRestoreErrorAlert,
                 actions: {
                     Button(action: {
@@ -165,6 +193,14 @@ struct ContentView: View {
                 } catch {}
             }
         }
+    }
+    
+    func showToast(_ text: String, _ subTitle: String, duration: Double = 3.0) {
+        toastType = .complete(.blue)
+        toastText = text
+        toastSubTitle = subTitle
+        toastDuration = duration
+        showToast.toggle()
     }
 
     func getFeatures() -> Int {
@@ -294,8 +330,7 @@ struct ContentView: View {
         var text = ""
         for line in lines { text = text + line + "\n" }
         copyToClipboard(text)
-        clipboardName = "report"
-        showingCopiedToClipboardAlert.toggle()
+        showToast("Report generated!", "Copied the report of features to the clipboard")
     }
 
     func backup() -> Void {
@@ -304,8 +339,7 @@ struct ContentView: View {
             encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
             let json = try encoder.encode(pages.sorted { $0.name < $1.name })
             copyToClipboard(String(decoding: json, as: UTF8.self))
-            clipboardName = "backup"
-            showingCopiedToClipboardAlert.toggle()
+            showToast("Backed up!", "Copied a backup of the features to the clipboard")
         } catch {
             exceptionError = error.localizedDescription
             backupOperation = .backup
@@ -327,6 +361,7 @@ struct ContentView: View {
                 for page in loadedPages {
                     modelContext.insert(page)
                 }
+                showToast("Restored!", "Restored the items from the clipboard")
             }
         } catch let DecodingError.dataCorrupted(context) {
             exceptionError = context.debugDescription

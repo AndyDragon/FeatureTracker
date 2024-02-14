@@ -12,6 +12,7 @@ struct PageEditor: View {
     @Bindable var page: Page
     @Binding var selectedFeature: Feature?
     var onDelete: () -> Void
+    var onDeleteFeature: (Feature) -> Void
 
     var body: some View {
         VStack {
@@ -60,8 +61,7 @@ struct PageEditor: View {
             VStack {
                 if let feature = selectedFeature {
                     FeatureEditor(feature: feature) {
-                        selectedFeature = nil
-                        page.features!.remove(element: feature)
+                        onDeleteFeature(feature)
                     }
                 }
             }

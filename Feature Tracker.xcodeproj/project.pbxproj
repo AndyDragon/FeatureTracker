@@ -17,6 +17,7 @@
 		494202C62B74703600227660 /* PageListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202C52B74703600227660 /* PageListing.swift */; };
 		494202C82B74798100227660 /* Feature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202C72B74798100227660 /* Feature.swift */; };
 		494202CC2B747FC300227660 /* FeatureListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202CB2B747FC300227660 /* FeatureListing.swift */; };
+		4950CE3B2B7CF9F400C401B3 /* AlertToast in Frameworks */ = {isa = PBXBuildFile; productRef = 4950CE3A2B7CF9F400C401B3 /* AlertToast */; };
 		49B4C4A92B7C4E6D0068B8C9 /* FeatureEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4C4A82B7C4E6D0068B8C9 /* FeatureEditor.swift */; };
 		49B4C4AB2B7C53330068B8C9 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4C4AA2B7C53330068B8C9 /* Helpers.swift */; };
 /* End PBXBuildFile section */
@@ -44,6 +45,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4918AC222B7C25770078BC00 /* CloudKitSyncMonitor in Frameworks */,
+				4950CE3B2B7CF9F400C401B3 /* AlertToast in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +114,7 @@
 			name = "Feature Tracker";
 			packageProductDependencies = (
 				4918AC212B7C25770078BC00 /* CloudKitSyncMonitor */,
+				4950CE3A2B7CF9F400C401B3 /* AlertToast */,
 			);
 			productName = FeatureTracker;
 			productReference = 494202AF2B745BEC00227660 /* Feature Tracker.app */;
@@ -143,6 +146,7 @@
 			mainGroup = 494202A62B745BEC00227660;
 			packageReferences = (
 				4918AC202B7C25770078BC00 /* XCRemoteSwiftPackageReference "CloudKitSyncMonitor" */,
+				4950CE392B7CF9F400C401B3 /* XCRemoteSwiftPackageReference "AlertToast" */,
 			);
 			productRefGroup = 494202B02B745BEC00227660 /* Products */;
 			projectDirPath = "";
@@ -313,7 +317,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -347,7 +351,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -403,6 +407,14 @@
 				minimumVersion = 1.2.1;
 			};
 		};
+		4950CE392B7CF9F400C401B3 /* XCRemoteSwiftPackageReference "AlertToast" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/elai950/AlertToast.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.9;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -410,6 +422,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4918AC202B7C25770078BC00 /* XCRemoteSwiftPackageReference "CloudKitSyncMonitor" */;
 			productName = CloudKitSyncMonitor;
+		};
+		4950CE3A2B7CF9F400C401B3 /* AlertToast */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4950CE392B7CF9F400C401B3 /* XCRemoteSwiftPackageReference "AlertToast" */;
+			productName = AlertToast;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
