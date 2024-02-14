@@ -173,24 +173,26 @@ struct ContentView: View {
                     .accentColor(.red)
                 }
             )
-            HStack {
-                Image(systemName: syncMonitor.syncStateSummary.symbolName)
-                    .foregroundColor(syncMonitor.syncStateSummary.symbolColor)
-                    .help(syncMonitor.syncStateSummary.description)
-                if showSyncAccountStatus {
-                    if case .accountNotAvailable = syncMonitor.syncStateSummary {
-                        Text("Not logged into iCloud account, changes will not be synced to iCloud storage")
+            if CloudKitConfiguration.Enabled {
+                HStack {
+                    Image(systemName: syncMonitor.syncStateSummary.symbolName)
+                        .foregroundColor(syncMonitor.syncStateSummary.symbolColor)
+                        .help(syncMonitor.syncStateSummary.description)
+                    if showSyncAccountStatus {
+                        if case .accountNotAvailable = syncMonitor.syncStateSummary {
+                            Text("Not logged into iCloud account, changes will not be synced to iCloud storage")
+                        }
                     }
+                    Spacer()
                 }
-                Spacer()
-            }
-            .padding([.top], 2)
-            .padding([.bottom, .leading], 12)
-            .task {
-                do {
-                    try await Task.sleep(nanoseconds: 5_000_000_000)
-                    showSyncAccountStatus = true
-                } catch {}
+                .padding([.top], 2)
+                .padding([.bottom, .leading], 12)
+                .task {
+                    do {
+                        try await Task.sleep(nanoseconds: 5_000_000_000)
+                        showSyncAccountStatus = true
+                    } catch {}
+                }
             }
         }
     }
