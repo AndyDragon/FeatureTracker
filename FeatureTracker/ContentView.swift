@@ -10,13 +10,8 @@ import CloudKitSyncMonitor
 import SwiftData
 import SwiftUI
 
-enum BackupOperation: Int, Codable, CaseIterable {
-    case none,
-         backup,
-         restore
-}
-
 struct ContentView: View {
+    @Environment(\.openURL) var openURL
     @Environment(\.modelContext) var modelContext
     @Query var pages: [Page]
     @State private var path = [Page]()
@@ -37,163 +32,229 @@ struct ContentView: View {
     @State private var showDeleteAlert = false
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
     @ObservedObject private var syncMonitor = SyncMonitor.shared
+    var appState: VersionCheckAppState
+    
+    init(_ appState: VersionCheckAppState) {
+        self.appState = appState
+    }
 
     var body: some View {
-        VStack {
-            HStack(alignment: .center) {
-                let featuresCount = getFeatures()
-                let totalFeaturesCount = getTotalFeatures()
-                if (featuresCount != totalFeaturesCount) {
-                    Text("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
-                } else {
-                    Text("Total features: \(featuresCount)")
-                    
-                }
-                Spacer()
-                    .frame(width: 8)
-                Text("|")
-                Spacer()
-                    .frame(width: 8)
-                let pagesCount = getPages()
-                let totalPagesCount = getTotalPages()
-                if pagesCount != totalPagesCount {
-                    Text("Total pages: \(pagesCount) (counts as \(totalPagesCount))")
-                } else {
-                    Text("Total pages: \(pagesCount)")
-                }
-                Text("|")
-                Spacer()
-                    .frame(width: 8)
-                Text("Membership: \(getMembership())")
-                Spacer()
-            }
-            .padding()
-            .toast(isPresenting: $showToast, duration: toastDuration, tapToDismiss: true, alert: {
-                AlertToast(
-                    displayMode: .hud,
-                    type: toastType,
-                    title: toastText,
-                    subTitle: toastSubTitle)
-            })
-            NavigationSplitView {
-                PageListing(sorting: pageSorting, selectedPage: $selectedPage, selectedFeature: $selectedFeature)
-                    .navigationTitle("Feature Tracker")
-                    .listStyle(.sidebar)
-                    .navigationSplitViewColumnWidth(min: 280, ideal: 320)
-                    .toolbar {
-                        Button("Add page", systemImage: "plus", action: addPage)
-                        Menu("Sort", systemImage: "arrow.up.arrow.down") {
-                            Picker("Sort pages by", selection: $pageSorting) {
-                                Text("Name").tag(PageSorting.name)
-                                Text("Count").tag(PageSorting.count)
-                                Text("Features").tag(PageSorting.features)
-                            }
-                            .pickerStyle(.inline)
-                        }
-                    }
-            } detail: {
-                VStack {
-                    if let page = selectedPage {
-                        PageEditor(page: page, selectedFeature: $selectedFeature, onDelete: {
-                            deleteAlertText = "Are you sure you want to delete this page?"
-                            deleteAlertAction = {
-                                selectedFeature = nil
-                                selectedPage = nil
-                                modelContext.delete(page)
-                                showToast("Deleted page!", "Removed the page and all the features", duration: 15.0)
-                            }
-                            showDeleteAlert.toggle()
-                        }, onDeleteFeature: { feature in
-                            deleteAlertText = "Are you sure you want to delete this feature?"
-                            deleteAlertAction = {
-                                selectedFeature = nil
-                                page.features!.remove(element: feature)
-                                showToast("Deleted feature!", "Removed the feature", duration: 15.0)
-                            }
-                            showDeleteAlert.toggle()
-                        })
+        ZStack {
+            VStack {
+                HStack(alignment: .center) {
+                    let featuresCount = getFeatures()
+                    let totalFeaturesCount = getTotalFeatures()
+                    if (featuresCount != totalFeaturesCount) {
+                        Text("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
                     } else {
-                        HStack {
-                            Spacer()
-                            Text("Select page from the list to edit")
-                                .foregroundColor(.gray)
-                            Spacer()
-                        }
-                    }
-                }
-                .toolbar {
-                    Button("Populate defaults", action: { showingRepopulateAlert.toggle() })
-                    Button("Generate report", systemImage: "menucard", action: generateReport)
-                    Menu("JSON", systemImage: "tray") {
-                        Button("Backup to Clipboard", systemImage: "tray.and.arrow.down", action: backup)
-                        Button("Restore from Clipboard", systemImage: "tray.and.arrow.up", action: restore)
-                    }
-                }
-            }
-            .alert(
-                "Are you sure?",
-                isPresented: $showingRepopulateAlert,
-                actions: {
-                    Button(role: .destructive, action: {
-                        populateDefaultPages()
-                    }) {
-                        Text("Yes")
-                    }
-                },
-                message: {
-                    Text("This will remove all features and custom pages and cannot be undone.")
-                }
-            )
-            .alert(
-                "Delete confirmation",
-                isPresented: $showDeleteAlert,
-                actions: {
-                    Button(role: .destructive, action: deleteAlertAction ?? { }) {
-                        Text("Yes")
-                    }
-                },
-                message: {
-                    Text(deleteAlertText)
-                }
-            )
-            .alert(
-                backupOperation == .backup ? "ERROR: Failed to backup" : "ERROR: Failed to restore",
-                isPresented: $showingBackupRestoreErrorAlert,
-                actions: {
-                    Button(action: {
-                        showingBackupRestoreErrorAlert.toggle()
-                    }) {
-                        Text("OK")
-                    }
-                },
-                message: {
-                    Text(backupOperation == .backup
-                         ? "Could to backup to the clipboard: \(exceptionError)"
-                         : "Could to restore from the clipboard: \(exceptionError)")
-                    .accentColor(.red)
-                }
-            )
-            if CloudKitConfiguration.Enabled {
-                HStack {
-                    Image(systemName: syncMonitor.syncStateSummary.symbolName)
-                        .foregroundColor(syncMonitor.syncStateSummary.symbolColor)
-                        .help(syncMonitor.syncStateSummary.description)
-                    if showSyncAccountStatus {
-                        if case .accountNotAvailable = syncMonitor.syncStateSummary {
-                            Text("Not logged into iCloud account, changes will not be synced to iCloud storage")
-                        }
+                        Text("Total features: \(featuresCount)")
+                        
                     }
                     Spacer()
+                        .frame(width: 8)
+                    Text("|")
+                    Spacer()
+                        .frame(width: 8)
+                    let pagesCount = getPages()
+                    let totalPagesCount = getTotalPages()
+                    if pagesCount != totalPagesCount {
+                        Text("Total pages: \(pagesCount) (counts as \(totalPagesCount))")
+                    } else {
+                        Text("Total pages: \(pagesCount)")
+                    }
+                    Text("|")
+                    Spacer()
+                        .frame(width: 8)
+                    Text("Membership: \(getMembership())")
+                    Spacer()
                 }
-                .padding([.top], 2)
-                .padding([.bottom, .leading], 12)
-                .task {
-                    do {
-                        try await Task.sleep(nanoseconds: 5_000_000_000)
-                        showSyncAccountStatus = true
-                    } catch {}
+                .padding()
+                .toast(
+                    isPresenting: $showToast,
+                    duration: toastDuration,
+                    tapToDismiss: true,
+                    offsetY: 32,
+                    alert: {
+                        AlertToast(
+                            displayMode: .hud,
+                            type: toastType,
+                            title: toastText,
+                            subTitle: toastSubTitle)
+                    })
+                NavigationSplitView {
+                    PageListing(sorting: pageSorting, selectedPage: $selectedPage, selectedFeature: $selectedFeature)
+                        .navigationTitle("Feature Tracker")
+                        .listStyle(.sidebar)
+                        .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+                        .toolbar {
+                            Button("Add page", systemImage: "plus", action: addPage)
+                            Menu("Sort", systemImage: "arrow.up.arrow.down") {
+                                Picker("Sort pages by", selection: $pageSorting) {
+                                    Text("Name").tag(PageSorting.name)
+                                    Text("Count").tag(PageSorting.count)
+                                    Text("Features").tag(PageSorting.features)
+                                }
+                                .pickerStyle(.inline)
+                            }
+                        }
+                } detail: {
+                    VStack {
+                        if let page = selectedPage {
+                            PageEditor(page: page, selectedFeature: $selectedFeature, onDelete: {
+                                deleteAlertText = "Are you sure you want to delete this page?"
+                                deleteAlertAction = {
+                                    selectedFeature = nil
+                                    selectedPage = nil
+                                    modelContext.delete(page)
+                                    showToast("Deleted page!", "Removed the page and all the features", duration: 15.0)
+                                }
+                                showDeleteAlert.toggle()
+                            }, onDeleteFeature: { feature in
+                                deleteAlertText = "Are you sure you want to delete this feature?"
+                                deleteAlertAction = {
+                                    selectedFeature = nil
+                                    page.features!.remove(element: feature)
+                                    showToast("Deleted feature!", "Removed the feature", duration: 15.0)
+                                }
+                                showDeleteAlert.toggle()
+                            }, onClose: {
+                                selectedFeature = nil
+                                selectedPage = nil
+                            }, onCloseFeature: {
+                                selectedFeature = nil
+                            })
+                        } else {
+                            HStack {
+                                Spacer()
+                                Text("Select page from the list to edit")
+                                    .foregroundColor(.gray)
+                                Spacer()
+                            }
+                        }
+                    }
+                    .toolbar {
+                        Button("Populate defaults", action: { showingRepopulateAlert.toggle() })
+                        Button("Generate report", systemImage: "menucard", action: generateReport)
+                        Menu("JSON", systemImage: "tray") {
+                            Button("Backup to Clipboard", systemImage: "tray.and.arrow.down", action: backup)
+                            Button("Restore from Clipboard", systemImage: "tray.and.arrow.up", action: restore)
+                        }
+                    }
+                }
+                .alert(
+                    "Are you sure?",
+                    isPresented: $showingRepopulateAlert,
+                    actions: {
+                        Button(role: .destructive, action: {
+                            populateDefaultPages()
+                        }) {
+                            Text("Yes")
+                        }
+                    },
+                    message: {
+                        Text("This will remove all features and custom pages and cannot be undone.")
+                    }
+                )
+                .alert(
+                    "Delete confirmation",
+                    isPresented: $showDeleteAlert,
+                    actions: {
+                        Button(role: .destructive, action: deleteAlertAction ?? { }) {
+                            Text("Yes")
+                        }
+                    },
+                    message: {
+                        Text(deleteAlertText)
+                    }
+                )
+                .alert(
+                    backupOperation == .backup ? "ERROR: Failed to backup" : "ERROR: Failed to restore",
+                    isPresented: $showingBackupRestoreErrorAlert,
+                    actions: {
+                        Button(action: {
+                            showingBackupRestoreErrorAlert.toggle()
+                        }) {
+                            Text("OK")
+                        }
+                    },
+                    message: {
+                        Text(backupOperation == .backup
+                             ? "Could to backup to the clipboard: \(exceptionError)"
+                             : "Could to restore from the clipboard: \(exceptionError)")
+                        .accentColor(.red)
+                    }
+                )
+                if CloudKitConfiguration.Enabled {
+                    HStack {
+                        Image(systemName: syncMonitor.syncStateSummary.symbolName)
+                            .foregroundColor(syncMonitor.syncStateSummary.symbolColor)
+                            .help(syncMonitor.syncError
+                                  ? (syncMonitor.syncStateSummary.description + " " + (syncMonitor.lastError?.localizedDescription ?? "unknown"))
+                                  : syncMonitor.syncStateSummary.description)
+                        if showSyncAccountStatus {
+                            if case .accountNotAvailable = syncMonitor.syncStateSummary {
+                                Text("Not logged into iCloud account, changes will not be synced to iCloud storage")
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding([.top], 2)
+                    .padding([.bottom, .leading], 12)
+                    .task {
+                        do {
+                            try await Task.sleep(nanoseconds: 5_000_000_000)
+                            showSyncAccountStatus = true
+                        } catch {}
+                    }
                 }
             }
+            .blur(radius: (appState.isShowingVersionAvailableToast.wrappedValue || appState.isShowingVersionRequiredToast.wrappedValue) ? 4 : 0)
+            .allowsHitTesting(!(appState.isShowingVersionAvailableToast.wrappedValue || appState.isShowingVersionRequiredToast.wrappedValue))
+            .padding()
+        }
+        .toast(
+            isPresenting: appState.isShowingVersionAvailableToast,
+            duration: 10,
+            tapToDismiss: true,
+            offsetY: 32,
+            alert: {
+                AlertToast(
+                    displayMode: .hud,
+                    type: .systemImage("exclamationmark.triangle.fill", .yellow),
+                    title: "New version available",
+                    subTitle: "You are using v\(appState.versionCheckToast.wrappedValue.appVersion) and v\(appState.versionCheckToast.wrappedValue.currentVersion) is available\(appState.versionCheckToast.wrappedValue.linkToCurrentVersion.isEmpty ? "" : ", click here to open your browser") (this will go away in 10 seconds)")
+            },
+            onTap: {
+                if let url = URL(string: appState.versionCheckToast.wrappedValue.linkToCurrentVersion) {
+                    openURL(url)
+                }
+            },
+            completion: {
+                appState.resetCheckingForUpdates()
+            })
+        .toast(
+            isPresenting: appState.isShowingVersionRequiredToast,
+            duration: 0,
+            tapToDismiss: true,
+            offsetY: 32,
+            alert: {
+                AlertToast(
+                    displayMode: .hud,
+                    type: .systemImage("xmark.octagon.fill", .red),
+                    title: "New version required",
+                    subTitle: "You are using v\(appState.versionCheckToast.wrappedValue.appVersion) and v\(appState.versionCheckToast.wrappedValue.currentVersion) is required\(appState.versionCheckToast.wrappedValue.linkToCurrentVersion.isEmpty ? "" : ", click here to open your browser") or ⌘ + Q to Quit")
+            },
+            onTap: {
+                if let url = URL(string: appState.versionCheckToast.wrappedValue.linkToCurrentVersion) {
+                    openURL(url)
+                    NSApplication.shared.terminate(nil)
+                }
+            },
+            completion: {
+                appState.resetCheckingForUpdates()
+            })
+        .task {
+            appState.checkForUpdates()
         }
     }
     
@@ -497,8 +558,4 @@ struct ContentView: View {
             selectedPage = newPage
         }
     }
-}
-
-#Preview {
-    ContentView()
 }

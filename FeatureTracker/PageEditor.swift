@@ -13,6 +13,8 @@ struct PageEditor: View {
     @Binding var selectedFeature: Feature?
     var onDelete: () -> Void
     var onDeleteFeature: (Feature) -> Void
+    var onClose: () -> Void = {}
+    var onCloseFeature: () -> Void = {}
 
     var body: some View {
         VStack {
@@ -23,6 +25,10 @@ struct PageEditor: View {
                 Spacer()
                 Button(action: onDelete) {
                     Image(systemName: "trash")
+                }
+                .frame(alignment: .center)
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
                 }
                 .frame(alignment: .center)
             }.padding([.bottom], 8)
@@ -60,9 +66,11 @@ struct PageEditor: View {
                 .frame(height: 30)
             VStack {
                 if let feature = selectedFeature {
-                    FeatureEditor(feature: feature) {
+                    FeatureEditor(feature: feature, onDelete: {
                         onDeleteFeature(feature)
-                    }
+                    }, onClose: {
+                        onCloseFeature()
+                    })
                 }
             }
             .frame(height: 120)

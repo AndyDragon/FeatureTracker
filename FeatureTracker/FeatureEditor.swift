@@ -10,6 +10,7 @@ import SwiftUI
 struct FeatureEditor: View {
     @Bindable var feature: Feature
     var onDelete: () -> Void
+    var onClose: () -> Void = {}
     
     var body: some View {
         VStack {
@@ -20,6 +21,10 @@ struct FeatureEditor: View {
                 Spacer()
                 Button(action: onDelete) {
                     Image(systemName: "trash")
+                }
+                .frame(alignment: .center)
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
                 }
                 .frame(alignment: .center)
             }.padding([.bottom], 8)

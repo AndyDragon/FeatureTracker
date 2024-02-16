@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		491434422B7FED6E0031FC0D /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 491434412B7FED6E0031FC0D /* Types.swift */; };
 		4918AC222B7C25770078BC00 /* CloudKitSyncMonitor in Frameworks */ = {isa = PBXBuildFile; productRef = 4918AC212B7C25770078BC00 /* CloudKitSyncMonitor */; };
 		494202B32B745BEC00227660 /* FeatureTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202B22B745BEC00227660 /* FeatureTrackerApp.swift */; };
 		494202B52B745BEC00227660 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202B42B745BEC00227660 /* ContentView.swift */; };
@@ -23,6 +24,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		491434412B7FED6E0031FC0D /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
 		494202AF2B745BEC00227660 /* Feature Tracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Feature Tracker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		494202B22B745BEC00227660 /* FeatureTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTrackerApp.swift; sourceTree = "<group>"; };
 		494202B42B745BEC00227660 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -56,7 +58,6 @@
 		494202A62B745BEC00227660 = {
 			isa = PBXGroup;
 			children = (
-				49FAC3872B7D56350054D2D3 /* CloudSync.xcconfig */,
 				494202B12B745BEC00227660 /* FeatureTracker */,
 				494202B02B745BEC00227660 /* Products */,
 			);
@@ -75,6 +76,7 @@
 			children = (
 				49AD862B2B74AB3B006722B3 /* Info.plist */,
 				494202B22B745BEC00227660 /* FeatureTrackerApp.swift */,
+				491434412B7FED6E0031FC0D /* Types.swift */,
 				494202B42B745BEC00227660 /* ContentView.swift */,
 				494202C52B74703600227660 /* PageListing.swift */,
 				494202C12B745C4200227660 /* Page.swift */,
@@ -85,6 +87,7 @@
 				494202C72B74798100227660 /* Feature.swift */,
 				494202B62B745BED00227660 /* Assets.xcassets */,
 				494202BB2B745BED00227660 /* FeatureTracker.entitlements */,
+				49FAC3872B7D56350054D2D3 /* CloudSync.xcconfig */,
 				494202B82B745BED00227660 /* Preview Content */,
 			);
 			path = FeatureTracker;
@@ -179,6 +182,7 @@
 				494202C82B74798100227660 /* Feature.swift in Sources */,
 				49B4C4A92B7C4E6D0068B8C9 /* FeatureEditor.swift in Sources */,
 				494202B52B745BEC00227660 /* ContentView.swift in Sources */,
+				491434422B7FED6E0031FC0D /* Types.swift in Sources */,
 				494202C62B74703600227660 /* PageListing.swift in Sources */,
 				49B4C4AB2B7C53330068B8C9 /* Helpers.swift in Sources */,
 				494202B32B745BEC00227660 /* FeatureTrackerApp.swift in Sources */,
