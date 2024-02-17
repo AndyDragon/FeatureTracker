@@ -180,6 +180,7 @@ struct ContentView: View {
                         .accentColor(.red)
                     }
                 )
+                .padding([.bottom], CloudKitConfiguration.Enabled ? 0 : 14)
                 if CloudKitConfiguration.Enabled {
                     HStack {
                         Image(systemName: syncMonitor.syncStateSummary.symbolName)
@@ -204,7 +205,6 @@ struct ContentView: View {
                     }
                 }
             }
-            .padding()
             .allowsHitTesting(!isAnyToastShowing)
             if isAnyToastShowing {
                 VStack {
