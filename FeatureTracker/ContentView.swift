@@ -26,14 +26,17 @@ struct ContentView: View {
     @State private var toastType: AlertToast.AlertType = .regular
     @State private var toastText = ""
     @State private var toastSubTitle = ""
-    @State private var showToast = false
+    @State private var isShowingToast = false
     @State private var deleteAlertText = ""
     @State private var deleteAlertAction: (() -> Void)? = nil
     @State private var showDeleteAlert = false
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
     @ObservedObject private var syncMonitor = SyncMonitor.shared
     var appState: VersionCheckAppState
-    
+    private var isAnyToastShowing: Bool {
+        isShowingToast || appState.isShowingVersionAvailableToast.wrappedValue || appState.isShowingVersionRequiredToast.wrappedValue
+    }
+
     init(_ appState: VersionCheckAppState) {
         self.appState = appState
     }
@@ -48,7 +51,7 @@ struct ContentView: View {
                         Text("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
                     } else {
                         Text("Total features: \(featuresCount)")
-                        
+
                     }
                     Spacer()
                         .frame(width: 8)
@@ -69,18 +72,6 @@ struct ContentView: View {
                     Spacer()
                 }
                 .padding()
-                .toast(
-                    isPresenting: $showToast,
-                    duration: toastDuration,
-                    tapToDismiss: true,
-                    offsetY: 32,
-                    alert: {
-                        AlertToast(
-                            displayMode: .hud,
-                            type: toastType,
-                            title: toastText,
-                            subTitle: toastSubTitle)
-                    })
                 NavigationSplitView {
                     PageListing(sorting: pageSorting, selectedPage: $selectedPage, selectedFeature: $selectedFeature)
                         .navigationTitle("Feature Tracker")
@@ -88,6 +79,7 @@ struct ContentView: View {
                         .navigationSplitViewColumnWidth(min: 280, ideal: 320)
                         .toolbar {
                             Button("Add page", systemImage: "plus", action: addPage)
+                                .disabled(isAnyToastShowing)
                             Menu("Sort", systemImage: "arrow.up.arrow.down") {
                                 Picker("Sort pages by", selection: $pageSorting) {
                                     Text("Name").tag(PageSorting.name)
@@ -96,6 +88,7 @@ struct ContentView: View {
                                 }
                                 .pickerStyle(.inline)
                             }
+                            .disabled(isAnyToastShowing)
                         }
                 } detail: {
                     VStack {
@@ -134,11 +127,14 @@ struct ContentView: View {
                     }
                     .toolbar {
                         Button("Populate defaults", action: { showingRepopulateAlert.toggle() })
+                            .disabled(isAnyToastShowing)
                         Button("Generate report", systemImage: "menucard", action: generateReport)
+                            .disabled(isAnyToastShowing)
                         Menu("JSON", systemImage: "tray") {
                             Button("Backup to Clipboard", systemImage: "tray.and.arrow.down", action: backup)
                             Button("Restore from Clipboard", systemImage: "tray.and.arrow.up", action: restore)
                         }
+                        .disabled(isAnyToastShowing)
                     }
                 }
                 .alert(
@@ -208,10 +204,34 @@ struct ContentView: View {
                     }
                 }
             }
-            .blur(radius: (appState.isShowingVersionAvailableToast.wrappedValue || appState.isShowingVersionRequiredToast.wrappedValue) ? 4 : 0)
-            .allowsHitTesting(!(appState.isShowingVersionAvailableToast.wrappedValue || appState.isShowingVersionRequiredToast.wrappedValue))
             .padding()
+            .allowsHitTesting(!isAnyToastShowing)
+            if isAnyToastShowing {
+                VStack {
+                    Rectangle().opacity(0.0000001)
+                }
+                .onTapGesture {
+                    if isShowingToast {
+                        isShowingToast.toggle()
+                    } else if appState.isShowingVersionAvailableToast.wrappedValue {
+                        appState.isShowingVersionAvailableToast.wrappedValue.toggle()
+                    }
+                }
+            }
         }
+        .blur(radius: isAnyToastShowing ? 4 : 0)
+        .toast(
+            isPresenting: $isShowingToast,
+            duration: toastDuration,
+            tapToDismiss: true,
+            offsetY: 32,
+            alert: {
+                AlertToast(
+                    displayMode: .hud,
+                    type: toastType,
+                    title: toastText,
+                    subTitle: toastSubTitle)
+            })
         .toast(
             isPresenting: appState.isShowingVersionAvailableToast,
             duration: 10,
@@ -257,13 +277,13 @@ struct ContentView: View {
             appState.checkForUpdates()
         }
     }
-    
+
     func showToast(_ text: String, _ subTitle: String, duration: Double = 3.0) {
         toastType = .complete(.blue)
         toastText = text
         toastSubTitle = subTitle
         toastDuration = duration
-        showToast.toggle()
+        isShowingToast.toggle()
     }
 
     func getFeatures() -> Int {
