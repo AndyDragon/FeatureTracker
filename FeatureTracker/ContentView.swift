@@ -71,7 +71,9 @@ struct ContentView: View {
                     Text("Membership: \(getMembership())")
                     Spacer()
                 }
-                .padding()
+                .padding([.leading, .trailing, .top])
+                .padding([.bottom], 6)
+                .border(.black, edges: [.top], width: 1)
                 NavigationSplitView {
                     PageListing(sorting: pageSorting, selectedPage: $selectedPage, selectedFeature: $selectedFeature)
                         .navigationTitle("Feature Tracker")
@@ -90,6 +92,7 @@ struct ContentView: View {
                             }
                             .disabled(isAnyToastShowing)
                         }
+                        .border(.black, edges: [.top, .bottom], width: 1)
                 } detail: {
                     VStack {
                         if let page = selectedPage {
