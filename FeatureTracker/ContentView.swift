@@ -42,42 +42,23 @@ struct ContentView: View {
     }
 
     var body: some View {
-        ZStack {
-            VStack {
-                HStack(alignment: .center) {
-                    let featuresCount = getFeatures()
-                    let totalFeaturesCount = getTotalFeatures()
-                    if (featuresCount != totalFeaturesCount) {
-                        Text("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
-                    } else {
-                        Text("Total features: \(featuresCount)")
-
-                    }
-                    Spacer()
-                        .frame(width: 8)
-                    Text("|")
-                    Spacer()
-                        .frame(width: 8)
-                    let pagesCount = getPages()
-                    let totalPagesCount = getTotalPages()
-                    if pagesCount != totalPagesCount {
-                        Text("Total pages: \(pagesCount) (counts as \(totalPagesCount))")
-                    } else {
-                        Text("Total pages: \(pagesCount)")
-                    }
-                    Text("|")
-                    Spacer()
-                        .frame(width: 8)
-                    Text("Membership: \(getMembership())")
-                    Spacer()
-                }
-                .padding([.leading, .trailing, .top])
-                .padding([.bottom], 6)
-                .border(.black, edges: [.top], width: 1)
-                NavigationSplitView {
+        NavigationSplitView {
+            ZStack {
+                VStack {
                     PageListing(sorting: pageSorting, selectedPage: $selectedPage, selectedFeature: $selectedFeature)
-                        .navigationTitle("Feature Tracker")
                         .listStyle(.sidebar)
+                        .onDeleteCommand {
+                            if let page = selectedPage {
+                                deleteAlertText = "Are you sure you want to delete this page?"
+                                deleteAlertAction = {
+                                    selectedFeature = nil
+                                    selectedPage = nil
+                                    modelContext.delete(page)
+                                    showToast("Deleted page!", "Removed the page and all the features")
+                                }
+                                showDeleteAlert.toggle()
+                            }
+                        }
                         .navigationSplitViewColumnWidth(min: 280, ideal: 320)
                         .toolbar {
                             Button("Add page", systemImage: "plus", action: addPage)
@@ -92,137 +73,181 @@ struct ContentView: View {
                             }
                             .disabled(isAnyToastShowing)
                         }
-                        .border(.black, edges: [.top, .bottom], width: 1)
-                } detail: {
-                    VStack {
-                        if let page = selectedPage {
-                            PageEditor(page: page, selectedFeature: $selectedFeature, onDelete: {
-                                deleteAlertText = "Are you sure you want to delete this page?"
-                                deleteAlertAction = {
-                                    selectedFeature = nil
-                                    selectedPage = nil
-                                    modelContext.delete(page)
-                                    showToast("Deleted page!", "Removed the page and all the features", duration: 15.0)
+                    if CloudKitConfiguration.Enabled {
+                        HStack {
+                            Image(systemName: syncMonitor.syncStateSummary.symbolName)
+                                .foregroundColor(syncMonitor.syncStateSummary.symbolColor)
+                                .help(syncMonitor.syncError
+                                      ? (syncMonitor.syncStateSummary.description + " " + (syncMonitor.lastError?.localizedDescription ?? "unknown"))
+                                      : syncMonitor.syncStateSummary.description)
+                            if showSyncAccountStatus {
+                                if case .accountNotAvailable = syncMonitor.syncStateSummary {
+                                    Text("Not logged into iCloud account, changes will not be synced to iCloud storage")
                                 }
-                                showDeleteAlert.toggle()
-                            }, onDeleteFeature: { feature in
-                                deleteAlertText = "Are you sure you want to delete this feature?"
-                                deleteAlertAction = {
-                                    selectedFeature = nil
-                                    page.features!.remove(element: feature)
-                                    showToast("Deleted feature!", "Removed the feature", duration: 15.0)
-                                }
-                                showDeleteAlert.toggle()
-                            }, onClose: {
-                                selectedFeature = nil
-                                selectedPage = nil
-                            }, onCloseFeature: {
-                                selectedFeature = nil
-                            })
-                        } else {
-                            HStack {
-                                Spacer()
-                                Text("Select page from the list to edit")
-                                    .foregroundColor(.gray)
-                                Spacer()
                             }
+                            Spacer()
                         }
-                    }
-                    .toolbar {
-                        Button("Populate defaults", action: { showingRepopulateAlert.toggle() })
-                            .disabled(isAnyToastShowing)
-                        Button("Generate report", systemImage: "menucard", action: generateReport)
-                            .disabled(isAnyToastShowing)
-                        Menu("JSON", systemImage: "tray") {
-                            Button("Backup to Clipboard", systemImage: "tray.and.arrow.down", action: backup)
-                            Button("Restore from Clipboard", systemImage: "tray.and.arrow.up", action: restore)
+                        .padding([.top], 4)
+                        .padding([.bottom], 16)
+                        .padding([.leading], 20)
+                        .task {
+                            do {
+                                try await Task.sleep(nanoseconds: 5_000_000_000)
+                                showSyncAccountStatus = true
+                            } catch {}
                         }
-                        .disabled(isAnyToastShowing)
                     }
                 }
-                .alert(
-                    "Are you sure?",
-                    isPresented: $showingRepopulateAlert,
-                    actions: {
-                        Button(role: .destructive, action: {
-                            populateDefaultPages()
-                        }) {
-                            Text("Yes")
-                        }
-                    },
-                    message: {
-                        Text("This will remove all features and custom pages and cannot be undone.")
-                    }
-                )
-                .alert(
-                    "Delete confirmation",
-                    isPresented: $showDeleteAlert,
-                    actions: {
-                        Button(role: .destructive, action: deleteAlertAction ?? { }) {
-                            Text("Yes")
-                        }
-                    },
-                    message: {
-                        Text(deleteAlertText)
-                    }
-                )
-                .alert(
-                    backupOperation == .backup ? "ERROR: Failed to backup" : "ERROR: Failed to restore",
-                    isPresented: $showingBackupRestoreErrorAlert,
-                    actions: {
-                        Button(action: {
-                            showingBackupRestoreErrorAlert.toggle()
-                        }) {
-                            Text("OK")
-                        }
-                    },
-                    message: {
-                        Text(backupOperation == .backup
-                             ? "Could to backup to the clipboard: \(exceptionError)"
-                             : "Could to restore from the clipboard: \(exceptionError)")
-                        .accentColor(.red)
-                    }
-                )
-                .padding([.bottom], CloudKitConfiguration.Enabled ? 0 : 14)
-                if CloudKitConfiguration.Enabled {
-                    HStack {
-                        Image(systemName: syncMonitor.syncStateSummary.symbolName)
-                            .foregroundColor(syncMonitor.syncStateSummary.symbolColor)
-                            .help(syncMonitor.syncError
-                                  ? (syncMonitor.syncStateSummary.description + " " + (syncMonitor.lastError?.localizedDescription ?? "unknown"))
-                                  : syncMonitor.syncStateSummary.description)
-                        if showSyncAccountStatus {
-                            if case .accountNotAvailable = syncMonitor.syncStateSummary {
-                                Text("Not logged into iCloud account, changes will not be synced to iCloud storage")
+                ToastDismissShield(
+                    isAnyToastShowing: isAnyToastShowing,
+                    isShowingToast: $isShowingToast,
+                    isShowingVersionAvailableToast: appState.isShowingVersionAvailableToast)
+            }
+            .blur(radius: isAnyToastShowing ? 4 : 0)
+        } detail: {
+            ZStack {
+                VStack {
+                    HStack(alignment: .top) {
+                        Spacer()
+                        VStack(alignment: .center) {
+                            let featuresCount = getFeatures()
+                            let totalFeaturesCount = getTotalFeatures()
+                            if (featuresCount != totalFeaturesCount) {
+                                Text("Total features: \(featuresCount) (\(totalFeaturesCount))")
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .help("Total count including features which count more than one is \(totalFeaturesCount)")
+                            } else {
+                                Text("Total features: \(featuresCount)")
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
                             }
                         }
                         Spacer()
+                        VStack(alignment: .center) {
+                            let pagesCount = getPages()
+                            let totalPagesCount = getTotalPages()
+                            if pagesCount != totalPagesCount {
+                                Text("Total pages: \(pagesCount) (\(totalPagesCount))")
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .help("Total count including pages which count more than one is \(totalPagesCount)")
+                            } else {
+                                Text("Total pages: \(pagesCount)")
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                            }
+                        }
+                        Spacer()
+                        VStack(alignment: .center) {
+                            Text("Membership: \(getMembership())")
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                        }
+                        Spacer()
                     }
-                    .padding([.top], 2)
-                    .padding([.bottom, .leading], 12)
-                    .task {
-                        do {
-                            try await Task.sleep(nanoseconds: 5_000_000_000)
-                            showSyncAccountStatus = true
-                        } catch {}
+                    .padding([.leading, .trailing])
+                    .padding([.top, .bottom], 6)
+                    .border(.black, edges: [.bottom], width: 1)
+                    .background(Color.gray)
+                    .foregroundColor(.black)
+                    .fontWeight(.bold)
+                    Spacer()
+                    if let page = selectedPage {
+                        PageEditor(page: page, selectedFeature: $selectedFeature, onDelete: {
+                            deleteAlertText = "Are you sure you want to delete this page?"
+                            deleteAlertAction = {
+                                selectedFeature = nil
+                                selectedPage = nil
+                                modelContext.delete(page)
+                                showToast("Deleted page!", "Removed the page and all the features", duration: 15.0)
+                            }
+                            showDeleteAlert.toggle()
+                        }, onDeleteFeature: { feature in
+                            deleteAlertText = "Are you sure you want to delete this feature?"
+                            deleteAlertAction = {
+                                selectedFeature = nil
+                                page.features!.remove(element: feature)
+                                showToast("Deleted feature!", "Removed the feature", duration: 15.0)
+                            }
+                            showDeleteAlert.toggle()
+                        }, onClose: {
+                            selectedFeature = nil
+                            selectedPage = nil
+                        }, onCloseFeature: {
+                            selectedFeature = nil
+                        })
+                    } else {
+                        HStack {
+                            Spacer()
+                            Text("Select page from the list to edit")
+                                .foregroundColor(.gray)
+                            Spacer()
+                        }
+                        Spacer()
                     }
                 }
+                ToastDismissShield(
+                    isAnyToastShowing: isAnyToastShowing,
+                    isShowingToast: $isShowingToast,
+                    isShowingVersionAvailableToast: appState.isShowingVersionAvailableToast)
             }
-            .allowsHitTesting(!isAnyToastShowing)
-            if isAnyToastShowing {
-                VStack {
-                    Rectangle().opacity(0.0000001)
+            .blur(radius: isAnyToastShowing ? 4 : 0)
+            .toolbar {
+                Button("Populate defaults", action: { showingRepopulateAlert.toggle() })
+                    .disabled(isAnyToastShowing)
+                Button("Generate report", systemImage: "menucard", action: generateReport)
+                    .disabled(isAnyToastShowing)
+                Menu("JSON", systemImage: "tray") {
+                    Button("Backup to Clipboard", systemImage: "tray.and.arrow.down", action: backup)
+                    Button("Restore from Clipboard", systemImage: "tray.and.arrow.up", action: restore)
                 }
-                .onTapGesture {
-                    if isShowingToast {
-                        isShowingToast.toggle()
-                    } else if appState.isShowingVersionAvailableToast.wrappedValue {
-                        appState.isShowingVersionAvailableToast.wrappedValue.toggle()
-                    }
-                }
+                .disabled(isAnyToastShowing)
             }
         }
-        .blur(radius: isAnyToastShowing ? 4 : 0)
+        .alert(
+            "Are you sure?",
+            isPresented: $showingRepopulateAlert,
+            actions: {
+                Button(role: .destructive, action: {
+                    populateDefaultPages()
+                }) {
+                    Text("Yes")
+                }
+            },
+            message: {
+                Text("This will remove all features and custom pages and cannot be undone.")
+            }
+        )
+        .alert(
+            "Delete confirmation",
+            isPresented: $showDeleteAlert,
+            actions: {
+                Button(role: .destructive, action: deleteAlertAction ?? { }) {
+                    Text("Yes")
+                }
+            },
+            message: {
+                Text(deleteAlertText)
+            }
+        )
+        .alert(
+            backupOperation == .backup ? "ERROR: Failed to backup" : "ERROR: Failed to restore",
+            isPresented: $showingBackupRestoreErrorAlert,
+            actions: {
+                Button(action: {
+                    showingBackupRestoreErrorAlert.toggle()
+                }) {
+                    Text("OK")
+                }
+            },
+            message: {
+                Text(backupOperation == .backup
+                     ? "Could to backup to the clipboard: \(exceptionError)"
+                     : "Could to restore from the clipboard: \(exceptionError)")
+                .accentColor(.red)
+            }
+        )
         .toast(
             isPresenting: $isShowingToast,
             duration: toastDuration,
@@ -245,7 +270,7 @@ struct ContentView: View {
                     displayMode: .hud,
                     type: .systemImage("exclamationmark.triangle.fill", .yellow),
                     title: "New version available",
-                    subTitle: "You are using v\(appState.versionCheckToast.wrappedValue.appVersion) and v\(appState.versionCheckToast.wrappedValue.currentVersion) is available\(appState.versionCheckToast.wrappedValue.linkToCurrentVersion.isEmpty ? "" : ", click here to open your browser") (this will go away in 10 seconds)")
+                    subTitle: getVersionSubTitle())
             },
             onTap: {
                 if let url = URL(string: appState.versionCheckToast.wrappedValue.linkToCurrentVersion) {
@@ -265,7 +290,7 @@ struct ContentView: View {
                     displayMode: .hud,
                     type: .systemImage("xmark.octagon.fill", .red),
                     title: "New version required",
-                    subTitle: "You are using v\(appState.versionCheckToast.wrappedValue.appVersion) and v\(appState.versionCheckToast.wrappedValue.currentVersion) is required\(appState.versionCheckToast.wrappedValue.linkToCurrentVersion.isEmpty ? "" : ", click here to open your browser") or ⌘ + Q to Quit")
+                    subTitle: getVersionSubTitle())
             },
             onTap: {
                 if let url = URL(string: appState.versionCheckToast.wrappedValue.linkToCurrentVersion) {
@@ -281,12 +306,37 @@ struct ContentView: View {
         }
     }
 
-    func showToast(_ text: String, _ subTitle: String, duration: Double = 3.0) {
-        toastType = .complete(.blue)
-        toastText = text
-        toastSubTitle = subTitle
-        toastDuration = duration
-        isShowingToast.toggle()
+    func getVersionSubTitle() -> String {
+        if appState.isShowingVersionAvailableToast.wrappedValue {
+            return "You are using v\(appState.versionCheckToast.wrappedValue.appVersion) " +
+            "and v\(appState.versionCheckToast.wrappedValue.currentVersion) is available" +
+            "\(appState.versionCheckToast.wrappedValue.linkToCurrentVersion.isEmpty ? "" : ", click here to open your browser") " +
+            "(this will go away in 10 seconds)"
+        } else if appState.isShowingVersionRequiredToast.wrappedValue {
+            return "You are using v\(appState.versionCheckToast.wrappedValue.appVersion) " +
+            "and v\(appState.versionCheckToast.wrappedValue.currentVersion) is required" +
+            "\(appState.versionCheckToast.wrappedValue.linkToCurrentVersion.isEmpty ? "" : ", click here to open your browser") " +
+            "or ⌘ + Q to Quit"
+        }
+        return ""
+    }
+    
+    func showToast(_ text: String, _ subTitle: String, duration: Double = 2) {
+        withAnimation {
+            toastType = .complete(.blue)
+            toastText = text
+            toastSubTitle = subTitle
+            toastDuration = duration
+            isShowingToast.toggle()
+        }
+    }
+
+    func addPage() -> Void {
+        withAnimation {
+            let newPage = Page(name: "new page")
+            modelContext.insert(newPage)
+            selectedPage = newPage
+        }
     }
 
     func getFeatures() -> Int {
@@ -423,7 +473,11 @@ struct ContentView: View {
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
-            let json = try encoder.encode(pages.sorted { $0.name < $1.name })
+            var codablePages = [CodablePage]()
+            codablePages.append(contentsOf: pages.sorted(by: { $0.name < $1.name }).map({ page in
+                return CodablePage(page)
+            }))
+            let json = try encoder.encode(codablePages)
             copyToClipboard(String(decoding: json, as: UTF8.self))
             showToast("Backed up!", "Copied a backup of the features to the clipboard")
         } catch {
@@ -437,38 +491,44 @@ struct ContentView: View {
         do {
             let pasteBoard = NSPasteboard.general
             let json = pasteBoard.string(forType: .string) ?? ""
-            let loadedPages = try JSONDecoder().decode([Page].self, from: json.data(using: .utf8)!)
-            if loadedPages.count != 0 {
+            let codablePages = try JSONDecoder().decode([CodablePage].self, from: json.data(using: .utf8)!)
+            if codablePages.count != 0 {
                 do {
                     try modelContext.delete(model: Page.self)
                 } catch {
                     // do nothing
+                    debugPrint(error.localizedDescription)
                 }
-                for page in loadedPages {
-                    modelContext.insert(page)
+                for codablePage in codablePages {
+                    modelContext.insert(codablePage.toPage())
                 }
-                showToast("Restored!", "Restored the items from the clipboard")
+                showToast("Restored!", "Restored the items from the clipboard", duration: 6)
             }
         } catch let DecodingError.dataCorrupted(context) {
             exceptionError = context.debugDescription
             backupOperation = .restore
             showingBackupRestoreErrorAlert.toggle()
+            debugPrint(context.debugDescription)
         } catch let DecodingError.keyNotFound(key, context) {
             exceptionError = "Key '\(key)' not found:" + context.debugDescription
             backupOperation = .restore
             showingBackupRestoreErrorAlert.toggle()
+            debugPrint(context.debugDescription)
         } catch let DecodingError.valueNotFound(value, context) {
             exceptionError = "Value '\(value)' not found:" + context.debugDescription
             backupOperation = .restore
             showingBackupRestoreErrorAlert.toggle()
+            debugPrint(context.debugDescription)
         } catch let DecodingError.typeMismatch(type, context) {
             exceptionError = "Type '\(type)' mismatch:" + context.debugDescription
             backupOperation = .restore
             showingBackupRestoreErrorAlert.toggle()
+            debugPrint(context.debugDescription)
         } catch {
             exceptionError = error.localizedDescription
             backupOperation = .restore
             showingBackupRestoreErrorAlert.toggle()
+            debugPrint(error.localizedDescription)
         }
     }
 
@@ -572,13 +632,5 @@ struct ContentView: View {
         }
         // Add the multi-count features.
         modelContext.insert(Page(name: "papanoel", count: 3))
-    }
-
-    func addPage() -> Void {
-        withAnimation {
-            let newPage = Page(name: "new page")
-            modelContext.insert(newPage)
-            selectedPage = newPage
-        }
     }
 }

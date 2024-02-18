@@ -9,8 +9,8 @@ import Foundation
 import SwiftData
 
 @Model
-class Feature : Codable, Comparable, Identifiable {
-    var id: UUID = UUID()
+class Feature {
+    @Transient var id: UUID = UUID()
     var date: Date = Date.now
     var raw: Bool = false
     var notes: String = ""
@@ -28,13 +28,23 @@ class Feature : Codable, Comparable, Identifiable {
         self.raw = raw
         self.notes = notes
     }
+}
+
+class CodableFeature: Codable {
+    var id: UUID = UUID()
+    var date: Date = Date.now
+    var raw: Bool = false
+    var notes: String = ""
     
-    static func == (lhs: Feature, rhs: Feature) -> Bool {
-        return lhs.id == rhs.id
+    init(_ feature: Feature) {
+        self.id = feature.id
+        self.date = feature.date
+        self.raw = feature.raw
+        self.notes = feature.notes
     }
     
-    static func < (lhs: Feature, rhs: Feature) -> Bool {
-        return lhs.date < rhs.date
+    func toFeature() -> Feature {
+        return Feature(id: id, date: date, raw: raw, notes: notes)
     }
     
     enum CodingKeys: CodingKey {
@@ -43,7 +53,7 @@ class Feature : Codable, Comparable, Identifiable {
         case raw
         case notes
     }
-
+    
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
@@ -51,7 +61,7 @@ class Feature : Codable, Comparable, Identifiable {
         raw = try container.decode(Bool.self, forKey: .raw)
         notes = try container.decode(String.self, forKey: .notes)
     }
-
+    
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
