@@ -473,6 +473,7 @@ struct ContentView: View {
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+            encoder.dateEncodingStrategy = .iso8601
             var codablePages = [CodablePage]()
             codablePages.append(contentsOf: pages.sorted(by: { $0.name < $1.name }).map({ page in
                 return CodablePage(page)
@@ -491,7 +492,9 @@ struct ContentView: View {
         do {
             let pasteBoard = NSPasteboard.general
             let json = pasteBoard.string(forType: .string) ?? ""
-            let codablePages = try JSONDecoder().decode([CodablePage].self, from: json.data(using: .utf8)!)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let codablePages = try decoder.decode([CodablePage].self, from: json.data(using: .utf8)!)
             if codablePages.count != 0 {
                 do {
                     try modelContext.delete(model: Page.self)
