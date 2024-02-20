@@ -38,7 +38,7 @@ namespace FeatureTracker
             this.mode = mode;
         }
 
-        CompareMode mode;
+        readonly CompareMode mode;
 
         public int Compare(Page x, Page y)
         {

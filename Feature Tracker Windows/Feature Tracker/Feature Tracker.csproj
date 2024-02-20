@@ -119,6 +119,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ArrayCountToStringConverter.cs" />
     <Compile Include="BlankPage.xaml.cs">
       <DependentUpon>BlankPage.xaml</DependentUpon>
     </Compile>
@@ -135,6 +136,7 @@
       <DependentUpon>PageEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="PagesCatalog.cs" />
+    <Compile Include="FeatureSortConverter.cs" />
     <Compile Include="PageSortConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

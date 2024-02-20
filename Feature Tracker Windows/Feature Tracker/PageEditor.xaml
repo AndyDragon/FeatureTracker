@@ -8,6 +8,10 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="{ThemeResource SystemControlAcrylicWindowBrush}">
+    <Page.Resources>
+        <local:ArrayCountToStringConverter x:Key="ArrayCountToStringConverter" />
+        <local:FeatureSortConverter x:Key="FeatureSortConverter" />
+    </Page.Resources>
     <StackPanel Margin="20">
         <Grid>
             <Grid.ColumnDefinitions>
@@ -48,5 +52,37 @@
                 <TextBlock Grid.Column="1" Text="{Binding SelectedPage.Count}" Margin="12,0,0,0" />
             </Grid>
         </Grid>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Text="Features:" VerticalAlignment="Bottom" />
+                <TextBlock Text="{Binding SelectedPage.Features, Converter={ StaticResource ArrayCountToStringConverter}, ConverterParameter='features', Mode=OneWay}" VerticalAlignment="Bottom" Margin="12, 0, 0, 0" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                <Button Command="{Binding DeletePageCommand}" Style="{StaticResource SmIconButtonStyle}">
+                    <fa:FontAwesome Icon="TrashOutline"  />
+                </Button>
+                <Button Command="{Binding ClosePageCommand}" Style="{StaticResource SmIconButtonStyle}">
+                    <fa:FontAwesome Icon="Times"  />
+                </Button>
+            </StackPanel>
+        </Grid>
+        <ListBox ItemsSource="{Binding SelectedPage.Features, Converter={StaticResource FeatureSortConverter}}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="local:Feature">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding Date}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Raw}" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </StackPanel>
 </Page>
