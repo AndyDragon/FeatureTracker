@@ -7,7 +7,7 @@
     <ProjectGuid>{69C94AEE-D468-408F-A1F0-D799D3957FB8}</ProjectGuid>
     <OutputType>AppContainerExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Feature_Tracker</RootNamespace>
+    <RootNamespace>FeatureTracker</RootNamespace>
     <AssemblyName>Feature Tracker</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
@@ -119,6 +119,9 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="BlankPage.xaml.cs">
+      <DependentUpon>BlankPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="BooleanToVisibilityConverter.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="MainPage.xaml.cs">
@@ -128,7 +131,11 @@
     <Compile Include="MenuItem.cs" />
     <Compile Include="NotifyPropertyChanged.cs" />
     <Compile Include="ObjectToMenuItemConverter.cs" />
+    <Compile Include="PageEditor.xaml.cs">
+      <DependentUpon>PageEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="PagesCatalog.cs" />
+    <Compile Include="PageSortConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -151,9 +158,17 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="BlankPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="PageEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>

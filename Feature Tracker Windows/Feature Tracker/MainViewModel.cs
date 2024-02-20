@@ -15,7 +15,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.UI;
 using Windows.UI.Xaml.Media;
 
-namespace Feature_Tracker
+namespace FeatureTracker
 {
     public class MainViewModel : NotifyPropertyChanged
     {
@@ -35,6 +35,13 @@ namespace Feature_Tracker
             generateReportCommand = new Command(GenerateReport);
             backupCommand = new Command(BackupToClipboard);
             restoreCommand = new Command(() => _ = RestoreFromClipboard());
+            closePageCommand = new Command(() => SelectedPage = null);
+            deletePageCommand = new Command(() =>
+            {
+                var page = SelectedPage;
+                SelectedPage = null;
+                Pages.Remove(page);
+            });
             Pages = new ObservableCollection<Page>();
             //SortedPages = new ObservableCollection<Page>();
             Pages.CollectionChanged += (sender, e) =>
@@ -76,26 +83,26 @@ namespace Feature_Tracker
 
         private void LoadPages()
         {
-            using (var isoStore =
+            try
+            {
+                using (var isoStore =
                 IsolatedStorageFile.GetStore(
                     IsolatedStorageScope.User |
                     IsolatedStorageScope.Assembly |
                     IsolatedStorageScope.Roaming,
                     null,
                     null))
-            {
-                if (isoStore != null)
                 {
-                    using (var stream = isoStore.OpenFile("PagesStore", FileMode.Open))
+                    if (isoStore != null)
                     {
-                        if (stream != null)
+                        using (var stream = isoStore.OpenFile("PagesStore", FileMode.Open))
                         {
-                            using (var streamReader = new StreamReader(stream))
+                            if (stream != null)
                             {
-                                var json = streamReader.ReadToEnd();
-                                if (!string.IsNullOrEmpty(json))
+                                using (var streamReader = new StreamReader(stream))
                                 {
-                                    try
+                                    var json = streamReader.ReadToEnd();
+                                    if (!string.IsNullOrEmpty(json))
                                     {
                                         var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
                                         if (loadedPages != null)
@@ -106,48 +113,56 @@ namespace Feature_Tracker
                                             }
                                         }
                                     }
-                                    catch (Exception ex)
-                                    {
-                                        Debug.WriteLine(ex.Message);
-                                        // TODO notify the user loading data failed.
-                                    }
+                                    streamReader.Close();
                                 }
-                                streamReader.Close();
+                                stream.Close();
                             }
-                            stream.Close();
                         }
+                        isoStore.Close();
                     }
-                    isoStore.Close();
                 }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                // TODO notify the user loading data failed.
             }
         }
 
         private void StorePages()
         {
-            using (var isoStore =
-                IsolatedStorageFile.GetStore(
-                    IsolatedStorageScope.User |
-                    IsolatedStorageScope.Assembly |
-                    IsolatedStorageScope.Roaming,
-                    null,
-                    null))
+            try
             {
-                if (isoStore != null)
+                using (var isoStore =
+                    IsolatedStorageFile.GetStore(
+                        IsolatedStorageScope.User |
+                        IsolatedStorageScope.Assembly |
+                        IsolatedStorageScope.Roaming,
+                        null,
+                        null))
                 {
-                    using (var stream = isoStore.OpenFile("PagesStore", FileMode.Create))
+                    if (isoStore != null)
                     {
-                        //var jsonPages = SortedPages.Select(page => page.ToJson());
-                        var jsonPages = Pages.Select(page => page.ToJson());
-                        var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
-                        using (var streamWriter = new StreamWriter(stream))
+                        using (var stream = isoStore.OpenFile("PagesStore", FileMode.Create))
                         {
-                            streamWriter.Write(json);
-                            streamWriter.Flush();
+                            //var jsonPages = SortedPages.Select(page => page.ToJson());
+                            var jsonPages = Pages.Select(page => page.ToJson());
+                            var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
+                            using (var streamWriter = new StreamWriter(stream))
+                            {
+                                streamWriter.Write(json);
+                                streamWriter.Flush();
+                            }
+                            stream.Close();
                         }
-                        stream.Close();
+                        isoStore.Close();
                     }
-                    isoStore.Close();
                 }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                // TODO notify the user loading data failed.
             }
         }
 
@@ -158,7 +173,13 @@ namespace Feature_Tracker
         public Page SelectedPage
         {
             get => selectedPage;
-            set => Set(ref selectedPage, value);
+            set
+            {
+                if (Set(ref selectedPage, value))
+                {
+                    
+                }
+            }
         }
 
         private bool isSplitViewPaneOpen = true;
@@ -202,6 +223,18 @@ namespace Feature_Tracker
         public ICommand RestoreCommand
         {
             get => restoreCommand;
+        }
+
+        private readonly ICommand closePageCommand;
+        public ICommand ClosePageCommand
+        {
+            get => closePageCommand;
+        }
+
+        private readonly ICommand deletePageCommand;
+        public ICommand DeletePageCommand
+        {
+            get => deletePageCommand;
         }
 
         private void PopulateDefaultPages()
@@ -471,7 +504,6 @@ namespace Feature_Tracker
 
     public class Page : MenuItem
     {
-        //private static readonly SolidColorBrush BlackBrush = new SolidColorBrush(Colors.Black);
         private static readonly SolidColorBrush WhiteBrush = new SolidColorBrush(Colors.White);
         private static readonly SolidColorBrush CadetBlueBrush = new SolidColorBrush(Colors.CadetBlue);
 
@@ -489,6 +521,7 @@ namespace Feature_Tracker
             Foreground = Features.Count == 0 ? WhiteBrush : CadetBlueBrush;
             AlternativeTitle = $"{Features.Count} Feature{GetSuffix(Features.Count)}";
             SubTitle = $"(counts as {Count})";
+            PageType = typeof(PageEditor);
         }
 
         public Page(JsonPage page) : this()
@@ -557,7 +590,7 @@ namespace Feature_Tracker
 
         public Feature(JsonFeature feature) : this()
         {
-            Date = new DateTime(2001, 1, 1) + TimeSpan.FromMilliseconds(feature.Date * 1000);
+            Date = feature.Date;
             Raw = feature.Raw;
             Notes = feature.Notes;
         }
@@ -566,7 +599,7 @@ namespace Feature_Tracker
         {
             return new JsonFeature
             {
-                Date = (Date - new DateTime(2001, 1, 1)).TotalMilliseconds / 1000,
+                Date = Date,
                 Raw = Raw,
                 Notes = Notes,
             };
@@ -596,28 +629,28 @@ namespace Feature_Tracker
 
     public class JsonPage
     {
-        [JsonProperty(PropertyName = "name")]
-        public string Name { get; set; } = "";
-
-        [JsonProperty(PropertyName = "notes")]
-        public string Notes { get; set; } = "";
-
         [JsonProperty(PropertyName = "count")]
         public int Count { get; set; } = 1;
 
         [JsonProperty(PropertyName = "features", NullValueHandling = NullValueHandling.Ignore)]
         public IList<JsonFeature> Features { get; set; } = new List<JsonFeature>();
+
+        [JsonProperty(PropertyName = "name")]
+        public string Name { get; set; } = "";
+
+        [JsonProperty(PropertyName = "notes")]
+        public string Notes { get; set; } = "";
     }
 
     public class JsonFeature
     {
-        [JsonProperty(PropertyName = "date")]
-        public double Date { get; set; } = (DateTime.Now - new DateTime(2001, 1, 1)).TotalMilliseconds / 1000;
-
-        [JsonProperty(PropertyName = "raw")]
-        public bool Raw { get; set; } = false;
+        [JsonProperty(PropertyName = "dateV2")]
+        public DateTime Date { get; set; } = DateTime.Now;
 
         [JsonProperty(PropertyName = "notes")]
         public string Notes { get; set; } = "";
+
+        [JsonProperty(PropertyName = "raw")]
+        public bool Raw { get; set; } = false;
     }
 }

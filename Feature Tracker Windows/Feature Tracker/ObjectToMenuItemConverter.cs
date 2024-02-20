@@ -1,7 +1,7 @@
 ﻿using System;
 using Windows.UI.Xaml.Data;
 
-namespace Feature_Tracker
+namespace FeatureTracker
 {
     public class ObjectToMenuItemConverter : IValueConverter
     {

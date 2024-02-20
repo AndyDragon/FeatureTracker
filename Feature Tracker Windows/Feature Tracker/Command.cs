@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace Feature_Tracker
+namespace FeatureTracker
 {
     internal class Command : ICommand
     {

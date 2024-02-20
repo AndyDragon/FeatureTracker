@@ -15,7 +15,7 @@ using Windows.UI.Xaml.Navigation;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
-namespace Feature_Tracker
+namespace FeatureTracker
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -25,6 +25,25 @@ namespace Feature_Tracker
         public MainPage()
         {
             this.InitializeComponent();
+            if (DataContext is MainViewModel)
+            {
+                var viewModel = DataContext as MainViewModel;
+                viewModel.PropertyChanged += (sender, e) =>
+                {
+                    if (e.PropertyName == "SelectedPage")
+                    {
+                        if (viewModel.SelectedPage != null)
+                        {
+                            EditorFrame.Navigate(viewModel.SelectedPage.PageType, viewModel.SelectedPage);
+                        }
+                        else
+                        {
+                            EditorFrame.Navigate(typeof(BlankPage));
+                        }
+                    }
+                };
+            }
+            EditorFrame.Navigate(typeof(BlankPage));
         }
     }
 }

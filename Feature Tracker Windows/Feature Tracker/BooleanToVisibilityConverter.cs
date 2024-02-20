@@ -2,7 +2,7 @@
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Data;
 
-namespace Feature_Tracker
+namespace FeatureTracker
 {
     public class BooleanToVisibilityConverter : IValueConverter
     {

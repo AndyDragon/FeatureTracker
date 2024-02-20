@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace Feature_Tracker
+namespace FeatureTracker
 {
     public abstract class NotifyPropertyChanged : INotifyPropertyChanged
     {

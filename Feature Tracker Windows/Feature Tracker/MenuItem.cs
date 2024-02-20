@@ -1,7 +1,7 @@
 ﻿using System;
 using Windows.UI.Xaml.Media;
 
-namespace Feature_Tracker
+namespace FeatureTracker
 {
     public class MenuItem : NotifyPropertyChanged
     {
