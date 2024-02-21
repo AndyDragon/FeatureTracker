@@ -74,3 +74,24 @@ struct EdgeBorder: Shape {
         }.reduce(into: Path()) { $0.addPath($1) }
     }
 }
+
+extension Date {
+    static func localDate() -> Date {
+        let nowUTC = Date()
+        let timeZoneOffset = Double(TimeZone.current.secondsFromGMT(for: nowUTC))
+        guard let localDate = Calendar.current.date(byAdding: .second, value: Int(timeZoneOffset), to: nowUTC) else {
+            return nowUTC
+        }
+        return localDate
+    }
+    
+    func toLocalDate() -> Date {
+        let dateUTC = self
+        let timeZoneOffset = Double(TimeZone.current.secondsFromGMT(for: dateUTC))
+        guard let localDate = Calendar.current.date(byAdding: .second, value: Int(timeZoneOffset), to: dateUTC) else {
+            return dateUTC
+        }
+        return localDate
+
+    }
+}

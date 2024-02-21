@@ -457,8 +457,8 @@ struct ContentView: View {
                 } else {
                     lines.append("Page: \(page.name.uppercased()) - \(getStringForCount(page.features!.count, "feature"))")
                 }
-                for feature in page.features!.sorted(by: { $0.date < $1.date }) {
-                    lines.append("\tFeature: \(feature.date.formatted(date: .abbreviated, time: .omitted)) on \(feature.raw ? "RAW" : "Snap"):")
+                for feature in page.features!.sorted(by: { $0.date > $1.date }) {
+                    lines.append("\tFeature: \(feature.date.formatted(date: .complete, time: .omitted)) on \(feature.raw ? "RAW" : "Snap"):")
                     lines.append("\t\t\(feature.notes)")
                 }
             }
