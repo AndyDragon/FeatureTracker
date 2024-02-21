@@ -22,9 +22,40 @@ namespace FeatureTracker
     /// </summary>
     public sealed partial class PageEditor : Windows.UI.Xaml.Controls.Page
     {
+        public static readonly BlankViewModel blankViewModel = new BlankViewModel { Message = "Select a feature" };
+
         public PageEditor()
         {
             this.InitializeComponent();
+            EditorFrame.Navigate(typeof(BlankPage), blankViewModel);
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+
+            if (e.Parameter is Page page)
+            {
+                ConnectPage(page);
+            }
+        }
+
+        private void ConnectPage(Page page)
+        {
+            page.PropertyChanged += (sender, e) =>
+            {
+                if (e.PropertyName == "SelectedFeature")
+                {
+                    if (page.SelectedFeature != null && page.SelectedFeature.EditorPageType != null)
+                    {
+                        EditorFrame.Navigate(page.SelectedFeature.EditorPageType, page.SelectedFeature);
+                    }
+                    else
+                    {
+                        EditorFrame.Navigate(typeof(BlankPage), blankViewModel);
+                    }
+                }
+            };
         }
     }
 }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
@@ -22,28 +24,35 @@ namespace FeatureTracker
     /// </summary>
     public sealed partial class MainPage : Windows.UI.Xaml.Controls.Page
     {
+        public static readonly BlankViewModel blankViewModel = new BlankViewModel { Message = "Select a page" };
+
         public MainPage()
         {
             this.InitializeComponent();
-            if (DataContext is MainViewModel)
+            EditorFrame.Navigate(typeof(BlankPage), blankViewModel);
+
+            if (DataContext is MainViewModel viewModel)
             {
-                var viewModel = DataContext as MainViewModel;
-                viewModel.PropertyChanged += (sender, e) =>
-                {
-                    if (e.PropertyName == "SelectedPage")
-                    {
-                        if (viewModel.SelectedPage != null)
-                        {
-                            EditorFrame.Navigate(viewModel.SelectedPage.PageType, viewModel.SelectedPage);
-                        }
-                        else
-                        {
-                            EditorFrame.Navigate(typeof(BlankPage));
-                        }
-                    }
-                };
+                ConnectViewModel(viewModel);
             }
-            EditorFrame.Navigate(typeof(BlankPage));
+        }
+
+        private void ConnectViewModel(MainViewModel viewModel)
+        {
+            viewModel.PropertyChanged += (sender, e) =>
+            {
+                if (e.PropertyName == "SelectedPage")
+                {
+                    if (viewModel.SelectedPage != null && viewModel.SelectedPage.EditorPageType != null)
+                    {
+                        EditorFrame.Navigate(viewModel.SelectedPage.EditorPageType, viewModel.SelectedPage);
+                    }
+                    else
+                    {
+                        EditorFrame.Navigate(typeof(BlankPage), blankViewModel);
+                    }
+                }
+            };
         }
     }
 }

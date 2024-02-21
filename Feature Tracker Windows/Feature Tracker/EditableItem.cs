@@ -3,7 +3,7 @@ using Windows.UI.Xaml.Media;
 
 namespace FeatureTracker
 {
-    public class MenuItem : NotifyPropertyChanged
+    public class EditableItem : NotifyPropertyChanged
     {
         private string icon = "";
         public string Icon
@@ -40,11 +40,11 @@ namespace FeatureTracker
             set => Set(ref foreground, value);
         }
 
-        private Type pageType = null;
-        public Type PageType
+        private Type editorPageType = null;
+        public Type EditorPageType
         {
-            get => pageType;
-            set => Set(ref pageType, value);
+            get => editorPageType;
+            set => Set(ref editorPageType, value);
         }
     }
 }

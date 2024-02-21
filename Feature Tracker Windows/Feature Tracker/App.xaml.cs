@@ -7,6 +7,7 @@ using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -94,5 +95,34 @@ namespace FeatureTracker
             //TODO: Save application state and stop any background activity
             deferral.Complete();
         }
+
+        //private readonly double minW = 1024;
+        //private readonly double minH = 768;
+
+        //protected override void OnWindowCreated(WindowCreatedEventArgs args)
+        //{
+        //    SetWindowMinSize(new Size(args.Window.Bounds.Width, args.Window.Bounds.Height));
+        //    args.Window.CoreWindow.SizeChanged += CoreWindow_SizeChanged;
+        //    base.OnWindowCreated(args);
+        //}
+
+        //private void CoreWindow_SizeChanged(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.WindowSizeChangedEventArgs args)
+        //{
+        //    if (SetWindowMinSize(args.Size))
+        //    {
+        //        sender.ReleasePointerCapture();
+        //    }
+        //}
+
+        //private bool SetWindowMinSize(Size size)
+        //{
+        //    if (size.Width < minW || size.Height < minH)
+        //    {
+        //        if (size.Width < minW) size.Width = minW;
+        //        if (size.Height < minH) size.Height = minH;
+        //        return ApplicationView.GetForCurrentView().TryResizeView(size);
+        //    }
+        //    return false;
+        //}
     }
 }

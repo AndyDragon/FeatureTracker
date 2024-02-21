@@ -212,7 +212,7 @@
             </Style>
 
             <!-- Free Public License 1.0.0 Permission to use, copy, modify, and/or distribute this code for any purpose with or without fee is hereby granted. -->
-            <local:ObjectToMenuItemConverter x:Key="ObjectToMenuItemConverter"/>
+            <local:ObjectToEditableItemConverter x:Key="ObjectToEditableItemConverter"/>
             <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>

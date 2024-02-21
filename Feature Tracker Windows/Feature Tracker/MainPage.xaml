@@ -102,7 +102,7 @@
         </Style>
     </Page.Resources>
 
-    <Grid>
+    <Grid MinWidth="800" MinHeight="600">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition />
@@ -149,10 +149,12 @@
             DisplayMode="Inline"
             OpenPaneLength="320">
             <SplitView.Pane>
-                <!--<ListBox ItemsSource="{Binding SortedPages}" SelectedItem="{Binding SelectedPage, Mode=TwoWay, Converter={StaticResource ObjectToMenuItemConverter}}" ItemContainerStyle="{StaticResource MenuListBoxItemStyle}">-->
-                <ListBox ItemsSource="{Binding Pages, Converter={StaticResource PageSortConverter}}" SelectedItem="{Binding SelectedPage, Mode=TwoWay, Converter={StaticResource ObjectToMenuItemConverter}}" ItemContainerStyle="{StaticResource MenuListBoxItemStyle}">
+                <ListBox 
+                    ItemsSource="{Binding Pages, Converter={StaticResource PageSortConverter}}" 
+                    SelectedItem="{Binding SelectedPage, Mode=TwoWay, Converter={StaticResource ObjectToEditableItemConverter}}" 
+                    ItemContainerStyle="{StaticResource MenuListBoxItemStyle}">
                     <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="local:MenuItem">
+                        <DataTemplate x:DataType="local:EditableItem">
                             <Grid Margin="8,4">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -171,7 +173,7 @@
                 </ListBox>
             </SplitView.Pane>
             <Grid>
-                <Frame Name="EditorFrame" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                <Frame x:Name="EditorFrame" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
             </Grid>
         </SplitView>
     </Grid>

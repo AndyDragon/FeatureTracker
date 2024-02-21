@@ -43,7 +43,7 @@ namespace FeatureTracker
             switch (mode)
             {
                 case CompareMode.Date:
-                    return DateTime.Compare(x.Date, y.Date);
+                    return DateTime.Compare(y.Date, x.Date);
             }
             return 0;
         }
