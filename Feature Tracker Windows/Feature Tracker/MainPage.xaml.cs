@@ -30,6 +30,11 @@ namespace FeatureTracker
         {
             this.InitializeComponent();
             EditorFrame.Navigate(typeof(BlankPage), blankViewModel);
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
 
             if (DataContext is MainViewModel viewModel)
             {

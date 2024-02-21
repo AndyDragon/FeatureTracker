@@ -3,7 +3,7 @@ using Windows.UI.Xaml.Media;
 
 namespace FeatureTracker
 {
-    public class EditableItem : NotifyPropertyChanged
+    public abstract class EditableModel : Model
     {
         private string icon = "";
         public string Icon

@@ -34,13 +34,13 @@ namespace FeatureTracker
         {
             base.OnNavigatedTo(e);
 
-            if (e.Parameter is Page page)
+            if (DataContext is MainViewModel viewModel && e.Parameter is Page page)
             {
-                ConnectPage(page);
+                ConnectPage(viewModel, page);
             }
         }
 
-        private void ConnectPage(Page page)
+        private void ConnectPage(MainViewModel viewModel, Page page)
         {
             page.PropertyChanged += (sender, e) =>
             {

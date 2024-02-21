@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.IO.IsolatedStorage;
@@ -13,11 +13,10 @@ using System.Windows.Input;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.UI;
 using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Shapes;
 
 namespace FeatureTracker
 {
-    public class MainViewModel : NotifyPropertyChanged
+    public class MainViewModel : NotifyPropertyChanged, IDataManager
     {
         private bool loadingPages = false;
 
@@ -26,7 +25,8 @@ namespace FeatureTracker
             toggleSplitViewCommand = new Command(() => this.IsSplitViewPaneOpen = !this.IsSplitViewPaneOpen);
             addPageCommand = new Command(() =>
             {
-                var page = new Page { Name = "new page" };
+                var page = new Page() { Name = "new page" };
+                AddModel(page);
                 Pages.Add(page);
                 SelectedPage = page;
             });
@@ -40,15 +40,10 @@ namespace FeatureTracker
                 var page = SelectedPage;
                 SelectedPage = null;
                 Pages.Remove(page);
+                RemoveModel(page);
             });
             Pages = new ObservableCollection<Page>();
-            Pages.CollectionChanged += (sender, e) =>
-            {
-                if (!loadingPages)
-                {
-                    StorePages();
-                }
-            };
+            AddModelCollection(Pages);
             loadingPages = true;
             LoadPages();
             loadingPages = false;
@@ -80,9 +75,11 @@ namespace FeatureTracker
                                         var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
                                         if (loadedPages != null)
                                         {
-                                            foreach (var page in loadedPages)
+                                            foreach (var loadedPage in loadedPages)
                                             {
-                                                Pages.Add(new Page(page));
+                                                var page = new Page(loadedPage);
+                                                AddModel(page);
+                                                Pages.Add(page);
                                             }
                                         }
                                     }
@@ -161,52 +158,28 @@ namespace FeatureTracker
         }
 
         private readonly ICommand toggleSplitViewCommand;
-        public ICommand ToggleSplitViewCommand
-        {
-            get => toggleSplitViewCommand;
-        }
+        public ICommand ToggleSplitViewCommand => toggleSplitViewCommand;
 
         private readonly ICommand addPageCommand;
-        public ICommand AddPageCommand
-        {
-            get => addPageCommand;
-        }
+        public ICommand AddPageCommand => addPageCommand;
 
         private readonly ICommand populateDefaultsCommand;
-        public ICommand PopulateDefaultsCommand
-        {
-            get => populateDefaultsCommand;
-        }
+        public ICommand PopulateDefaultsCommand => populateDefaultsCommand;
 
         private readonly ICommand generateReportCommand;
-        public ICommand GenerateReportCommand
-        {
-            get => generateReportCommand;
-        }
+        public ICommand GenerateReportCommand => generateReportCommand;
 
         private readonly ICommand backupCommand;
-        public ICommand BackupCommand
-        {
-            get => backupCommand;
-        }
+        public ICommand BackupCommand => backupCommand;
 
         private readonly ICommand restoreCommand;
-        public ICommand RestoreCommand
-        {
-            get => restoreCommand;
-        }
+        public ICommand RestoreCommand => restoreCommand;
 
         private readonly ICommand closePageCommand;
-        public ICommand ClosePageCommand
-        {
-            get => closePageCommand;
-        }
+        public ICommand ClosePageCommand => closePageCommand;
 
         private readonly ICommand deletePageCommand;
-        public ICommand DeletePageCommand
-        {
-            get => deletePageCommand;
-        }
+        public ICommand DeletePageCommand => deletePageCommand;
 
         private void PopulateDefaultPages()
         {
@@ -299,14 +272,22 @@ namespace FeatureTracker
                 "writings"
             };
 
+            foreach (var page in Pages)
+            {
+                RemoveModel(page);
+            }
             Pages.Clear();
 
             foreach (var pageName in singleFeaturePages)
             {
-                Pages.Add(new Page { Name = pageName });
+                var page = new Page { Name = pageName };
+                AddModel(page);
+                Pages.Add(page);
             }
 
-            Pages.Add(new Page { Name = "papanoel", Count = 3 });
+            var papaNoelPage = new Page { Name = "papanoel", Count = 3 };
+            AddModel(papaNoelPage);
+            Pages.Add(papaNoelPage);
         }
 
         private int GetFeatures()
@@ -440,7 +421,7 @@ namespace FeatureTracker
                     foreach (var feature in page.Features.OrderBy(feature => feature, FeatureComparer.DateComparer))
                     {
                         var hub = feature.Raw ? "RAW" : "Snap";
-                        builder.AppendLine($"\tFeature: {feature.Date.ToLocalTime().ToString("D")} on {hub}:");
+                        builder.AppendLine($"\tFeature: {feature.Date.ToLocalTime():D} on {hub}:");
                         builder.AppendLine($"\t\t{feature.Notes}");
                     }
                 }
@@ -480,10 +461,16 @@ namespace FeatureTracker
                     if (loadedPages != null)
                     {
                         loadingPages = true;
-                        Pages.Clear();
-                        foreach (var page in loadedPages)
+                        foreach (var page in Pages)
                         {
-                            Pages.Add(new Page(page));
+                            RemoveModel(page);
+                        }
+                        Pages.Clear();
+                        foreach (var loadedPage in loadedPages)
+                        {
+                            var page = new Page(loadedPage);
+                            AddModel(page);
+                            Pages.Add(page);
                         }
                         loadingPages = false;
                         StorePages();
@@ -501,9 +488,58 @@ namespace FeatureTracker
                 }
             }
         }
+
+        private void OnModelChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (sender is Model model)
+            {
+                if (model.ModelProperties.Contains(e.PropertyName))
+                {
+                    // TODO trigger debouncer to save data...
+                    if (!loadingPages)
+                    {
+                        Debug.WriteLine("Saving data from model changed...");
+                        StorePages();
+                    }
+                    model.OnDataChanged(e.PropertyName);
+                }
+            }
+        }
+
+        public void AddModel(Model model)
+        {
+            model.PropertyChanged += OnModelChanged;
+            model.DataManager = this;
+        }
+
+        public void RemoveModel(Model model)
+        {
+            model.DataManager = null;
+            model.PropertyChanged -= OnModelChanged;
+        }
+
+        private void OnModelCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            // TODO trigger debouncer to save data...
+            if (!loadingPages)
+            {
+                Debug.WriteLine("Saving data from collection changed...");
+                StorePages();
+            }
+        }
+
+        public void AddModelCollection<T>(ObservableCollection<T> collection) where T : Model
+        {
+            collection.CollectionChanged += OnModelCollectionChanged;
+        }
+
+        public void RemoveModelCollection<T>(ObservableCollection<T> collection) where T : Model
+        {
+            collection.CollectionChanged -= OnModelCollectionChanged;
+        }
     }
 
-    public class Page : EditableItem
+    public class Page : EditableModel
     {
         private static readonly SolidColorBrush WhiteBrush = new SolidColorBrush(Colors.White);
         private static readonly SolidColorBrush CadetBlueBrush = new SolidColorBrush(Colors.CadetBlue);
@@ -514,7 +550,8 @@ namespace FeatureTracker
         {
             addFeatureCommand = new Command(() =>
             {
-                var feature = new Feature { Date = DateTime.Now };
+                var feature = new Feature() { Date = DateTime.Now };
+                DataManager.AddModel(feature);
                 Features.Add(feature);
                 SelectedFeature = feature;
             });
@@ -524,12 +561,14 @@ namespace FeatureTracker
                 var feature = SelectedFeature;
                 SelectedFeature = null;
                 Features.Remove(feature);
+                DataManager.RemoveModel(feature);
             });
             Features = new ObservableCollection<Feature>();
             Features.CollectionChanged += (sender, e) =>
             {
                 Foreground = Features.Count == 0 ? WhiteBrush : CadetBlueBrush;
                 AlternativeTitle = $"{Features.Count} Feature{GetSuffix(Features.Count)}";
+                OnPropertyChanged("FeaturesCount");
             };
             Title = Name.ToUpper();
             Foreground = Features.Count == 0 ? WhiteBrush : CadetBlueBrush;
@@ -538,14 +577,15 @@ namespace FeatureTracker
             EditorPageType = typeof(PageEditor);
         }
 
-        public Page(JsonPage page) : this()
+        public Page(JsonPage jsonPage) : this()
         {
-            Name = page.Name;
-            Notes = page.Notes;
-            Count = page.Count;
-            foreach (var feature in page.Features)
+            Name = jsonPage.Name;
+            Notes = jsonPage.Notes;
+            Count = jsonPage.Count;
+            foreach (var jsonFeature in jsonPage.Features)
             {
-                Features.Add(new Feature(feature));
+                var feature = new Feature(jsonFeature);
+                Features.Add(feature);
             }
         }
 
@@ -561,6 +601,15 @@ namespace FeatureTracker
         }
 
         public ObservableCollection<Feature> Features { get; private set; }
+
+        public string FeaturesCount
+        {
+            get
+            {
+                var suffix = Features.Count != 1 ? "s" : "";
+                return $"{Features.Count} feature{suffix}";
+            }
+        }
 
         private Feature selectedFeature = null;
         public Feature SelectedFeature
@@ -625,26 +674,56 @@ namespace FeatureTracker
         {
             get => deleteFeatureCommand;
         }
+
+        public override string[] ModelProperties => new[] { nameof(Name), nameof(Notes), nameof(Count) };
+
+        public override string[] ModelCollectionProperties => new[] { nameof(Features) };
+
+        private IDataManager dataManager;
+        public override IDataManager DataManager
+        {
+            get => dataManager;
+            set
+            {
+                if (dataManager != null)
+                {
+                    foreach (var feature in Features)
+                    {
+                        dataManager.RemoveModel(feature);
+                    }
+                    dataManager.RemoveModelCollection(Features);
+                }
+                dataManager = value;
+                if (dataManager != null)
+                {
+                    dataManager.AddModelCollection(Features);
+                    foreach (var feature in Features)
+                    {
+                        dataManager.AddModel(feature);
+                    }
+                }
+            }
+        }
     }
 
-    public class Feature : EditableItem
+    public class Feature : EditableModel
     {
         private static readonly SolidColorBrush WhiteBrush = new SolidColorBrush(Colors.White);
 
         public Feature()
         {
-            Title = Date.ToLocalTime().ToString("D");
+            Title = Date./*ToLocalTime().*/ToString("D");
             Foreground = WhiteBrush;
             AlternativeTitle = Raw ? "RAW" : "";
             SubTitle = Notes;
             EditorPageType = typeof(FeatureEditor);
         }
 
-        public Feature(JsonFeature feature) : this()
+        public Feature(JsonFeature jsonFeature) : this()
         {
-            Date = feature.Date;
-            Raw = feature.Raw;
-            Notes = feature.Notes;
+            Date = jsonFeature.Date;
+            Raw = jsonFeature.Raw;
+            Notes = jsonFeature.Notes;
         }
 
         public JsonFeature ToJson()
@@ -665,7 +744,7 @@ namespace FeatureTracker
             {
                 if (Set(ref date, value))
                 {
-                    Title = Date.ToLocalTime().ToString("D");
+                    Title = Date./*ToLocalTime().*/ToString("D");
                 }
             }
         }
@@ -695,6 +774,12 @@ namespace FeatureTracker
                 }
             }
         }
+
+        public override string[] ModelProperties => new[] { nameof(Date), nameof(Notes), nameof(Raw) };
+
+        public override string[] ModelCollectionProperties => new string[] { };
+
+        public override IDataManager DataManager { get; set; }    
     }
 
     public class JsonPage

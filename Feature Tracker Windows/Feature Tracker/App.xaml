@@ -212,8 +212,12 @@
             </Style>
 
             <!-- Free Public License 1.0.0 Permission to use, copy, modify, and/or distribute this code for any purpose with or without fee is hereby granted. -->
-            <local:ObjectToEditableItemConverter x:Key="ObjectToEditableItemConverter"/>
-            <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <local:ObjectToEditableModelConverter x:Key="ObjectToEditableModelConverter" />
+            <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <local:PageSortConverter x:Key="PageSortConverter" />
+            <local:ArrayCountToStringConverter x:Key="ArrayCountToStringConverter" />
+            <local:FeatureSortConverter x:Key="FeatureSortConverter" />
+            <local:DateTimeConverter x:Key="DateTimeConverter" />
         </ResourceDictionary>
     </Application.Resources>
 

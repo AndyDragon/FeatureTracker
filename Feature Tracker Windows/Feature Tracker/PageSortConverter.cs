@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.UI.Xaml.Data;
 
 namespace FeatureTracker
@@ -11,11 +11,44 @@ namespace FeatureTracker
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
-            if (!(value is IEnumerable<Page> pages))
+            if (value is ObservableCollection<Page> pagesCollection)
             {
-                return value;
+                var hookedPages = new List<Page>();
+                var observableCollection = new ObservableCollection<Page>();
+                void PopulateResults()
+                {
+                    foreach (var page in pagesCollection.OrderBy(page => page, PageComparer.FeaturesComparer))
+                    {
+                        page.DataChanged += RepopulateResults;
+                        page.Features.CollectionChanged += RepopulateResults;
+                        hookedPages.Add(page);
+                        observableCollection.Add(page);
+                    }
+                }
+                void RepopulateResults(object sender, EventArgs e)
+                {
+                    Debug.WriteLine("Repopulate pages by " + e.GetType().Name);
+
+                    // Should filter this based on sorting
+
+                    foreach (var hookedPage in hookedPages)
+                    {
+                        hookedPage.DataChanged -= RepopulateResults;
+                        hookedPage.Features.CollectionChanged -= RepopulateResults;
+                    }
+                    hookedPages.Clear();
+                    observableCollection.Clear();
+                    PopulateResults();
+                }
+                PopulateResults();
+                pagesCollection.CollectionChanged += RepopulateResults;
+                return observableCollection;
             }
-            return pages.OrderBy(page => page, PageComparer.FeaturesComparer);
+            if (value is IEnumerable<Page> pages)
+            {
+                return pages.OrderBy(page => page, PageComparer.FeaturesComparer);
+            }
+            return value;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)

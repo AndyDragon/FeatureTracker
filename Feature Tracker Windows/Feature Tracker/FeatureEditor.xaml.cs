@@ -26,5 +26,22 @@ namespace FeatureTracker
         {
             this.InitializeComponent();
         }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+
+            if (DataContext is MainViewModel viewModel && e.Parameter is Feature feature)
+            {
+                ConnectFeature(viewModel, feature);
+            }
+        }
+
+        private void ConnectFeature(MainViewModel viewModel, Feature feature)
+        {
+            feature.PropertyChanged += (sender, e) =>
+            {
+            };
+        }
     }
 }

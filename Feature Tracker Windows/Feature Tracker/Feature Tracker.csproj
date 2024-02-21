@@ -126,16 +126,18 @@
     <Compile Include="BooleanToFlagStringConverter.cs" />
     <Compile Include="BooleanToVisibilityConverter.cs" />
     <Compile Include="Command.cs" />
+    <Compile Include="DateTimeConverter.cs" />
     <Compile Include="FeatureEditor.xaml.cs">
       <DependentUpon>FeatureEditor.xaml</DependentUpon>
     </Compile>
+    <Compile Include="IDataManager.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="MainViewModel.cs" />
     <Compile Include="EditableItem.cs" />
     <Compile Include="NotifyPropertyChanged.cs" />
-    <Compile Include="ObjectToEditableItemConverter.cs" />
+    <Compile Include="ObjectToEditableModelConverter.cs" />
     <Compile Include="PageEditor.xaml.cs">
       <DependentUpon>PageEditor.xaml</DependentUpon>
     </Compile>

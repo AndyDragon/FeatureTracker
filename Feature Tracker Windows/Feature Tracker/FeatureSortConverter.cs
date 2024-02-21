@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.UI.Xaml.Data;
 
 namespace FeatureTracker
@@ -11,11 +10,40 @@ namespace FeatureTracker
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
-            if (!(value is IEnumerable<Feature> features))
+            if (value is ObservableCollection<Feature> featuresCollection)
             {
-                return value;
+                var hookedFeatures = new List<Feature>();
+                var observableCollection = new ObservableCollection<Feature>();
+                void PopulateResults()
+                {
+                    foreach (var feature in featuresCollection.OrderBy(feature => feature, FeatureComparer.DateComparer))
+                    {
+                        feature.DataChanged += RepopulateResults;
+                        hookedFeatures.Add(feature);
+                        observableCollection.Add(feature);
+                    }
+                }
+                void RepopulateResults(object sender, EventArgs e)
+                {
+                    // Should filter this based on sorting
+
+                    foreach (var hookedFeature in hookedFeatures)
+                    {
+                        hookedFeature.DataChanged -= RepopulateResults;
+                    }
+                    hookedFeatures.Clear();
+                    observableCollection.Clear();
+                    PopulateResults();
+                };
+                PopulateResults();
+                featuresCollection.CollectionChanged += RepopulateResults;
+                return observableCollection;
             }
-            return features.OrderBy(feature => feature, FeatureComparer.DateComparer);
+            if (value is IEnumerable<Feature> features)
+            {
+                return features.OrderBy(feature => feature, FeatureComparer.DateComparer);
+            }
+            return value;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)

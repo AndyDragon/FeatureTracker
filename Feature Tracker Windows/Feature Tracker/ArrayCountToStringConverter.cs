@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.UI.Xaml.Data;
 
 namespace FeatureTracker
@@ -11,13 +9,16 @@ namespace FeatureTracker
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
-            var valueAsEnumerable = value as IEnumerable<object>;
             var featureLabel = parameter as string;
-            if (valueAsEnumerable.Count() != 1)
+            if (value is IEnumerable<object> objects)
             {
-                featureLabel += "s";
+                if (objects.Count() != 1)
+                {
+                    featureLabel += "s";
+                }
+                return $"({objects.Count()} {featureLabel})";
             }
-            return $"({valueAsEnumerable.Count()} {featureLabel})";
+            return "0";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)

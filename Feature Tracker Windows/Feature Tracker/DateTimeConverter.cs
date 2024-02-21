@@ -3,22 +3,17 @@ using Windows.UI.Xaml.Data;
 
 namespace FeatureTracker
 {
-    public class StringFormatConverter : IValueConverter
+    public class DateTimeConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
-            if (value == null)
-                return null;
+            return new DateTimeOffset(((DateTime)value).ToUniversalTime());
 
-            if (parameter == null)
-                return value;
-
-            return string.Format((string)parameter, value);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)
         {
-            throw new NotImplementedException();
+            return ((DateTimeOffset)value).DateTime;
         }
     }
 }
