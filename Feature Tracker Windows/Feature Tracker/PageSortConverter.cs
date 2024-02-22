@@ -13,30 +13,30 @@ namespace FeatureTracker
         {
             if (value is ObservableCollection<Page> pagesCollection)
             {
-                var hookedPages = new List<Page>();
+                //var hookedPages = new List<Page>();
                 var observableCollection = new ObservableCollection<Page>();
                 void PopulateResults()
                 {
                     foreach (var page in pagesCollection.OrderBy(page => page, PageComparer.FeaturesComparer))
                     {
-                        page.DataChanged += RepopulateResults;
-                        page.Features.CollectionChanged += RepopulateResults;
-                        hookedPages.Add(page);
+                        //page.DataChanged += RepopulateResults;
+                        //page.Features.CollectionChanged += RepopulateResults;
+                        //hookedPages.Add(page);
                         observableCollection.Add(page);
                     }
                 }
                 void RepopulateResults(object sender, EventArgs e)
                 {
-                    Debug.WriteLine("Repopulate pages by " + e.GetType().Name);
+                    //Debug.WriteLine("Repopulate pages by " + e.GetType().Name);
 
                     // Should filter this based on sorting
 
-                    foreach (var hookedPage in hookedPages)
-                    {
-                        hookedPage.DataChanged -= RepopulateResults;
-                        hookedPage.Features.CollectionChanged -= RepopulateResults;
-                    }
-                    hookedPages.Clear();
+                    //foreach (var hookedPage in hookedPages)
+                    //{
+                    //    hookedPage.DataChanged -= RepopulateResults;
+                    //    hookedPage.Features.CollectionChanged -= RepopulateResults;
+                    //}
+                    //hookedPages.Clear();
                     observableCollection.Clear();
                     PopulateResults();
                 }

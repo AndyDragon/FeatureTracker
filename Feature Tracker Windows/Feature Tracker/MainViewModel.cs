@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.UI;
+using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 
 namespace FeatureTracker
@@ -145,7 +146,7 @@ namespace FeatureTracker
             {
                 if (Set(ref selectedPage, value))
                 {
-                    
+
                 }
             }
         }
@@ -579,6 +580,7 @@ namespace FeatureTracker
 
         public Page(JsonPage jsonPage) : this()
         {
+            Id = jsonPage.Id;
             Name = jsonPage.Name;
             Notes = jsonPage.Notes;
             Count = jsonPage.Count;
@@ -593,6 +595,7 @@ namespace FeatureTracker
         {
             return new JsonPage
             {
+                Id = Id,
                 Name = Name,
                 Notes = Notes,
                 Count = Count,
@@ -624,6 +627,8 @@ namespace FeatureTracker
             }
         }
 
+        public Guid Id { get; private set; }
+
         private string name = "";
         public string Name
         {
@@ -640,7 +645,7 @@ namespace FeatureTracker
         private string notes = "";
         public string Notes
         {
-            get => notes; 
+            get => notes;
             set => Set(ref notes, value);
         }
 
@@ -648,7 +653,7 @@ namespace FeatureTracker
         public int Count
         {
             get => count;
-            set 
+            set
             {
                 if (Set(ref count, value))
                 {
@@ -712,6 +717,7 @@ namespace FeatureTracker
 
         public Feature()
         {
+            Id = Guid.NewGuid();
             Title = Date./*ToLocalTime().*/ToString("D");
             Foreground = WhiteBrush;
             AlternativeTitle = Raw ? "RAW" : "";
@@ -721,6 +727,7 @@ namespace FeatureTracker
 
         public Feature(JsonFeature jsonFeature) : this()
         {
+            Id = jsonFeature.Id;
             Date = jsonFeature.Date;
             Raw = jsonFeature.Raw;
             Notes = jsonFeature.Notes;
@@ -730,11 +737,14 @@ namespace FeatureTracker
         {
             return new JsonFeature
             {
+                Id = Id,
                 Date = Date,
                 Raw = Raw,
                 Notes = Notes,
             };
         }
+
+        public Guid Id { get; private set; }
 
         private DateTime date = DateTime.Now;
         public DateTime Date
@@ -779,7 +789,7 @@ namespace FeatureTracker
 
         public override string[] ModelCollectionProperties => new string[] { };
 
-        public override IDataManager DataManager { get; set; }    
+        public override IDataManager DataManager { get; set; }
     }
 
     public class JsonPage
@@ -790,6 +800,9 @@ namespace FeatureTracker
         [JsonProperty(PropertyName = "features", NullValueHandling = NullValueHandling.Ignore)]
         public IList<JsonFeature> Features { get; set; } = new List<JsonFeature>();
 
+        [JsonProperty(PropertyName = "id"), JsonConverter(typeof(UppercaseGuidConverter))]
+        public Guid Id { get; set; } = Guid.NewGuid();
+
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; } = "";
 
@@ -797,10 +810,26 @@ namespace FeatureTracker
         public string Notes { get; set; } = "";
     }
 
+    public class UppercaseGuidConverter : JsonConverter<Guid>
+    {
+        public override void WriteJson(JsonWriter writer, Guid value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString("D").ToUpper());
+        }
+
+        public override Guid ReadJson(JsonReader reader, Type objectType, Guid existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            return new Guid((string)reader.Value);
+        }
+    }
+
     public class JsonFeature
     {
         [JsonProperty(PropertyName = "dateV2")]
         public DateTime Date { get; set; } = DateTime.Now;
+
+        [JsonProperty(PropertyName = "id"), JsonConverter(typeof(UppercaseGuidConverter))]
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [JsonProperty(PropertyName = "notes")]
         public string Notes { get; set; } = "";

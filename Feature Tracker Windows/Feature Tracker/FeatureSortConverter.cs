@@ -12,14 +12,14 @@ namespace FeatureTracker
         {
             if (value is ObservableCollection<Feature> featuresCollection)
             {
-                var hookedFeatures = new List<Feature>();
+                //var hookedFeatures = new List<Feature>();
                 var observableCollection = new ObservableCollection<Feature>();
                 void PopulateResults()
                 {
                     foreach (var feature in featuresCollection.OrderBy(feature => feature, FeatureComparer.DateComparer))
                     {
-                        feature.DataChanged += RepopulateResults;
-                        hookedFeatures.Add(feature);
+                        //feature.DataChanged += RepopulateResults;
+                        //hookedFeatures.Add(feature);
                         observableCollection.Add(feature);
                     }
                 }
@@ -27,11 +27,11 @@ namespace FeatureTracker
                 {
                     // Should filter this based on sorting
 
-                    foreach (var hookedFeature in hookedFeatures)
-                    {
-                        hookedFeature.DataChanged -= RepopulateResults;
-                    }
-                    hookedFeatures.Clear();
+                    //foreach (var hookedFeature in hookedFeatures)
+                    //{
+                    //    hookedFeature.DataChanged -= RepopulateResults;
+                    //}
+                    //hookedFeatures.Clear();
                     observableCollection.Clear();
                     PopulateResults();
                 };
