@@ -333,7 +333,7 @@ struct ContentView: View {
 
     func addPage() -> Void {
         withAnimation {
-            let newPage = Page(name: "new page")
+            let newPage = Page(id: UUID(), name: "new page")
             modelContext.insert(newPage)
             selectedPage = newPage
         }
@@ -631,9 +631,9 @@ struct ContentView: View {
             "writings",
         ]
         for pageName in singleFeaturePages {
-            modelContext.insert(Page(name: pageName))
+            modelContext.insert(Page(id: UUID(), name: pageName))
         }
         // Add the multi-count features.
-        modelContext.insert(Page(name: "papanoel", count: 3))
+        modelContext.insert(Page(id: UUID(), name: "papanoel", count: 3))
     }
 }
