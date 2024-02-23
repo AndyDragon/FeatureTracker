@@ -10,6 +10,30 @@ import CloudKitSyncMonitor
 import SwiftData
 import SwiftUI
 
+class DuplicatePages {
+    private var pages: [String:[Page]]?
+    
+    init(pages: [String:[Page]]? = nil) {
+        self.pages = pages
+    }
+    
+    var isEmpty: Bool {
+        self.pages?.isEmpty ?? true
+    }
+    
+    var firstKey: String {
+        self.pages?.keys?.first ?? ""
+    }
+    
+    func pages(key: String) -> [Page] {
+        return self.pages?[key] ?? [Page]()
+    }
+    
+    func removePage(key: String) -> Void {
+        self.pages?.removeValue(forKey: key)
+    }
+}
+
 struct ContentView: View {
     @Environment(\.openURL) var openURL
     @Environment(\.modelContext) var modelContext
@@ -30,6 +54,9 @@ struct ContentView: View {
     @State private var deleteAlertText = ""
     @State private var deleteAlertAction: (() -> Void)? = nil
     @State private var showDeleteAlert = false
+    @State private var isShowingDuplicatePages = false;
+    @State private var selectedDuplicatePage = UUID();
+    @State private var duplicatePages = DuplicatePages();
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
     @ObservedObject private var syncMonitor = SyncMonitor.shared
     var appState: VersionCheckAppState
@@ -198,6 +225,8 @@ struct ContentView: View {
                     .disabled(isAnyToastShowing)
                 Button("Generate report", systemImage: "menucard", action: generateReport)
                     .disabled(isAnyToastShowing)
+                Button("Validate data", systemImage: "checkmark.rectangle.stack", action: validateData)
+                    .disabled(isAnyToastShowing)
                 Menu("JSON", systemImage: "tray") {
                     Button("Backup to Clipboard", systemImage: "tray.and.arrow.down", action: backup)
                     Button("Restore from Clipboard", systemImage: "tray.and.arrow.up", action: restore)
@@ -248,6 +277,48 @@ struct ContentView: View {
                 .accentColor(.red)
             }
         )
+        .sheet(
+            isPresented: $isShowingDuplicatePages,
+            onDismiss: {
+                duplicatePages = nil
+            }) {
+                VStack {
+//                    Text("Duplicate page found '\(duplicatePages!.first!.key)', which should be kept:")
+//                    Picker(selection: $selectedDuplicatePage, label: "") {
+//                        ForEach(duplicatePages!.first!.value) { page in
+//                            VStack(alignment: .leading) {
+//                                Text("Name: '\(page.name)'")
+//                                Text("ID: \(page.id)")
+//                                Text("Count: \(page.count)")
+//                                Text("Features: \(page.features!.count)")
+//                            }
+//                            .padding()
+//                            .tag(page.id)
+//                        }
+//                    }.pickerStyle(RadioGroupPickerStyle())
+//                    Button("Clear dupicates", action: {
+//                        var pagesDeleted = 0
+//                        duplicatePages!.first!.value.forEach { page in
+//                            if page.id != selectedDuplicatePage {
+//                                selectedFeature = nil
+//                                selectedPage = nil
+//                                modelContext.delete(page)
+//                                pagesDeleted += 1
+//                            }
+//                            isShowingDuplicatePages = false
+//                            showToast("Deleted duplicate pages!", "Removed \(pagesDeleted) page and all the features", duration: 15.0)
+//                            duplicatePages!.removeValue(forKey: duplicatePages!.first!.key)
+//                            if !duplicatePages!.isEmpty {
+//                                isShowingDuplicatePages.wrappedValue = true
+//                            } else {
+//                                duplicatePages = nil
+//                            }
+//                        }
+//                    })
+                }
+                .padding(40)
+                .presentationDetents([.medium, .large])
+            }
         .toast(
             isPresenting: $isShowingToast,
             duration: toastDuration,
@@ -467,6 +538,71 @@ struct ContentView: View {
         for line in lines { text = text + line + "\n" }
         copyToClipboard(text)
         showToast("Report generated!", "Copied the report of features to the clipboard")
+    }
+    
+    func validateData() -> Void {
+        duplicatePages = nil
+        //var duplicateFeatures = [String: [Date: [(Page, Feature)]]]()
+        var pagesChecked = [String : Page]()
+        //var featuresChecked = [String: [Date: Feature]]()
+        pages.forEach { page in
+            if let firstPage = pagesChecked[page.name] {
+                if duplicatePages == nil {
+                    duplicatePages = [String : [Page]]()
+                }
+                var duplicatePage: [Page]
+                if let duplicatePageFound = duplicatePages![page.name] {
+                    duplicatePage = duplicatePageFound
+                } else {
+                    duplicatePage = [Page]()
+                    duplicatePage.append(firstPage)
+                }
+                duplicatePage.append(page)
+                duplicatePages![page.name] = duplicatePage
+            }
+            pagesChecked[page.name] = page
+            
+//            var featuresCheckedForPage: [Date: Feature]
+//            if let featuresCheckedForPageFound = featuresChecked[page.name] {
+//                featuresCheckedForPage = featuresCheckedForPageFound
+//            } else {
+//                featuresCheckedForPage = [Date: Feature]()
+//            }
+//            var duplicateFeaturesForPage: [Date: [(Page, Feature)]]
+//            if let duplicatedFeaturesForPageFound = duplicateFeatures[page.name] {
+//                duplicateFeaturesForPage = duplicatedFeaturesForPageFound
+//            } else {
+//                duplicateFeaturesForPage = [Date: [(Page, Feature)]]()
+//                duplicateFeatures[page.name] = duplicateFeaturesForPage
+//            }
+//            page.features?.forEach { feature in
+//                if let firstFeature = featuresCheckedForPage[feature.date] {
+//                    var duplicateFeature: [(Page, Feature)]
+//                    if let duplicateFeatureFound = duplicateFeaturesForPage[feature.date] {
+//                        duplicateFeature = duplicateFeatureFound
+//                    } else {
+//                        duplicateFeature = [(Page, Feature)]()
+//                        duplicateFeature.append((page, firstFeature))
+//                        duplicateFeaturesForPage[feature.date] = duplicateFeature
+//                    }
+//                    duplicateFeature.append((page, feature))
+//                }
+//                featuresChecked[page.name] = featuresCheckedForPage
+//            }
+        }
+        if duplicatePages != nil {
+            print(duplicatePages!)
+            print(duplicatePages!.first!)
+            isShowingDuplicatePages = true
+        } else {
+//            if try! duplicateFeatures.reduce<Bool>(false, { result, element in
+//                return result || !element.value.isEmpty
+//            }) {
+//                print(duplicateFeatures)
+//            } else {
+                showToast("Validation complete", "No duplicate pages or features found")
+//            }
+        }
     }
 
     func backup() -> Void {
