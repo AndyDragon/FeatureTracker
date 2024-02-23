@@ -8,8 +8,8 @@
 
   <Identity
     Name="b0e75927-0c53-4fa1-87bc-f4feee4b4d2f"
-    Publisher="CN=andyd"
-    Version="1.0.0.0" />
+    Publisher="CN=andrew.forget@anydragon.com"
+    Version="1.0.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="b0e75927-0c53-4fa1-87bc-f4feee4b4d2f" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -33,12 +33,10 @@
       EntryPoint="Feature_Tracker.App">
       <uap:VisualElements
         DisplayName="Feature Tracker"
-        Square150x150Logo="Assets\Square150x150Logo.png"
-        Square44x44Logo="Assets\mac-256x256.png"
         Description="Feature Tracker"
-        BackgroundColor="transparent">
-        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"/>
-        <uap:SplashScreen Image="Assets/mac-256x256.png"/>
+        BackgroundColor="transparent" Square44x44Logo="Assets\App-Icon.png" Square150x150Logo="Assets\Square150x150Logo.png">
+        <uap:SplashScreen Image="Assets\Splash-Screen-620x300.png"/>
+        <uap:DefaultTile/>
       </uap:VisualElements>
     </Application>
   </Applications>
