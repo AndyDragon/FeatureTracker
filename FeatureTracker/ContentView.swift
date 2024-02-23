@@ -205,8 +205,22 @@ struct ContentView: View {
                 Button("Validate data", systemImage: "checkmark.rectangle.stack", action: validateData)
                     .disabled(isAnyToastShowing)
                 Menu("JSON", systemImage: "tray") {
-                    Button("Backup to Clipboard", systemImage: "tray.and.arrow.down", action: backup)
-                    Button("Restore from Clipboard", systemImage: "tray.and.arrow.up", action: restore)
+                    Section(header: Text("Backup to:")) {
+                        Button(action: backup) {
+                            Label("Clipboard", systemImage: "tray.and.arrow.down")
+                        }
+                        Button(action: backupToCloud) {
+                            Label("iCloud Documents", systemImage: "icloud.and.arrow.up")
+                        }
+                    }
+                    Section(header: Text("Restore from:")) {
+                        Button(action: restore) {
+                            Label("Clipboard", systemImage: "tray.and.arrow.up")
+                        }
+                        Button(action: restoreFromCloud) {
+                            Label("iCloud Documents", systemImage: "icloud.and.arrow.down")
+                        }
+                    }
                 }
                 .disabled(isAnyToastShowing)
             }
@@ -238,7 +252,7 @@ struct ContentView: View {
             }
         )
         .alert(
-            backupOperation == .backup ? "ERROR: Failed to backup" : "ERROR: Failed to restore",
+            getBackupOperationError(backupOperation),
             isPresented: $showingBackupRestoreErrorAlert,
             actions: {
                 Button(action: {
@@ -248,9 +262,7 @@ struct ContentView: View {
                 }
             },
             message: {
-                Text(backupOperation == .backup
-                     ? "Could to backup to the clipboard: \(exceptionError)"
-                     : "Could to restore from the clipboard: \(exceptionError)")
+                Text(getBackupOperationErrorMessage(backupOperation, exceptionError))
                 .accentColor(.red)
             }
         )
@@ -361,6 +373,38 @@ struct ContentView: View {
         .task {
             appState.checkForUpdates()
         }
+    }
+    
+    func getBackupOperationError(_ operation: BackupOperation) -> String {
+        switch operation {
+        case .backup:
+            return "ERROR: Failed to backup"
+        case .cloudBackup:
+            return "ERROR: Failed to backup to your iCloud"
+        case .restore:
+            return "ERROR: Failed to restore"
+        case .cloudRestore:
+            return "ERROR: Failed to restore from your iCloud"
+        case .none:
+            break
+        }
+        return "ERROR"
+    }
+    
+    func getBackupOperationErrorMessage(_ operation: BackupOperation, _ message: String) -> String {
+        switch operation {
+        case .backup:
+            return "Could to backup to the clipboard: \(exceptionError)"
+        case .cloudBackup:
+            return "Could to backup to your iCloud documents: \(exceptionError)"
+        case .restore:
+            return "Could to restore from the clipboard: \(exceptionError)"
+        case .cloudRestore:
+            return "Could to restore from your iCloud documents: \(exceptionError)"
+        case .none:
+            break
+        }
+        return exceptionError
     }
     
     func getVersionSubTitle() -> String {
@@ -621,6 +665,33 @@ struct ContentView: View {
         }
     }
 
+    func backupToCloud() -> Void {
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+            encoder.dateEncodingStrategy = .iso8601
+            var codablePages = [CodablePage]()
+            codablePages.append(contentsOf: pages.sorted(by: { $0.name < $1.name }).map({ page in
+                return CodablePage(page)
+            }))
+            let json = try encoder.encode(codablePages)
+            if let containerUrl = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
+                if !FileManager.default.fileExists(atPath: containerUrl.path, isDirectory: nil) {
+                    try FileManager.default.createDirectory(at: containerUrl, withIntermediateDirectories: true, attributes: nil)
+                }
+                
+                let fileUrl = containerUrl.appendingPathComponent("features.json")
+                try String(decoding: json, as: UTF8.self).write(to: fileUrl, atomically: true, encoding: .utf8)
+                
+                showToast("Backed up to iCloud!", "Stored a backup of the features to your iCloud documents")
+            }
+        } catch {
+            exceptionError = error.localizedDescription
+            backupOperation = .backup
+            showingBackupRestoreErrorAlert.toggle()
+        }
+    }
+
     func restore() -> Void {
         do {
             let pasteBoard = NSPasteboard.general
@@ -641,31 +712,80 @@ struct ContentView: View {
                 showToast("Restored!", "Restored the items from the clipboard", duration: 6)
             }
         } catch let DecodingError.dataCorrupted(context) {
-            exceptionError = context.debugDescription
-            backupOperation = .restore
-            showingBackupRestoreErrorAlert.toggle()
-            debugPrint(context.debugDescription)
+            showRestoreErrorToast(context.debugDescription)
         } catch let DecodingError.keyNotFound(key, context) {
-            exceptionError = "Key '\(key)' not found:" + context.debugDescription
-            backupOperation = .restore
-            showingBackupRestoreErrorAlert.toggle()
-            debugPrint(context.debugDescription)
+            showRestoreErrorToast("Key '\(key)' not found:" + context.debugDescription)
         } catch let DecodingError.valueNotFound(value, context) {
-            exceptionError = "Value '\(value)' not found:" + context.debugDescription
-            backupOperation = .restore
-            showingBackupRestoreErrorAlert.toggle()
-            debugPrint(context.debugDescription)
+            showRestoreErrorToast("Value '\(value)' not found:" + context.debugDescription)
         } catch let DecodingError.typeMismatch(type, context) {
-            exceptionError = "Type '\(type)' mismatch:" + context.debugDescription
-            backupOperation = .restore
-            showingBackupRestoreErrorAlert.toggle()
-            debugPrint(context.debugDescription)
+            showRestoreErrorToast("Type '\(type)' mismatch:" + context.debugDescription)
         } catch {
-            exceptionError = error.localizedDescription
-            backupOperation = .restore
-            showingBackupRestoreErrorAlert.toggle()
-            debugPrint(error.localizedDescription)
+            showRestoreErrorToast(error.localizedDescription)
         }
+    }
+    
+    func showRestoreErrorToast(_ message: String) {
+        debugPrint("iCloud restore failed: \(message)")
+        exceptionError = message
+        backupOperation = .restore
+        showingBackupRestoreErrorAlert.toggle()
+    }
+    
+    func restoreFromCloud() -> Void {
+        do {
+            if let containerUrl = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
+                if FileManager.default.fileExists(atPath: containerUrl.path, isDirectory: nil) {
+                    let fileUrl = containerUrl.appendingPathComponent("features.json")
+                    if FileManager.default.fileExists(atPath: fileUrl.path) {
+                        let fileContents = FileManager.default.contents(atPath: fileUrl.path)
+                        if let json = fileContents {
+                            let decoder = JSONDecoder()
+                            decoder.dateDecodingStrategy = .iso8601
+                            let codablePages = try decoder.decode([CodablePage].self, from: json)
+                            if codablePages.count != 0 {
+                                do {
+                                    try modelContext.delete(model: Page.self)
+                                } catch {
+                                    // do nothing
+                                    debugPrint(error.localizedDescription)
+                                }
+                                for codablePage in codablePages {
+                                    modelContext.insert(codablePage.toPage())
+                                }
+                                showToast("Restored from iCloud!", "Restored the items from your iCloud", duration: 6)
+                            } else {
+                                showCloudRestoreErrorToast("No pages found in the backup")
+                            }
+                        } else {
+                            showCloudRestoreErrorToast("No pages loaded from the backup")
+                        }
+                    } else {
+                        showCloudRestoreErrorToast("No backup was found in your iCloud documents")
+                    }
+                } else {
+                    showCloudRestoreErrorToast("No backup was found in your iCloud documents")
+                }
+            } else {
+                showCloudRestoreErrorToast("No access to your iCloud documents")
+            }
+        } catch let DecodingError.dataCorrupted(context) {
+            showCloudRestoreErrorToast(context.debugDescription)
+        } catch let DecodingError.keyNotFound(key, context) {
+            showCloudRestoreErrorToast("Key '\(key)' not found:" + context.debugDescription)
+        } catch let DecodingError.valueNotFound(value, context) {
+            showCloudRestoreErrorToast("Value '\(value)' not found:" + context.debugDescription)
+        } catch let DecodingError.typeMismatch(type, context) {
+            showCloudRestoreErrorToast("Type '\(type)' mismatch:" + context.debugDescription)
+        } catch {
+            showCloudRestoreErrorToast(error.localizedDescription)
+        }
+    }
+                                
+    func showCloudRestoreErrorToast(_ message: String) {
+        debugPrint("iCloud restore failed: \(message)")
+        exceptionError = message
+        backupOperation = .cloudRestore
+        showingBackupRestoreErrorAlert.toggle()
     }
 
     func populateDefaultPages() -> Void {

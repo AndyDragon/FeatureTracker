@@ -18,7 +18,9 @@ struct CloudKitConfiguration {
 enum BackupOperation: Int, Codable, CaseIterable {
     case none,
          backup,
-         restore
+         cloudBackup,
+         restore,
+         cloudRestore
 }
 
 struct VersionManifest: Codable {
