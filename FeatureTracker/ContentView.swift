@@ -26,10 +26,14 @@ struct ContentView: View {
     @State private var toastType: AlertToast.AlertType = .regular
     @State private var toastText = ""
     @State private var toastSubTitle = ""
+    @State private var toastCompleteAction: () -> Void = {}
     @State private var isShowingToast = false
     @State private var deleteAlertText = ""
     @State private var deleteAlertAction: (() -> Void)? = nil
     @State private var showDeleteAlert = false
+    @State private var isShowingDuplicatePages = false;
+    @State private var selectedDuplicatePage = UUID();
+    private var duplicatePages = DuplicatePages();
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
     @ObservedObject private var syncMonitor = SyncMonitor.shared
     var appState: VersionCheckAppState
@@ -198,6 +202,8 @@ struct ContentView: View {
                     .disabled(isAnyToastShowing)
                 Button("Generate report", systemImage: "menucard", action: generateReport)
                     .disabled(isAnyToastShowing)
+                Button("Validate data", systemImage: "checkmark.rectangle.stack", action: validateData)
+                    .disabled(isAnyToastShowing)
                 Menu("JSON", systemImage: "tray") {
                     Button("Backup to Clipboard", systemImage: "tray.and.arrow.down", action: backup)
                     Button("Restore from Clipboard", systemImage: "tray.and.arrow.up", action: restore)
@@ -248,6 +254,56 @@ struct ContentView: View {
                 .accentColor(.red)
             }
         )
+        .sheet(
+            isPresented: $isShowingDuplicatePages) {
+                VStack {
+                    Text("Duplicate page(s) found '\(duplicatePages.firstPageName)', which one should be kept:")
+                    List {
+                        ForEach(duplicatePages.duplicateList(pageName: duplicatePages.firstPageName)) { page in
+                            ZStack {
+                                Rectangle()
+                                    .background(Color.gray)
+                                    .opacity(0.2)
+                                    .cornerRadius(4)
+                                VStack(alignment: .leading) {
+                                    HStack(alignment: .bottom) {
+                                        Text("Name: '\(page.name)'")
+                                        Spacer()
+                                        Button("Keep", action: {
+                                            deDuplicatePages(page: page)
+                                        })
+                                    }
+                                    Text("ID: \(page.id)   |   Count: \(page.count)   |   Features: \(page.features!.count)")
+                                }
+                                .padding(8)
+                                .frame(width: 600, alignment: .leading)
+                                .tag(page.id)
+                            }
+                        }
+                        .listStyle(.bordered)
+                    }
+                    .frame(width: 640, height: 320)
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            deDuplicateAllPages()
+                        }, label: {
+                            Text("Remove all duplicates")
+                                .padding([.top, .bottom], 10)
+                                .padding([.leading, .trailing], 20)
+                        })
+                        Button(action: {
+                            skipDuplicationPages(pageName: duplicatePages.firstPageName)
+                        }, label: {
+                            Text("Keep all")
+                                .padding([.top, .bottom], 10)
+                                .padding([.leading, .trailing], 20)
+                        })
+                    }
+                    .frame(alignment: .center)
+                }
+                .padding(40)
+                .presentationDetents([.medium, .large])
+            }
         .toast(
             isPresenting: $isShowingToast,
             duration: toastDuration,
@@ -259,7 +315,8 @@ struct ContentView: View {
                     type: toastType,
                     title: toastText,
                     subTitle: toastSubTitle)
-            })
+            },
+            completion: toastCompleteAction)
         .toast(
             isPresenting: appState.isShowingVersionAvailableToast,
             duration: 10,
@@ -305,7 +362,7 @@ struct ContentView: View {
             appState.checkForUpdates()
         }
     }
-
+    
     func getVersionSubTitle() -> String {
         if appState.isShowingVersionAvailableToast.wrappedValue {
             return "You are using v\(appState.versionCheckToast.wrappedValue.appVersion) " +
@@ -321,12 +378,13 @@ struct ContentView: View {
         return ""
     }
     
-    func showToast(_ text: String, _ subTitle: String, duration: Double = 2) {
+    func showToast(_ text: String, _ subTitle: String, duration: Double = 2, toastComplete: @escaping () -> Void = {}) {
         withAnimation {
             toastType = .complete(.blue)
             toastText = text
             toastSubTitle = subTitle
             toastDuration = duration
+            toastCompleteAction = toastComplete
             isShowingToast.toggle()
         }
     }
@@ -467,6 +525,81 @@ struct ContentView: View {
         for line in lines { text = text + line + "\n" }
         copyToClipboard(text)
         showToast("Report generated!", "Copied the report of features to the clipboard")
+    }
+    
+    func validateData() -> Void {
+        duplicatePages.clear()
+        var pagesChecked = [String : Page]()
+        pages.forEach { page in
+            if let firstPage = pagesChecked[page.name] {
+                var duplicateList = [Page]();
+                if !duplicatePages.hasPage(pageName: page.name) {
+                    duplicateList.append(firstPage)
+                }
+                duplicateList.append(page)
+                duplicatePages.setDuplicateList(pageName: page.name, duplicateList: duplicateList)
+            }
+            pagesChecked[page.name] = page
+        }
+        if !duplicatePages.isEmpty {
+            print(duplicatePages)
+            print(duplicatePages.firstPageName)
+            isShowingDuplicatePages = true
+        } else {
+            showToast("Validation complete", "No duplicate pages")
+        }
+    }
+
+    func deDuplicatePages(page: Page) -> Void {
+        selectedFeature = nil
+        selectedPage = nil
+        var pagesDeleted = 0
+        duplicatePages.duplicateList(pageName: page.name).forEach { duplicatePage in
+            if duplicatePage.id != page.id {
+                modelContext.delete(duplicatePage)
+                pagesDeleted += 1
+            }
+        }
+        isShowingDuplicatePages = false
+        let deletedPageCount = getStringForCount(pagesDeleted, "page");
+        duplicatePages.removeDuplicateList(pageName: page.name)
+        showToast("Deleted duplicate pages!", "Removed \(deletedPageCount) and all the features", duration: 15.0) {
+            if !duplicatePages.isEmpty {
+                isShowingDuplicatePages = true
+            }
+        }
+    }
+    
+    func deDuplicateAllPages() -> Void {
+        selectedFeature = nil
+        selectedPage = nil
+        var pagesDeleted = 0
+        while !duplicatePages.isEmpty {
+            let duplicateList = duplicatePages.duplicateList(pageName: duplicatePages.firstPageName)
+            let page = duplicateList[0]
+            duplicateList.forEach { duplicatePage in
+                if duplicatePage.id != page.id {
+                    modelContext.delete(duplicatePage)
+                    pagesDeleted += 1
+                }
+            }
+            duplicatePages.removeDuplicateList(pageName: page.name)
+        }
+        isShowingDuplicatePages = false
+        let deletedPageCount = getStringForCount(pagesDeleted, "page");
+        showToast("Deleted all duplicate pages!", "Removed \(deletedPageCount) and all the features", duration: 15.0) {
+            if !duplicatePages.isEmpty {
+                isShowingDuplicatePages = true
+            }
+        }
+    }
+    
+    func skipDuplicationPages(pageName: String) -> Void {
+        isShowingDuplicatePages = false
+        duplicatePages.removeDuplicateList(pageName: pageName)
+        if !duplicatePages.isEmpty {
+            isShowingDuplicatePages = true
+        }
     }
 
     func backup() -> Void {
