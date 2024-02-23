@@ -156,9 +156,12 @@
                 <Button Command="{Binding SelectedPage.AddFeatureCommand}" Style="{StaticResource SmIconButtonStyle}">
                     <fa:FontAwesome Icon="Plus" />
                 </Button>
+                <Button Command="{Binding SelectedPage.RefreshFeaturesCommand}" Style="{StaticResource IconButtonStyle}">
+                    <fa:FontAwesome Icon="Refresh" />
+                </Button>
             </StackPanel>
         </Grid>
-        <ListBox Grid.Row="3" ItemsSource="{Binding SelectedPage.Features, Converter={StaticResource FeatureSortConverter}}" SelectedItem="{Binding SelectedPage.SelectedFeature, Mode=TwoWay, Converter={StaticResource ObjectToEditableModelConverter}}" ItemContainerStyle="{StaticResource FeatureListBoxItemStyle}" Margin="8,8">
+        <ListBox Grid.Row="3" ItemsSource="{Binding SelectedPage.Features}" SelectedItem="{Binding SelectedPage.SelectedFeature, Mode=TwoWay, Converter={StaticResource ObjectToEditableModelConverter}}" ItemContainerStyle="{StaticResource FeatureListBoxItemStyle}" Margin="8,8">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="local:Feature">
                     <Grid Margin="12">

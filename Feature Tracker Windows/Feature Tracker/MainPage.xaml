@@ -119,6 +119,31 @@
                         <Button Command="{Binding AddPageCommand}" Style="{StaticResource IconButtonStyle}">
                             <fa:FontAwesome Icon="Plus" FontSize="24" />
                         </Button>
+                        <Button Style="{StaticResource IconButtonStyle}">
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="Sort by Name" Command="{Binding SortByNameCommand}">
+                                        <MenuFlyoutItem.Icon>
+                                            <fa:FontAwesome Icon="{Binding SortedByNameCheck}" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Text="Sort by Count" Command="{Binding SortByCountCommand}">
+                                        <MenuFlyoutItem.Icon>
+                                            <fa:FontAwesome Icon="{Binding SortedByCountCheck}" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Text="Sort by Features" Command="{Binding SortByFeaturesCommand}">
+                                        <MenuFlyoutItem.Icon>
+                                            <fa:FontAwesome Icon="{Binding SortedByFeaturesCheck}" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                            <fa:FontAwesome Icon="Sort" FontSize="24" />
+                        </Button>
+                        <Button Command="{Binding RefreshPagesCommand}" Style="{StaticResource IconButtonStyle}">
+                            <fa:FontAwesome Icon="Refresh" FontSize="24" />
+                        </Button>
                     </StackPanel>
                 </StackPanel>
                 <Rectangle Visibility="{Binding IsSplitViewPaneOpen, Converter={StaticResource BooleanToVisibilityConverter}}" Width="320" />
@@ -148,7 +173,8 @@
             OpenPaneLength="320">
             <SplitView.Pane>
                 <ListBox 
-                    ItemsSource="{Binding Pages, Converter={StaticResource PageSortConverter}}" 
+                    Name="MenuList"
+                    ItemsSource="{Binding Pages}" 
                     SelectedItem="{Binding SelectedPage, Mode=TwoWay, Converter={StaticResource ObjectToEditableModelConverter}}" 
                     ItemContainerStyle="{StaticResource MenuListBoxItemStyle}">
                     <ListBox.ItemTemplate>

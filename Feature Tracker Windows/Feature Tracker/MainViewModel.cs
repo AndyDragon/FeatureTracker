@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using FontAwesome.UWP;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,15 +12,17 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
 using Windows.UI;
-using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 
 namespace FeatureTracker
 {
     public class MainViewModel : NotifyPropertyChanged, IDataManager
     {
-        private bool loadingPages = false;
+        private int operationCount = 0;
+
+        private readonly ApplicationDataContainer SettingsContainer = ApplicationData.Current.RoamingSettings;
 
         public MainViewModel()
         {
@@ -30,6 +33,28 @@ namespace FeatureTracker
                 AddModel(page);
                 Pages.Add(page);
                 SelectedPage = page;
+            });
+            sortByNameCommand = new Command(() =>
+            {
+                pageSort = PageComparer.NameComparer;
+                SettingsContainer.Values["PageSort"] = (int)PageComparer.CompareMode.Name;
+                RefreshPages();
+            });
+            sortByCountCommand = new Command(() =>
+            {
+                pageSort = PageComparer.CountComparer;
+                SettingsContainer.Values["PageSort"] = (int)PageComparer.CompareMode.Count;
+                RefreshPages();
+            });
+            sortByFeaturesCommand = new Command(() =>
+            {
+                pageSort = PageComparer.FeaturesComparer;
+                SettingsContainer.Values["PageSort"] = (int)PageComparer.CompareMode.Features;
+                RefreshPages();
+            });
+            refreshPagesCommand = new Command(() =>
+            {
+                RefreshPages();
             });
             populateDefaultsCommand = new Command(PopulateDefaultPages);
             generateReportCommand = new Command(GenerateReport);
@@ -43,11 +68,29 @@ namespace FeatureTracker
                 Pages.Remove(page);
                 RemoveModel(page);
             });
-            Pages = new ObservableCollection<Page>();
+            Pages = new SortableModelCollection<Page>();
+
+            if (SettingsContainer.Values.ContainsKey("PageSort"))
+            {
+                switch ((PageComparer.CompareMode)SettingsContainer.Values["PageSort"])
+                {
+                    case PageComparer.CompareMode.Count:
+                        pageSort = PageComparer.CountComparer;
+                        break;
+                    case PageComparer.CompareMode.Features:
+                        pageSort = PageComparer.FeaturesComparer;
+                        break;
+                    default:
+                        pageSort = PageComparer.NameComparer;
+                        break;
+                }
+            }
+
             AddModelCollection(Pages);
-            loadingPages = true;
+            StartOperation();
             LoadPages();
-            loadingPages = false;
+            Pages.SortBy(pageSort);
+            StopOperation();
         }
 
         private void LoadPages()
@@ -132,11 +175,26 @@ namespace FeatureTracker
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
-                // TODO notify the user loading data failed.
+                // TODO notify the user saving data failed.
             }
         }
 
-        public ObservableCollection<Page> Pages { get; private set; }
+        private void RefreshPages()
+        {
+            StartOperation();
+            var oldSelectedPage = SelectedPage;
+            SelectedPage = null;
+            Pages.SortBy(pageSort);
+            StopOperation();
+            SelectedPage = oldSelectedPage;
+            OnPropertyChanged(nameof(SortedByNameCheck));
+            OnPropertyChanged(nameof(SortedByCountCheck));
+            OnPropertyChanged(nameof(SortedByFeaturesCheck));
+        }
+
+        public SortableModelCollection<Page> Pages { get; private set; }
+
+        private PageComparer pageSort = PageComparer.NameComparer;
 
         private Page selectedPage = null;
         public Page SelectedPage
@@ -164,6 +222,18 @@ namespace FeatureTracker
         private readonly ICommand addPageCommand;
         public ICommand AddPageCommand => addPageCommand;
 
+        private readonly ICommand sortByNameCommand;
+        public ICommand SortByNameCommand => sortByNameCommand;
+
+        private readonly ICommand sortByCountCommand;
+        public ICommand SortByCountCommand => sortByCountCommand;
+
+        private readonly ICommand sortByFeaturesCommand;
+        public ICommand SortByFeaturesCommand => sortByFeaturesCommand;
+
+        private readonly ICommand refreshPagesCommand;
+        public ICommand RefreshPagesCommand => refreshPagesCommand;
+
         private readonly ICommand populateDefaultsCommand;
         public ICommand PopulateDefaultsCommand => populateDefaultsCommand;
 
@@ -181,6 +251,12 @@ namespace FeatureTracker
 
         private readonly ICommand deletePageCommand;
         public ICommand DeletePageCommand => deletePageCommand;
+
+        public FontAwesomeIcon SortedByNameCheck => pageSort == PageComparer.NameComparer ? FontAwesomeIcon.Check : FontAwesomeIcon.None;
+
+        public FontAwesomeIcon SortedByCountCheck => pageSort == PageComparer.CountComparer ? FontAwesomeIcon.Check : FontAwesomeIcon.None;
+
+        public FontAwesomeIcon SortedByFeaturesCheck => pageSort == PageComparer.FeaturesComparer ? FontAwesomeIcon.Check : FontAwesomeIcon.None;
 
         private void PopulateDefaultPages()
         {
@@ -273,6 +349,8 @@ namespace FeatureTracker
                 "writings"
             };
 
+            StartOperation();
+
             foreach (var page in Pages)
             {
                 RemoveModel(page);
@@ -289,6 +367,10 @@ namespace FeatureTracker
             var papaNoelPage = new Page { Name = "papanoel", Count = 3 };
             AddModel(papaNoelPage);
             Pages.Add(papaNoelPage);
+
+            Pages.SortBy(pageSort);
+
+            StopOperation(true);
         }
 
         private int GetFeatures()
@@ -461,7 +543,7 @@ namespace FeatureTracker
                     var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
                     if (loadedPages != null)
                     {
-                        loadingPages = true;
+                        StartOperation();
                         foreach (var page in Pages)
                         {
                             RemoveModel(page);
@@ -473,8 +555,8 @@ namespace FeatureTracker
                             AddModel(page);
                             Pages.Add(page);
                         }
-                        loadingPages = false;
-                        StorePages();
+                        Pages.SortBy(pageSort);
+                        StopOperation(true);
                         // TODO notify the user the restore succeeded...
                     }
                     else
@@ -497,7 +579,7 @@ namespace FeatureTracker
                 if (model.ModelProperties.Contains(e.PropertyName))
                 {
                     // TODO trigger debouncer to save data...
-                    if (!loadingPages)
+                    if (operationCount == 0)
                     {
                         Debug.WriteLine("Saving data from model changed...");
                         StorePages();
@@ -522,7 +604,7 @@ namespace FeatureTracker
         private void OnModelCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             // TODO trigger debouncer to save data...
-            if (!loadingPages)
+            if (operationCount == 0)
             {
                 Debug.WriteLine("Saving data from collection changed...");
                 StorePages();
@@ -538,6 +620,20 @@ namespace FeatureTracker
         {
             collection.CollectionChanged -= OnModelCollectionChanged;
         }
+
+        public void StartOperation()
+        {
+            ++operationCount;
+        }
+
+        public void StopOperation(bool saveData = false)
+        {
+            --operationCount;
+            if (saveData && operationCount == 0)
+            {
+                StorePages();
+            }
+        }
     }
 
     public class Page : EditableModel
@@ -549,6 +645,10 @@ namespace FeatureTracker
 
         public Page()
         {
+            refreshFeaturesCommand = new Command(() =>
+            {
+                RefreshFeatures();
+            });
             addFeatureCommand = new Command(() =>
             {
                 var feature = new Feature() { Date = DateTime.Now };
@@ -564,7 +664,7 @@ namespace FeatureTracker
                 Features.Remove(feature);
                 DataManager.RemoveModel(feature);
             });
-            Features = new ObservableCollection<Feature>();
+            Features = new SortableModelCollection<Feature>();
             Features.CollectionChanged += (sender, e) =>
             {
                 Foreground = Features.Count == 0 ? WhiteBrush : CadetBlueBrush;
@@ -603,7 +703,17 @@ namespace FeatureTracker
             };
         }
 
-        public ObservableCollection<Feature> Features { get; private set; }
+        public SortableModelCollection<Feature> Features { get; private set; }
+
+        private void RefreshFeatures()
+        {
+            DataManager.StartOperation();
+            var oldSelectedFeature = SelectedFeature;
+            SelectedFeature = null;
+            Features.SortBy(FeatureComparer.DateComparer);
+            DataManager.StopOperation();
+            SelectedFeature = oldSelectedFeature;
+        }
 
         public string FeaturesCount
         {
@@ -663,22 +773,16 @@ namespace FeatureTracker
         }
 
         private readonly ICommand addFeatureCommand;
-        public ICommand AddFeatureCommand
-        {
-            get => addFeatureCommand;
-        }
+        public ICommand AddFeatureCommand => addFeatureCommand;
+
+        private readonly ICommand refreshFeaturesCommand;
+        public ICommand RefreshFeaturesCommand => refreshFeaturesCommand;
 
         private readonly ICommand closeFeatureCommand;
-        public ICommand CloseFeatureCommand
-        {
-            get => closeFeatureCommand;
-        }
+        public ICommand CloseFeatureCommand => closeFeatureCommand;
 
         private readonly ICommand deleteFeatureCommand;
-        public ICommand DeleteFeatureCommand
-        {
-            get => deleteFeatureCommand;
-        }
+        public ICommand DeleteFeatureCommand => deleteFeatureCommand;
 
         public override string[] ModelProperties => new[] { nameof(Name), nameof(Notes), nameof(Count) };
 
@@ -718,7 +822,7 @@ namespace FeatureTracker
         public Feature()
         {
             Id = Guid.NewGuid();
-            Title = Date./*ToLocalTime().*/ToString("D");
+            Title = Date.ToString("D");
             Foreground = WhiteBrush;
             AlternativeTitle = Raw ? "RAW" : "";
             SubTitle = Notes;
@@ -754,7 +858,7 @@ namespace FeatureTracker
             {
                 if (Set(ref date, value))
                 {
-                    Title = Date./*ToLocalTime().*/ToString("D");
+                    Title = Date.ToString("D");
                 }
             }
         }
@@ -810,19 +914,6 @@ namespace FeatureTracker
         public string Notes { get; set; } = "";
     }
 
-    public class UppercaseGuidConverter : JsonConverter<Guid>
-    {
-        public override void WriteJson(JsonWriter writer, Guid value, JsonSerializer serializer)
-        {
-            writer.WriteValue(value.ToString("D").ToUpper());
-        }
-
-        public override Guid ReadJson(JsonReader reader, Type objectType, Guid existingValue, bool hasExistingValue, JsonSerializer serializer)
-        {
-            return new Guid((string)reader.Value);
-        }
-    }
-
     public class JsonFeature
     {
         [JsonProperty(PropertyName = "dateV2")]
@@ -836,5 +927,18 @@ namespace FeatureTracker
 
         [JsonProperty(PropertyName = "raw")]
         public bool Raw { get; set; } = false;
+    }
+
+    public class UppercaseGuidConverter : JsonConverter<Guid>
+    {
+        public override void WriteJson(JsonWriter writer, Guid value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString("D").ToUpper());
+        }
+
+        public override Guid ReadJson(JsonReader reader, Type objectType, Guid existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            return new Guid((string)reader.Value);
+        }
     }
 }

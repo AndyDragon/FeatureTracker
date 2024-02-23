@@ -1,21 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Devices.Enumeration;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Navigation;
-
-// The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
 namespace FeatureTracker
 {
@@ -29,7 +14,7 @@ namespace FeatureTracker
         public MainPage()
         {
             this.InitializeComponent();
-            EditorFrame.Navigate(typeof(BlankPage), blankViewModel);
+            EditorFrame.Navigate(typeof(BlankPage), blankViewModel, new DrillInNavigationTransitionInfo());
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -50,11 +35,12 @@ namespace FeatureTracker
                 {
                     if (viewModel.SelectedPage != null && viewModel.SelectedPage.EditorPageType != null)
                     {
-                        EditorFrame.Navigate(viewModel.SelectedPage.EditorPageType, viewModel.SelectedPage);
+                        EditorFrame.Navigate(viewModel.SelectedPage.EditorPageType, viewModel.SelectedPage, new DrillInNavigationTransitionInfo());
+                        MenuList.ScrollIntoView(viewModel.SelectedPage);
                     }
                     else
                     {
-                        EditorFrame.Navigate(typeof(BlankPage), blankViewModel);
+                        EditorFrame.Navigate(typeof(BlankPage), blankViewModel, new DrillInNavigationTransitionInfo());
                     }
                 }
             };
