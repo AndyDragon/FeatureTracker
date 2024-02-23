@@ -12,6 +12,12 @@ struct FeatureEditor: View {
     var onDelete: () -> Void
     var onClose: () -> Void = {}
     
+    // Editor state
+    @State private var currentFeature: Feature? = nil
+    @State private var date = Date.now
+    @State private var raw = false
+    @State private var notes = ""
+    
     var body: some View {
         VStack {
             HStack {
@@ -30,13 +36,42 @@ struct FeatureEditor: View {
             }.padding([.bottom], 8)
             Form {
                 HStack(alignment: .center) {
-                    DatePicker("Date: ", selection: $feature.date, displayedComponents: [.date])
+                    DatePicker("Date: ", selection: $date, displayedComponents: [.date])
                         .datePickerStyle(.stepperField)
+                        .onChange(of: date, debounceTime: 1) { newValue in
+                            feature.date = newValue
+                        }
                     Spacer()
-                    Toggle("RAW", isOn: $feature.raw)
+                    Toggle("RAW", isOn: $raw)
+                        .onChange(of: raw, debounceTime: 1) { newValue in
+                            feature.raw = newValue
+                        }
                 }
-                TextField("Notes: ", text: $feature.notes, axis: .vertical)
+                TextField("Notes: ", text: $notes, axis: .vertical)
+                    .onChange(of: notes, debounceTime: 1) { newValue in
+                        feature.notes = newValue
+                    }
             }
         }
+        .onChange(of: feature, initial: true) {
+            // When the feature changes, initialize the editor, but save any in-flight data
+            storeInFlightData()
+            loadDataIntoEditor()
+            currentFeature = feature
+        }
+    }
+    
+    func storeInFlightData() {
+        if let oldFeature = currentFeature {
+            oldFeature.date = date
+            oldFeature.raw = raw
+            oldFeature.notes = notes
+        }
+    }
+    
+    func loadDataIntoEditor() {
+        date = feature.date
+        raw  = feature.raw
+        notes = feature.notes
     }
 }

@@ -16,6 +16,12 @@ struct PageEditor: View {
     var onClose: () -> Void = {}
     var onCloseFeature: () -> Void = {}
 
+    // Editor state
+    @State private var currentPage: Page? = nil
+    @State private var name = ""
+    @State private var notes = ""
+    @State private var count = 1
+
     var body: some View {
         VStack {
             HStack {
@@ -33,15 +39,24 @@ struct PageEditor: View {
                 .frame(alignment: .center)
             }.padding([.bottom], 8)
             Form {
-                TextField("Name: ", text: $page.name)
-                TextField("Notes: ", text: $page.notes, axis: .vertical)
-                Picker("Counts as: ", selection: $page.count) {
+                TextField("Name: ", text: $name)
+                    .onChange(of: name, debounceTime: 1) { newValue in
+                        page.name = newValue
+                    }
+                TextField("Notes: ", text: $notes, axis: .vertical)
+                    .onChange(of: notes, debounceTime: 1) { newValue in
+                        page.notes = newValue
+                    }
+                Picker("Counts as: ", selection: $count) {
                     ForEach(1..<6) {
                         Text("\($0)").tag($0)
                     }
                 }
                 .pickerStyle(.segmented)
                 .padding([.top], 1)
+                .onChange(of: count, debounceTime: 1) { newValue in
+                    page.count = newValue
+                }
             }
             Spacer()
                 .frame(height: 30)
@@ -77,5 +92,25 @@ struct PageEditor: View {
             Spacer()
         }
         .padding([.leading, .trailing, .bottom])
+        .onChange(of: page, initial: true) {
+            // When the page changes, initialize the editor, but save any in-flight data
+            storeInFlightData()
+            loadDataIntoEditor()
+            currentPage = page
+        }
+    }
+    
+    func storeInFlightData() {
+        if let oldPage = currentPage {
+            oldPage.name = name
+            oldPage.notes = notes
+            oldPage.count = count
+        }
+    }
+    
+    func loadDataIntoEditor() {
+        name = page.name
+        notes = page.notes
+        count  = page.count
     }
 }
