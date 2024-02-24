@@ -20,9 +20,10 @@ namespace FeatureTracker
     /// </summary>
     public partial class FeatureEditor : System.Windows.Controls.Page
     {
-        public FeatureEditor()
+        public FeatureEditor(MainViewModel? viewModel)
         {
             InitializeComponent();
+            DataContext = viewModel;
         }
     }
 }

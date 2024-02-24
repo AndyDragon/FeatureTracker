@@ -1,17 +1,185 @@
-﻿<Window x:Class="FeatureTracker.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:FeatureTracker"
-        xmlns:ui="http://schemas.modernwpf.com/2019"
-        ui:WindowHelper.UseModernWindowStyle="True"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+﻿<mah:MetroWindow
+    x:Class="FeatureTracker.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:FeatureTracker"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+    mc:Ignorable="d"
+    Title="Feature Tracker" 
+    Height="600" 
+    Width="960"
+    GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
+    ResizeMode="CanResizeWithGrip">
+
     <Window.DataContext>
         <local:MainViewModel />
     </Window.DataContext>
-    <Grid>
-        <Frame Name="PageEditor" />
+
+    <mah:MetroWindow.LeftWindowCommands>
+        <mah:WindowCommands>
+            <Button Command="{Binding ToggleSplitViewCommand}" ToolTip="Hides or shows the pages list">
+                <iconPacks:PackIconBootstrapIcons 
+                    Width="22"
+                    Height="22"
+                    Kind="LayoutSidebar" />
+            </Button>
+            <Button Command="{Binding AddPageCommand}" ToolTip="Adds a new page or challenge">
+                <iconPacks:PackIconBootstrapIcons 
+                    Width="22"
+                    Height="22"
+                    Kind="FilePlus" />
+            </Button>
+            <mah:DropDownButton>
+                <mah:DropDownButton.Items>
+                    <Button Command="{Binding SortByNameCommand}" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconBootstrapIcons
+                                Width="18"
+                                Height="18"
+                                Kind="{Binding SortedByNameCheck}" />
+                            <TextBlock Text="Sort by Name" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding SortByCountCommand}" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconBootstrapIcons
+                                Width="18"
+                                Height="18"
+                                Kind="{Binding SortedByCountCheck}" />
+                            <TextBlock Text="Sort by Count" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding SortByFeaturesCommand}" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconBootstrapIcons
+                                Width="18"
+                                Height="18"
+                                Kind="{Binding SortedByFeaturesCheck}" />
+                            <TextBlock Text="Sort by Features" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                </mah:DropDownButton.Items>
+                <mah:DropDownButton.Icon>
+                    <iconPacks:PackIconBoxIcons 
+                        Width="22"
+                        Height="22"
+                        Kind="RegularSortAlt2" />
+                </mah:DropDownButton.Icon>
+            </mah:DropDownButton>
+            <Button Command="{Binding RefreshPagesCommand}" ToolTip="Refreshes the page list">
+                <iconPacks:PackIconModern 
+                    Width="22"
+                    Height="22"
+                    Kind="Refresh" />
+            </Button>
+        </mah:WindowCommands>
+    </mah:MetroWindow.LeftWindowCommands>
+
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands>
+            <Button Command="{Binding PopulateDefaultsCommand}" Content="Populate Defaults" ToolTip="Resets the page list to the defaults">
+                <Button.ContentTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconBootstrapIcons 
+                                Width="22"
+                                Height="22"
+                                VerticalAlignment="Center"
+                                Kind="ExclamationCircle" />
+                            <TextBlock Margin="4 0 0 0"
+                                VerticalAlignment="Center"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Button.ContentTemplate>
+            </Button>
+            <Button Command="{Binding GenerateReportCommand}" ToolTip="Generates a report of the features">
+                <iconPacks:PackIconEntypo 
+                        Width="22"
+                        Height="22"
+                        Kind="Book" />
+            </Button>
+            <mah:DropDownButton>
+                <mah:DropDownButton.Items>
+                    <Button Command="{Binding BackupCommand}" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                            <iconPacks:PackIconMaterial 
+                                Width="18"
+                                Height="18"
+                                Kind="ClipboardArrowUpOutline" />
+                            <TextBlock Text="Backup to Clipboard" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding RestoreCommand}" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                            <iconPacks:PackIconMaterial 
+                                Width="18"
+                                Height="18"
+                                Kind="ClipboardArrowDownOutline" />
+                            <TextBlock Text="Restore from Clipboard" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                </mah:DropDownButton.Items>
+                <mah:DropDownButton.Icon>
+                    <iconPacks:PackIconMaterial 
+                        Width="22"
+                        Height="22"
+                        Kind="Safe" />
+                </mah:DropDownButton.Icon>
+            </mah:DropDownButton>
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <Color x:Key="SystemBaseMediumColor">#99FFFFFF</Color>
+            <SolidColorBrush x:Key="SplitViewBackgroundBrush" Opacity="1" Color="{StaticResource SystemBaseMediumColor}" />
+            <Style x:Key="PageListTextBlock" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#404048" />
+                <Setter Property="Background" Value="Transparent" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Background="Silver">
+        <mah:SplitView x:Name="PageSplitview"
+                       DisplayMode="Inline"
+                       IsPaneOpen="{Binding IsSplitViewPaneOpen}"
+                       CanResizeOpenPane="True"
+                       OpenPaneLength="260"
+                       PaneBackground="White">
+            <mah:SplitView.Pane>
+                <Grid>
+                    <ListBox x:Name="PageList"  ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage}" Margin="0,8,0,8">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="local:Page">
+                                <Grid Margin="8 0 8 4" HorizontalAlignment="Stretch">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="3*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Title, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" FontSize="16" TextTrimming="WordEllipsis" Foreground="{Binding Foreground, Mode=OneWay}" />
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding SubTitle, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" FontSize="10" TextTrimming="WordEllipsis" Foreground="#505058"/>
+                                    <TextBlock Grid.RowSpan="2" Grid.Column="1" Text="{Binding AlternativeTitle, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" FontSize="12" TextTrimming="WordEllipsis" Foreground="{Binding Foreground, Mode=OneWay}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </mah:SplitView.Pane>
+
+            <Grid Grid.Row="1" Background="CornflowerBlue">
+                <Frame x:Name="EditorFrame" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="20" NavigationUIVisibility="Hidden" />
+            </Grid>
+
+        </mah:SplitView>
     </Grid>
-</Window>
+    
+</mah:MetroWindow>

@@ -13,7 +13,6 @@ using Newtonsoft.Json;
 
 namespace FeatureTracker
 {
-    using FontAwesome5;
     using Properties;
 
     public class MainViewModel : NotifyPropertyChanged, IDataManager
@@ -62,6 +61,14 @@ namespace FeatureTracker
             closePageCommand = new Command(() => SelectedPage = null);
             deletePageCommand = new Command(() =>
             {
+                if (MessageBox.Show(
+                    "Are you sure you want to delete this page / challenge and all the features?",
+                    "Delete confirmation", 
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                {
+                    return;
+                }
                 var page = SelectedPage;
                 SelectedPage = null;
                 if (page != null)
@@ -233,11 +240,11 @@ namespace FeatureTracker
         private readonly ICommand deletePageCommand;
         public ICommand DeletePageCommand => deletePageCommand;
 
-        public EFontAwesomeIcon SortedByNameCheck => pageSort == PageComparer.NameComparer ? EFontAwesomeIcon.Solid_Check : EFontAwesomeIcon.None;
+        public string SortedByNameCheck => pageSort == PageComparer.NameComparer ? "Check" : "";
 
-        public EFontAwesomeIcon SortedByCountCheck => pageSort == PageComparer.CountComparer ? EFontAwesomeIcon.Solid_Check : EFontAwesomeIcon.None;
+        public string SortedByCountCheck => pageSort == PageComparer.CountComparer ? "Check" : "";
 
-        public EFontAwesomeIcon SortedByFeaturesCheck => pageSort == PageComparer.FeaturesComparer ? EFontAwesomeIcon.Solid_Check : EFontAwesomeIcon.None;
+        public string SortedByFeaturesCheck => pageSort == PageComparer.FeaturesComparer ? "Check" : "";
 
         private void PopulateDefaultPages()
         {
@@ -330,6 +337,15 @@ namespace FeatureTracker
                 "writings"
             };
 
+            if (MessageBox.Show(
+                "This will remove all features and custom pages and cannot be undone!", 
+                "Are you sure?", 
+                MessageBoxButton.YesNo, 
+                MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
             StartOperation();
 
             foreach (var page in Pages)
@@ -352,6 +368,8 @@ namespace FeatureTracker
             Pages.SortBy(pageSort);
 
             StopOperation(true);
+
+            // TODO show toast
         }
 
         private int GetFeatures()
@@ -606,7 +624,7 @@ namespace FeatureTracker
 
     public class Page : EditableModel
     {
-        private static readonly SolidColorBrush WhiteBrush = new(Colors.White);
+        private static readonly SolidColorBrush DarkBrush = new(Color.FromRgb(0x40, 0x40, 0x48));
         private static readonly SolidColorBrush CadetBlueBrush = new(Colors.CadetBlue);
 
         private readonly Func<int, string> GetSuffix = count => count != 1 ? "s" : "";
@@ -627,6 +645,14 @@ namespace FeatureTracker
             closeFeatureCommand = new Command(() => SelectedFeature = null);
             deleteFeatureCommand = new Command(() =>
             {
+                if (MessageBox.Show(
+                    "Are you sure you want to delete this feature?",
+                    "Delete confirmation",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                {
+                    return;
+                }
                 var feature = SelectedFeature;
                 SelectedFeature = null;
                 if (feature != null)
@@ -637,15 +663,15 @@ namespace FeatureTracker
             });
             Features.CollectionChanged += (sender, e) =>
             {
-                Foreground = Features.Count == 0 ? WhiteBrush : CadetBlueBrush;
-                AlternativeTitle = $"{Features.Count} Feature{GetSuffix(Features.Count)}";
+                Foreground = Features.Count == 0 ? DarkBrush : CadetBlueBrush;
+                AlternativeTitle = $"{Features.Count} feature{GetSuffix(Features.Count)}";
                 OnPropertyChanged(nameof(FeaturesCount));
             };
             Title = Name.ToUpper();
-            Foreground = Features.Count == 0 ? WhiteBrush : CadetBlueBrush;
-            AlternativeTitle = $"{Features.Count} Feature{GetSuffix(Features.Count)}";
+            Foreground = Features.Count == 0 ? DarkBrush : CadetBlueBrush;
+            AlternativeTitle = $"{Features.Count} feature{GetSuffix(Features.Count)}";
             SubTitle = $"(counts as {Count})";
-            EditorPageType = typeof(PageEditor);
+            EditorPageFactory = (parameter) => new PageEditor(parameter as MainViewModel);
         }
 
         public Page(JsonPage jsonPage) : this()
@@ -790,7 +816,7 @@ namespace FeatureTracker
             Foreground = WhiteBrush;
             AlternativeTitle = Raw ? "RAW" : "";
             SubTitle = Notes;
-            EditorPageType = typeof(FeatureEditor);
+            EditorPageFactory = (parameter) => new FeatureEditor(parameter as MainViewModel);
         }
 
         public Feature(JsonFeature jsonFeature) : this()

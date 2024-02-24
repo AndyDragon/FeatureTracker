@@ -40,11 +40,11 @@ namespace FeatureTracker
             set => Set(ref foreground, value);
         }
 
-        private Type? editorPageType = null;
-        public Type? EditorPageType
+        private Func<object, System.Windows.Controls.Page>? editorPageFactory = null;
+        public Func<object, System.Windows.Controls.Page>? EditorPageFactory
         {
-            get => editorPageType;
-            set => Set(ref editorPageType, value);
+            get => editorPageFactory;
+            set => Set(ref editorPageFactory, value);
         }
     }
 }

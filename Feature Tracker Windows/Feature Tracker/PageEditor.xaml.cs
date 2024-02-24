@@ -1,17 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Diagnostics;
 
 namespace FeatureTracker
 {
@@ -20,9 +8,41 @@ namespace FeatureTracker
     /// </summary>
     public partial class PageEditor : System.Windows.Controls.Page
     {
-        public PageEditor()
+        public static readonly BlankViewModel blankViewModel = new() { Message = "Select a feature" };
+
+        public PageEditor(MainViewModel? viewModel)
         {
             InitializeComponent();
+            DataContext = viewModel;
+            EditorFrame.Navigate(new BlankPage(blankViewModel));
+
+            if (viewModel != null)
+            {
+                ConnectViewModel(viewModel);
+            }
+        }
+
+        private void ConnectViewModel(MainViewModel viewModel)
+        {
+            if (viewModel.SelectedPage == null)
+            {
+                return;
+            }
+            viewModel.SelectedPage.PropertyChanged += (sender, e) =>
+            {
+                if (e.PropertyName == "SelectedFeature")
+                {
+                    if (viewModel.SelectedPage?.SelectedFeature != null && viewModel.SelectedPage?.SelectedFeature?.EditorPageFactory != null)
+                    {
+                        EditorFrame.Navigate(viewModel.SelectedPage.SelectedFeature.EditorPageFactory(viewModel));
+                        FeatureList.ScrollIntoView(viewModel.SelectedPage.SelectedFeature);
+                    }
+                    else
+                    {
+                        EditorFrame.Navigate(new BlankPage(blankViewModel));
+                    }
+                }
+            };
         }
     }
 }
