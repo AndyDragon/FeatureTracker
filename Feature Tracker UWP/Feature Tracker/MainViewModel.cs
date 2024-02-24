@@ -1,28 +1,28 @@
-﻿using System;
+﻿using FontAwesome.UWP;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.IsolatedStorage;
+using System.Linq;
 using System.Text;
-using System.Windows;
+using System.Threading.Tasks;
 using System.Windows.Input;
-using Newtonsoft.Json;
-using Notification.Wpf;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
+using Windows.UI;
+using Windows.UI.Xaml.Media;
 
 namespace FeatureTracker
 {
-    using ControlzEx.Theming;
-    using MahApps.Metro.Controls.Dialogs;
-    using MahApps.Metro.IconPacks;
-    using Properties;
-    using System.Reflection;
-    using System.Windows.Threading;
-
     public class MainViewModel : NotifyPropertyChanged, IDataManager
     {
         private int operationCount = 0;
+
+        private readonly ApplicationDataContainer SettingsContainer = ApplicationData.Current.RoamingSettings;
 
         public MainViewModel()
         {
@@ -34,25 +34,22 @@ namespace FeatureTracker
                 Pages.Add(page);
                 SelectedPage = page;
             });
-            setPageSortCommand = new CommandWithParameter((parameter) =>
+            sortByNameCommand = new Command(() =>
             {
-                var compareMode = parameter != null 
-                    ? (PageComparer.CompareMode)parameter 
-                    : PageComparer.CompareMode.Name;
-                switch (compareMode)
-                {
-                    case PageComparer.CompareMode.Name:
-                        pageSort = PageComparer.NameComparer;
-                        break;
-                    case PageComparer.CompareMode.Count:
-                        pageSort = PageComparer.CountComparer;
-                        break;
-                    case PageComparer.CompareMode.Features:
-                        pageSort = PageComparer.FeaturesComparer;
-                        break;
-                }
-                Settings.Default.PageSort = (int)compareMode;
-                Settings.Default.Save();
+                pageSort = PageComparer.NameComparer;
+                SettingsContainer.Values["PageSort"] = (int)PageComparer.CompareMode.Name;
+                RefreshPages();
+            });
+            sortByCountCommand = new Command(() =>
+            {
+                pageSort = PageComparer.CountComparer;
+                SettingsContainer.Values["PageSort"] = (int)PageComparer.CompareMode.Count;
+                RefreshPages();
+            });
+            sortByFeaturesCommand = new Command(() =>
+            {
+                pageSort = PageComparer.FeaturesComparer;
+                SettingsContainer.Values["PageSort"] = (int)PageComparer.CompareMode.Features;
                 RefreshPages();
             });
             refreshPagesCommand = new Command(() =>
@@ -61,108 +58,88 @@ namespace FeatureTracker
             });
             populateDefaultsCommand = new Command(PopulateDefaultPages);
             generateReportCommand = new Command(GenerateReport);
-            startBackupOperationCommand = new CommandWithParameter((parameter) =>
-            {
-                var operation = (parameter != null) 
-                    ? (BackupOperation)parameter 
-                    : BackupOperation.BackupToClipboard;
-                switch (operation)
-                {
-                    case BackupOperation.BackupToClipboard:
-                        BackupToClipboard();
-                        break;
-                    case BackupOperation.RestoreFromClipboard:
-                        RestoreFromClipboard();
-                        break;
-                }
-            });
+            backupCommand = new Command(BackupToClipboard);
+            restoreCommand = new Command(() => _ = RestoreFromClipboard());
             closePageCommand = new Command(() => SelectedPage = null);
-            deletePageCommand = new Command(async () =>
+            deletePageCommand = new Command(() =>
             {
-                if (!await ShowConfirmationMessage(
-                    "Delete page / challenge",
-                    "Are you sure you want to delete this page / challenge and all the features, this cannot be undone!"))
-                {
-                    return;
-                }
                 var page = SelectedPage;
                 SelectedPage = null;
-                if (page != null)
-                {
-                    Pages.Remove(page);
-                    RemoveModel(page);
-                }
-                ShowToast("Deleted page", "Removed the page or challenge and all the features", NotificationType.Notification);
+                Pages.Remove(page);
+                RemoveModel(page);
             });
-            rotateThemeCommand = new Command(RotateTheme);
+            Pages = new SortableModelCollection<Page>();
 
-            pageSort = (PageComparer.CompareMode)Settings.Default.PageSort switch
+            if (SettingsContainer.Values.ContainsKey("PageSort"))
             {
-                PageComparer.CompareMode.Count => PageComparer.CountComparer,
-                PageComparer.CompareMode.Features => PageComparer.FeaturesComparer,
-                _ => PageComparer.NameComparer,
-            };
+                switch ((PageComparer.CompareMode)SettingsContainer.Values["PageSort"])
+                {
+                    case PageComparer.CompareMode.Count:
+                        pageSort = PageComparer.CountComparer;
+                        break;
+                    case PageComparer.CompareMode.Features:
+                        pageSort = PageComparer.FeaturesComparer;
+                        break;
+                    default:
+                        pageSort = PageComparer.NameComparer;
+                        break;
+                }
+            }
+
             AddModelCollection(Pages);
             StartOperation();
             LoadPages();
             Pages.SortBy(pageSort);
             StopOperation();
-            foreach (var pageSortOption in pageSortOptions)
-            {
-                pageSortOption.IsSelected = pageSortOption.Comparer == pageSort;
-            }
-            OnPropertyChanged(nameof(PageSortOptions));
         }
 
         private void LoadPages()
         {
             try
             {
-                using var isoStore =
+                using (var isoStore =
                 IsolatedStorageFile.GetStore(
                     IsolatedStorageScope.User |
                     IsolatedStorageScope.Assembly |
                     IsolatedStorageScope.Roaming,
                     null,
-                    null);
-                if (isoStore != null)
+                    null))
                 {
-                    using (var stream = isoStore.OpenFile("PagesStore", FileMode.Open))
+                    if (isoStore != null)
                     {
-                        if (stream != null)
+                        using (var stream = isoStore.OpenFile("PagesStore", FileMode.Open))
                         {
-                            using (var streamReader = new StreamReader(stream))
+                            if (stream != null)
                             {
-                                var json = streamReader.ReadToEnd();
-                                if (!string.IsNullOrEmpty(json))
+                                using (var streamReader = new StreamReader(stream))
                                 {
-                                    var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
-                                    if (loadedPages != null)
+                                    var json = streamReader.ReadToEnd();
+                                    if (!string.IsNullOrEmpty(json))
                                     {
-                                        foreach (var loadedPage in loadedPages)
+                                        var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
+                                        if (loadedPages != null)
                                         {
-                                            var page = new Page(loadedPage);
-                                            AddModel(page);
-                                            Pages.Add(page);
+                                            foreach (var loadedPage in loadedPages)
+                                            {
+                                                var page = new Page(loadedPage);
+                                                AddModel(page);
+                                                Pages.Add(page);
+                                            }
                                         }
                                     }
+                                    streamReader.Close();
                                 }
-                                streamReader.Close();
+                                stream.Close();
                             }
-                            stream.Close();
                         }
+                        isoStore.Close();
                     }
-                    isoStore.Close();
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
-                ShowToast(
-                    "Loading data failed",
-                    "An error occurred loading the data from storage: " + ex.Message,
-                    NotificationType.Error,
-                    TimeSpan.FromSeconds(10));
+                // TODO notify the user loading data failed.
             }
         }
 
@@ -170,144 +147,66 @@ namespace FeatureTracker
         {
             try
             {
-                using var isoStore =
+                using (var isoStore =
                     IsolatedStorageFile.GetStore(
                         IsolatedStorageScope.User |
                         IsolatedStorageScope.Assembly |
                         IsolatedStorageScope.Roaming,
                         null,
-                        null);
-                if (isoStore != null)
+                        null))
                 {
-                    using (var stream = isoStore.OpenFile("PagesStore", FileMode.Create))
+                    if (isoStore != null)
                     {
-                        var jsonPages = Pages.Select(page => page.ToJson());
-                        var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
-                        using (var streamWriter = new StreamWriter(stream))
+                        using (var stream = isoStore.OpenFile("PagesStore", FileMode.Create))
                         {
-                            streamWriter.Write(json);
-                            streamWriter.Flush();
+                            var jsonPages = Pages.Select(page => page.ToJson());
+                            var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
+                            using (var streamWriter = new StreamWriter(stream))
+                            {
+                                streamWriter.Write(json);
+                                streamWriter.Flush();
+                            }
+                            stream.Close();
                         }
-                        stream.Close();
+                        isoStore.Close();
                     }
-                    isoStore.Close();
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
-                ShowToast(
-                    "Saving data failed",
-                    "An error occurred saving the data to storage: " + ex.Message,
-                    NotificationType.Error,
-                    TimeSpan.FromSeconds(10));
+                // TODO notify the user saving data failed.
             }
         }
 
         private void RefreshPages()
         {
-            SetBusy(true);
             StartOperation();
             var oldSelectedPage = SelectedPage;
             SelectedPage = null;
             Pages.SortBy(pageSort);
             StopOperation();
             SelectedPage = oldSelectedPage;
-            foreach (var pageSortOption in pageSortOptions)
-            {
-                pageSortOption.IsSelected = pageSortOption.Comparer == pageSort;
-            }
-            OnPropertyChanged(nameof(PageSortOptions));
+            OnPropertyChanged(nameof(SortedByNameCheck));
+            OnPropertyChanged(nameof(SortedByCountCheck));
+            OnPropertyChanged(nameof(SortedByFeaturesCheck));
         }
 
-        private static bool IsBusy { get; set; } = false;
-        public static void SetBusy(bool busy)
-        {
-            if (busy != IsBusy)
-            {
-                IsBusy = busy;
-                Mouse.OverrideCursor = IsBusy ? Cursors.Wait : null;
-                if (IsBusy)
-                {
-                    _ = new DispatcherTimer(TimeSpan.FromSeconds(0.5), DispatcherPriority.ApplicationIdle, OnDispatcherTimerTick, Application.Current.Dispatcher);
-                }
-            }
-        }
-
-        private static void OnDispatcherTimerTick(object? sender, EventArgs e)
-        {
-            if (sender is DispatcherTimer dispatcherTimer)
-            {
-                SetBusy(false);
-                dispatcherTimer.Stop();
-            }
-        }
-
-        public void ShowToast(
-            string title,
-            string message,
-            NotificationType type = NotificationType.Success,
-            TimeSpan? duration = null)
-        {
-            notificationManager.Show(title, message, type: type, areaName: "WindowArea", expirationTime: duration ?? TimeSpan.FromSeconds(3));
-        }
-
-        public static async Task<bool> ShowConfirmationMessage(
-            string title,
-            string message)
-        {
-            // This demo runs on .Net 4.0, but we're using the Microsoft.Bcl.Async package so we have async/await support
-            // The package is only used by the demo and not a dependency of the library!
-            var settings = new MetroDialogSettings()
-            {
-                AffirmativeButtonText = "  Yes please  ",
-                NegativeButtonText = "  No thanks  ",
-                DialogButtonFontSize = 16D,
-                DefaultButtonFocus = MessageDialogResult.Negative,
-            };
-
-            if (Application.Current?.MainWindow is MahApps.Metro.Controls.MetroWindow mainWindow)
-            {
-                return (await mainWindow.ShowMessageAsync(
-                    title,
-                    message,
-                    MessageDialogStyle.AffirmativeAndNegative,
-                    settings)) == MessageDialogResult.Affirmative;
-            }
-            else
-            {
-                return MessageBox.Show(
-                    message,
-                    title,
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question) == MessageBoxResult.Yes;
-            }
-        }
-
-        private readonly NotificationManager notificationManager = new();
-
-        public SortableModelCollection<Page> Pages { get; } = [];
+        public SortableModelCollection<Page> Pages { get; private set; }
 
         private PageComparer pageSort = PageComparer.NameComparer;
 
-        private readonly SortOption<Page>[] pageSortOptions = [
-            new SortOption<Page> { Comparer = PageComparer.NameComparer, Label = "Sort by Name", IsSelected = false, CompareMode = (int)PageComparer.CompareMode.Name },
-            new SortOption<Page> { Comparer = PageComparer.CountComparer, Label = "Sort by Count", IsSelected = false, CompareMode = (int)PageComparer.CompareMode.Count },
-            new SortOption<Page> { Comparer = PageComparer.FeaturesComparer, Label = "Sort by Features", IsSelected = false, CompareMode = (int)PageComparer.CompareMode.Features },
-        ];
-        public SortOption<Page>[] PageSortOptions => pageSortOptions;
-
-        private readonly BackupOperationOption[] backupOperationOptions = [
-            new BackupOperationOption { Label = "Backup to Clipboard", IconKind = PackIconMaterialKind.ClipboardArrowUpOutline, Operation = BackupOperation.BackupToClipboard },
-            new BackupOperationOption { Label = "Restore from Clipboard", IconKind = PackIconMaterialKind.ClipboardArrowDownOutline, Operation = BackupOperation.RestoreFromClipboard },
-        ];
-        public BackupOperationOption[] BackupOperationOptions => backupOperationOptions;
-
-        private Page? selectedPage = null;
-        public Page? SelectedPage
+        private Page selectedPage = null;
+        public Page SelectedPage
         {
             get => selectedPage;
-            set => Set(ref selectedPage, value);
+            set
+            {
+                if (Set(ref selectedPage, value))
+                {
+
+                }
+            }
         }
 
         private bool isSplitViewPaneOpen = true;
@@ -323,8 +222,14 @@ namespace FeatureTracker
         private readonly ICommand addPageCommand;
         public ICommand AddPageCommand => addPageCommand;
 
-        private readonly ICommand setPageSortCommand;
-        public ICommand SetPageSortCommand => setPageSortCommand;
+        private readonly ICommand sortByNameCommand;
+        public ICommand SortByNameCommand => sortByNameCommand;
+
+        private readonly ICommand sortByCountCommand;
+        public ICommand SortByCountCommand => sortByCountCommand;
+
+        private readonly ICommand sortByFeaturesCommand;
+        public ICommand SortByFeaturesCommand => sortByFeaturesCommand;
 
         private readonly ICommand refreshPagesCommand;
         public ICommand RefreshPagesCommand => refreshPagesCommand;
@@ -335,8 +240,11 @@ namespace FeatureTracker
         private readonly ICommand generateReportCommand;
         public ICommand GenerateReportCommand => generateReportCommand;
 
-        private readonly ICommand startBackupOperationCommand;
-        public ICommand StartBackupOperationCommand => startBackupOperationCommand;
+        private readonly ICommand backupCommand;
+        public ICommand BackupCommand => backupCommand;
+
+        private readonly ICommand restoreCommand;
+        public ICommand RestoreCommand => restoreCommand;
 
         private readonly ICommand closePageCommand;
         public ICommand ClosePageCommand => closePageCommand;
@@ -344,45 +252,13 @@ namespace FeatureTracker
         private readonly ICommand deletePageCommand;
         public ICommand DeletePageCommand => deletePageCommand;
 
-        private readonly ICommand rotateThemeCommand;
-        public ICommand RotateThemeCommand => rotateThemeCommand;
+        public FontAwesomeIcon SortedByNameCheck => pageSort == PageComparer.NameComparer ? FontAwesomeIcon.Check : FontAwesomeIcon.None;
 
-        private Theme? theme = ThemeManager.Current.DetectTheme();
-        private Theme? Theme
-        {
-            get => theme;
-            set
-            {
-                if (Set(ref theme, value))
-                {
-                    OnPropertyChanged(nameof(ThemeName));
+        public FontAwesomeIcon SortedByCountCheck => pageSort == PageComparer.CountComparer ? FontAwesomeIcon.Check : FontAwesomeIcon.None;
 
-                }
-            }
-        }
-        public string ThemeName
-        {
-            get => Theme?.DisplayName ?? "unknown";
-        }
+        public FontAwesomeIcon SortedByFeaturesCheck => pageSort == PageComparer.FeaturesComparer ? FontAwesomeIcon.Check : FontAwesomeIcon.None;
 
-        public static string Version => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "---";
-
-        private void RotateTheme()
-        {
-            var themes = ThemeManager.Current.Themes;
-            var indexOfCurrent = Theme != null ? themes.IndexOf(Theme) : -1;
-            var newTheme = themes[0];
-            if (indexOfCurrent != -1 && indexOfCurrent != themes.Count - 1)
-            {
-                newTheme = themes[indexOfCurrent + 1];
-            }
-            ThemeManager.Current.ChangeTheme(Application.Current, newTheme);
-            Theme = newTheme;
-            Settings.Default.Theme = newTheme.Name;
-            Settings.Default.Save();
-        }
-
-        private async void PopulateDefaultPages()
+        private void PopulateDefaultPages()
         {
             var singleFeaturePages = new[] {
                 "abandoned",
@@ -473,14 +349,6 @@ namespace FeatureTracker
                 "writings"
             };
 
-            if (!await ShowConfirmationMessage(
-                "Populate defaults",
-                "Are you sure you want to remove all features and custom pages, this cannot be undone!"))
-            {
-                return;
-            }
-
-            SetBusy(true);
             StartOperation();
 
             foreach (var page in Pages)
@@ -503,8 +371,6 @@ namespace FeatureTracker
             Pages.SortBy(pageSort);
 
             StopOperation(true);
-
-            ShowToast("Populated the defaults", $"Populated {Pages.Count} default pages and challenges");
         }
 
         private int GetFeatures()
@@ -547,7 +413,7 @@ namespace FeatureTracker
             return count;
         }
 
-        private static string GetStringForCount(int count, string baseString, string? pluralString = null)
+        private string GetStringForCount(int count, string baseString, string pluralString = null)
         {
             if (count == 1)
             {
@@ -593,8 +459,6 @@ namespace FeatureTracker
 
         private void GenerateReport()
         {
-            SetBusy(true);
-
             var builder = new StringBuilder();
             builder.AppendLine("Report of features");
             builder.AppendLine("------------------");
@@ -646,38 +510,36 @@ namespace FeatureTracker
                 }
             }
 
-            Clipboard.SetText(builder.ToString());
+            SetClipboard(builder.ToString());
+        }
 
-            ShowToast("Report generated", "Copied the report of features to the clipboard");
+        private void SetClipboard(string text)
+        {
+            // Set the clipboard.
+            var package = new DataPackage
+            {
+                RequestedOperation = DataPackageOperation.Copy
+            };
+            package.SetText(text);
+            Clipboard.SetContent(package);
+
         }
 
         private void BackupToClipboard()
         {
-            SetBusy(true);
-
             var jsonPages = Pages.OrderBy(page => page.Name).Select(page => page.ToJson());
             var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
-            Clipboard.SetText(json);
-
-            ShowToast("Backup complete", "Copied a backup of the pages and features to the clipboard");
+            SetClipboard(json);
         }
 
-        private async void RestoreFromClipboard()
+        private async Task RestoreFromClipboard()
         {
-            if (Clipboard.ContainsText())
+            DataPackageView dataPackageView = Clipboard.GetContent();
+            if (dataPackageView.Contains(StandardDataFormats.Text))
             {
-                SetBusy(true);
-
-                string json = Clipboard.GetText();
+                string json = await dataPackageView.GetTextAsync();
                 try
                 {
-                    if (!await ShowConfirmationMessage(
-                        "Restore from clipboard",
-                        "Are you sure you want to reset all features and pages to the backup, this cannot be undone!"))
-                    {
-                        return;
-                    }
-
                     var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
                     if (loadedPages != null)
                     {
@@ -695,39 +557,22 @@ namespace FeatureTracker
                         }
                         Pages.SortBy(pageSort);
                         StopOperation(true);
-
-                        ShowToast("Restore complete", $"Restored {Pages.Count} pages and challenges from the clipboard");
+                        // TODO notify the user the restore succeeded...
                     }
                     else
                     {
-                        ShowToast(
-                            "Restore failed",
-                            "Failed to restore from clipboard, there were no pages loaded",
-                            NotificationType.Error,
-                            TimeSpan.FromSeconds(5));
+                        // TODO notify the user the restore failed...
                     }
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine(ex.Message);
-                    ShowToast(
-                        "Restore failed",
-                        "An error occurred restoring from clipboard, invalid data: " + ex.Message,
-                        NotificationType.Error,
-                        TimeSpan.FromSeconds(5));
+                    // TODO notify the user the restore failed...
                 }
-            }
-            else
-            {
-                ShowToast(
-                    "Restore failed",
-                    "The clipboard did not include any text to restore",
-                    NotificationType.Error,
-                    TimeSpan.FromSeconds(5));
             }
         }
 
-        private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
+        private void OnModelChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (sender is Model model)
             {
@@ -756,7 +601,7 @@ namespace FeatureTracker
             model.PropertyChanged -= OnModelChanged;
         }
 
-        private void OnModelCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        private void OnModelCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             // TODO trigger debouncer to save data...
             if (operationCount == 0)
@@ -789,15 +634,15 @@ namespace FeatureTracker
                 StorePages();
             }
         }
-
-        internal void ResetTheme(Theme theme)
-        {
-            Theme = theme;
-        }
     }
 
     public class Page : EditableModel
     {
+        private static readonly SolidColorBrush WhiteBrush = new SolidColorBrush(Colors.White);
+        private static readonly SolidColorBrush CadetBlueBrush = new SolidColorBrush(Colors.CadetBlue);
+
+        private readonly Func<int, string> GetSuffix = count => count != 1 ? "s" : "";
+
         public Page()
         {
             refreshFeaturesCommand = new Command(() =>
@@ -807,39 +652,30 @@ namespace FeatureTracker
             addFeatureCommand = new Command(() =>
             {
                 var feature = new Feature() { Date = DateTime.Now };
-                DataManager?.AddModel(feature);
+                DataManager.AddModel(feature);
                 Features.Add(feature);
                 SelectedFeature = feature;
             });
             closeFeatureCommand = new Command(() => SelectedFeature = null);
-            deleteFeatureCommand = new Command(async () =>
+            deleteFeatureCommand = new Command(() =>
             {
-                if (!await MainViewModel.ShowConfirmationMessage(
-                    "Delete feature",
-                    "Are you sure you want to delete this feature, this cannot be undone!"))
-                {
-                    return;
-                }
                 var feature = SelectedFeature;
                 SelectedFeature = null;
-                if (feature != null)
-                {
-                    Features.Remove(feature);
-                    DataManager?.RemoveModel(feature);
-                }
-                DataManager?.ShowToast("Deleted feature", "Removed the page or challenge and all the features", NotificationType.Notification);
+                Features.Remove(feature);
+                DataManager.RemoveModel(feature);
             });
+            Features = new SortableModelCollection<Feature>();
             Features.CollectionChanged += (sender, e) =>
             {
-                FontWeight = Features.Count > 0 ? FontWeights.Bold : FontWeights.Normal;
-                AlternativeTitle = $"({Features.Count})";
-                OnPropertyChanged(nameof(FeaturesCount));
+                Foreground = Features.Count == 0 ? WhiteBrush : CadetBlueBrush;
+                AlternativeTitle = $"{Features.Count} Feature{GetSuffix(Features.Count)}";
+                OnPropertyChanged("FeaturesCount");
             };
             Title = Name.ToUpper();
-            FontWeight = Features.Count > 0 ? FontWeights.Bold : FontWeights.Normal;
-            AlternativeTitle = $"({Features.Count})";
+            Foreground = Features.Count == 0 ? WhiteBrush : CadetBlueBrush;
+            AlternativeTitle = $"{Features.Count} Feature{GetSuffix(Features.Count)}";
             SubTitle = $"(counts as {Count})";
-            EditorPageFactory = (parameter) => new PageEditor(parameter as MainViewModel);
+            EditorPageType = typeof(PageEditor);
         }
 
         public Page(JsonPage jsonPage) : this()
@@ -867,16 +703,15 @@ namespace FeatureTracker
             };
         }
 
-        public SortableModelCollection<Feature> Features { get; } = [];
+        public SortableModelCollection<Feature> Features { get; private set; }
 
         private void RefreshFeatures()
         {
-            MainViewModel.SetBusy(true);
-            DataManager?.StartOperation();
+            DataManager.StartOperation();
             var oldSelectedFeature = SelectedFeature;
             SelectedFeature = null;
             Features.SortBy(FeatureComparer.DateComparer);
-            DataManager?.StopOperation();
+            DataManager.StopOperation();
             SelectedFeature = oldSelectedFeature;
         }
 
@@ -889,11 +724,17 @@ namespace FeatureTracker
             }
         }
 
-        private Feature? selectedFeature = null;
-        public Feature? SelectedFeature
+        private Feature selectedFeature = null;
+        public Feature SelectedFeature
         {
             get => selectedFeature;
-            set => Set(ref selectedFeature, value);
+            set
+            {
+                if (Set(ref selectedFeature, value))
+                {
+
+                }
+            }
         }
 
         public Guid Id { get; private set; }
@@ -943,12 +784,12 @@ namespace FeatureTracker
         private readonly ICommand deleteFeatureCommand;
         public ICommand DeleteFeatureCommand => deleteFeatureCommand;
 
-        public override string[] ModelProperties => [nameof(Name), nameof(Notes), nameof(Count)];
+        public override string[] ModelProperties => new[] { nameof(Name), nameof(Notes), nameof(Count) };
 
-        public override string[] ModelCollectionProperties => [nameof(Features)];
+        public override string[] ModelCollectionProperties => new[] { nameof(Features) };
 
-        private IDataManager? dataManager;
-        public override IDataManager? DataManager
+        private IDataManager dataManager;
+        public override IDataManager DataManager
         {
             get => dataManager;
             set
@@ -976,13 +817,16 @@ namespace FeatureTracker
 
     public class Feature : EditableModel
     {
+        private static readonly SolidColorBrush WhiteBrush = new SolidColorBrush(Colors.White);
+
         public Feature()
         {
             Id = Guid.NewGuid();
             Title = Date.ToString("D");
+            Foreground = WhiteBrush;
             AlternativeTitle = Raw ? "RAW" : "";
             SubTitle = Notes;
-            EditorPageFactory = (parameter) => new FeatureEditor(parameter as MainViewModel);
+            EditorPageType = typeof(FeatureEditor);
         }
 
         public Feature(JsonFeature jsonFeature) : this()
@@ -1045,11 +889,11 @@ namespace FeatureTracker
             }
         }
 
-        public override string[] ModelProperties => [nameof(Date), nameof(Notes), nameof(Raw)];
+        public override string[] ModelProperties => new[] { nameof(Date), nameof(Notes), nameof(Raw) };
 
-        public override string[] ModelCollectionProperties => [];
+        public override string[] ModelCollectionProperties => new string[] { };
 
-        public override IDataManager? DataManager { get; set; }
+        public override IDataManager DataManager { get; set; }
     }
 
     public class JsonPage
@@ -1058,7 +902,7 @@ namespace FeatureTracker
         public int Count { get; set; } = 1;
 
         [JsonProperty(PropertyName = "features", NullValueHandling = NullValueHandling.Ignore)]
-        public IList<JsonFeature> Features { get; set; } = [];
+        public IList<JsonFeature> Features { get; set; } = new List<JsonFeature>();
 
         [JsonProperty(PropertyName = "id"), JsonConverter(typeof(UppercaseGuidConverter))]
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -1094,38 +938,7 @@ namespace FeatureTracker
 
         public override Guid ReadJson(JsonReader reader, Type objectType, Guid existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            return new Guid((reader.Value as string) ?? "");
+            return new Guid((string)reader.Value);
         }
-    }
-
-    public class SortOption<T>: NotifyPropertyChanged where T : Model
-    {
-        public IComparer<T>? Comparer { get; set; }
-
-        public string? Label { get; set; }
-
-        private bool isSelected = false;
-        public bool IsSelected 
-        { 
-            get => isSelected;
-            set => Set(ref isSelected, value);
-        }
-
-        public int CompareMode { get; set; }
-    }
-
-    public enum BackupOperation
-    {
-        BackupToClipboard,
-        RestoreFromClipboard,
-    }
-
-    public class BackupOperationOption
-    {
-        public string? Label { get; set; }
-
-        public PackIconMaterialKind IconKind { get; set; }
-
-        public BackupOperation Operation { get; set; }
     }
 }

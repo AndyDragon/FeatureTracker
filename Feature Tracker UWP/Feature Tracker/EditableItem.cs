@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Windows;
-using System.Windows.Media;
+using Windows.UI.Xaml.Media;
 
 namespace FeatureTracker
 {
@@ -34,18 +33,18 @@ namespace FeatureTracker
             set => Set(ref alternativeTitle, value);
         }
 
-        private FontWeight fontWeight = FontWeights.Normal;
-        public FontWeight FontWeight
+        private SolidColorBrush foreground = new SolidColorBrush(Windows.UI.Colors.Black);
+        public SolidColorBrush Foreground
         {
-            get => fontWeight;
-            set => Set(ref fontWeight, value);
+            get => foreground;
+            set => Set(ref foreground, value);
         }
 
-        private Func<object, System.Windows.Controls.Page>? editorPageFactory = null;
-        public Func<object, System.Windows.Controls.Page>? EditorPageFactory
+        private Type editorPageType = null;
+        public Type EditorPageType
         {
-            get => editorPageFactory;
-            set => Set(ref editorPageFactory, value);
+            get => editorPageType;
+            set => Set(ref editorPageType, value);
         }
     }
 }

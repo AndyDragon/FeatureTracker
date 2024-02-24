@@ -1,121 +1,55 @@
-﻿<Page
-    x:Class="FeatureTracker.PageEditor"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:FeatureTracker"
-    xmlns:fa="using:FontAwesome.UWP"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d"
-    d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
-    Background="{ThemeResource SystemControlAcrylicWindowBrush}">
-    <Page.Resources>
-        <Style x:Key="FeatureListBoxItemStyle" TargetType="ListBoxItem">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="TabNavigation" Value="Local" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="LayoutRoot" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualStateGroup.Transitions>
-                                        <VisualTransition GeneratedDuration="0:0:0.25" />
-                                    </VisualStateGroup.Transitions>
-                                    <VisualState x:Name="Normal" />
-                                    <VisualState x:Name="PointerOver">
-                                        <Storyboard>
-                                            <ColorAnimation To="{ThemeResource SystemListLowColor}" Storyboard.TargetName="LayoutRoot" Storyboard.TargetProperty="(Panel.Background).(SolidColorBrush.Color)" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="Disabled" />
-                                    <VisualState x:Name="Pressed">
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="PressedBackground" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
-                                        </Storyboard>
-                                    </VisualState>
-                                </VisualStateGroup>
-                                <VisualStateGroup x:Name="SelectionStates">
-                                    <VisualStateGroup.Transitions>
-                                        <VisualTransition GeneratedDuration="0:0:0.25" />
-                                    </VisualStateGroup.Transitions>
-                                    <VisualState x:Name="Unselected" />
-                                    <VisualState x:Name="Selected">
-                                        <Storyboard>
-                                            <ColorAnimation To="{ThemeResource SystemListAccentHighColor}" Storyboard.TargetName="InnerGrid" Storyboard.TargetProperty="(Panel.Background).(SolidColorBrush.Color)" />
-                                            <ColorAnimation To="White" Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="(ContentPresenter.Foreground).(SolidColorBrush.Color)" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="SelectedUnfocused">
-                                        <Storyboard>
-                                            <ColorAnimation To="{ThemeResource SystemListAccentMediumColor}" Storyboard.TargetName="InnerGrid" Storyboard.TargetProperty="(Panel.Background).(SolidColorBrush.Color)" />
-                                            <ColorAnimation To="White" Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="(ContentPresenter.Foreground).(SolidColorBrush.Color)" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="SelectedDisabled">
-                                        <Storyboard>
-                                            <ColorAnimation To="{ThemeResource SystemBaseMediumColor}" Storyboard.TargetName="InnerGrid" Storyboard.TargetProperty="(Panel.Background).(SolidColorBrush.Color)" />
-                                            <ColorAnimation To="{ThemeResource SystemBaseLowColor}" Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="(ContentPresenter.Foreground).(SolidColorBrush.Color)" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="SelectedPointerOver">
-                                        <Storyboard>
-                                            <ColorAnimation To="{ThemeResource SystemListAccentHighColor}" Storyboard.TargetName="InnerGrid" Storyboard.TargetProperty="(Panel.Background).(SolidColorBrush.Color)" />
-                                            <ColorAnimation To="White" Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="(ContentPresenter.Foreground).(SolidColorBrush.Color)" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="SelectedPressed">
-                                        <Storyboard>
-                                            <ColorAnimation To="{ThemeResource SystemListAccentHighColor}" Storyboard.TargetName="InnerGrid" Storyboard.TargetProperty="(Panel.Background).(SolidColorBrush.Color)" />
-                                            <ColorAnimation To="White" Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="(ContentPresenter.Foreground).(SolidColorBrush.Color)" />
-                                        </Storyboard>
-                                    </VisualState>
-                                </VisualStateGroup>
-                                <VisualStateGroup x:Name="FocusStates">
-                                    <VisualState x:Name="Focused">
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="FocusVisualWhite" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
-                                            <DoubleAnimation Storyboard.TargetName="FocusVisualBlack" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
-                                        </Storyboard>
-                                    </VisualState>
-                                    <VisualState x:Name="Unfocused" />
-                                    <VisualState x:Name="PointerFocused" />
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                            <Grid x:Name="InnerGrid" Background="Transparent" HorizontalAlignment="Stretch">
-                                <Rectangle x:Name="PressedBackground" Fill="{ThemeResource ListBoxItemPressedBackgroundThemeBrush}" Opacity="0" />
-                                <ContentPresenter x:Name="ContentPresenter" Content="{TemplateBinding Content}" ContentTransitions="{TemplateBinding ContentTransitions}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Margin="{TemplateBinding Padding}" />
-                                <Rectangle x:Name="FocusVisualWhite" Stroke="{ThemeResource FocusVisualWhiteStrokeThemeBrush}" StrokeEndLineCap="Square" StrokeDashArray="1,1" Opacity="0" StrokeDashOffset=".5" />
-                                <Rectangle x:Name="FocusVisualBlack" Stroke="{ThemeResource FocusVisualBlackStrokeThemeBrush}" StrokeEndLineCap="Square" StrokeDashArray="1,1" Opacity="0" StrokeDashOffset="1.5" />
-                            </Grid>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Page.Resources>
-    <Grid Margin="20">
+﻿<Page x:Class="FeatureTracker.PageEditor"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:FeatureTracker"
+      xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" 
+      d:DesignWidth="800"
+      Title="PageEditor">
+    <Grid Margin="20,10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" /> <!-- Header -->
-            <RowDefinition Height="Auto" /> <!-- Page properties -->
-            <RowDefinition Height="Auto" /> <!-- Features header -->
-            <RowDefinition Height="*" /> <!-- Features list -->
-            <RowDefinition Height="Auto" /> <!-- Feature editor -->
+            <RowDefinition Height="Auto" />
+            <!-- Header -->
+            <RowDefinition Height="Auto" />
+            <!-- Page properties -->
+            <RowDefinition Height="Auto" />
+            <!-- Features header -->
+            <RowDefinition Height="*" />
+            <!-- Features list -->
+            <RowDefinition Height="Auto" />
+            <!-- Feature editor -->
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="Page:" VerticalAlignment="Bottom" />
+            <TextBlock Grid.Column="0" Text="Page / challenge:" VerticalAlignment="Bottom" />
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-                <Button Command="{Binding DeletePageCommand}" Style="{StaticResource SmIconButtonStyle}">
-                    <fa:FontAwesome Icon="TrashOutline"  />
+                <Button 
+                    Command="{Binding DeletePageCommand}" 
+                    ToolTip="Delete this page / challenge"
+                    Width="20"
+                    Margin="8,0"
+                    Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
+                    <iconPacks:PackIconBootstrapIcons 
+                        Width="14"
+                        Height="14"
+                        Kind="Trash" />
                 </Button>
-                <Button Command="{Binding ClosePageCommand}" Style="{StaticResource SmIconButtonStyle}">
-                    <fa:FontAwesome Icon="Times"  />
+                <Button 
+                    Command="{Binding ClosePageCommand}" 
+                    ToolTip="Close this page / challenge"
+                    Width="20"
+                    Margin="8,0"
+                    Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
+                    <iconPacks:PackIconModern 
+                        Width="14"
+                        Height="14"
+                        Kind="Close" />
                 </Button>
             </StackPanel>
         </Grid>
@@ -126,20 +60,22 @@
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="4" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="4" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center" HorizontalAlignment="Right" />
             <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedPage.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="Notes:" VerticalAlignment="Center" HorizontalAlignment="Right" />
-            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedPage.Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="Count as:" VerticalAlignment="Center" HorizontalAlignment="Right" />
-            <Grid Grid.Row="2" Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Notes:" VerticalAlignment="Center" HorizontalAlignment="Right" />
+            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedPage.Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Count as:" VerticalAlignment="Center" HorizontalAlignment="Right" />
+            <Grid Grid.Row="4" Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Slider Grid.Column="0" Minimum="1" Maximum="5" StepFrequency="1" TickFrequency="1" TickPlacement="BottomRight" Value="{Binding SelectedPage.Count, Mode=TwoWay}" VerticalAlignment="Center" />
+                <Slider Grid.Column="0" Minimum="1" Maximum="5" TickFrequency="1" TickPlacement="BottomRight" Value="{Binding SelectedPage.Count, Mode=TwoWay}" VerticalAlignment="Center" />
                 <TextBlock Grid.Column="1" Text="{Binding SelectedPage.Count}" FontSize="20" VerticalAlignment="Center" Margin="20,0,0,0" />
             </Grid>
         </Grid>
@@ -153,17 +89,33 @@
                 <TextBlock Text="{Binding SelectedPage.FeaturesCount, Mode=OneWay}" VerticalAlignment="Bottom" Margin="12, 0, 0, 0" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-                <Button Command="{Binding SelectedPage.AddFeatureCommand}" Style="{StaticResource SmIconButtonStyle}">
-                    <fa:FontAwesome Icon="Plus" />
+                <Button 
+                    Command="{Binding SelectedPage.AddFeatureCommand}" 
+                    ToolTip="Adds a new feature for this page / challenge"
+                    Width="20"
+                    Margin="8,0"
+                    Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
+                    <iconPacks:PackIconModern 
+                        Width="14"
+                        Height="14"
+                        Kind="Add" />
                 </Button>
-                <Button Command="{Binding SelectedPage.RefreshFeaturesCommand}" Style="{StaticResource IconButtonStyle}">
-                    <fa:FontAwesome Icon="Refresh" />
+                <Button 
+                    Command="{Binding SelectedPage.RefreshFeaturesCommand}" 
+                    ToolTip="Refresh the feature list"
+                    Width="20"
+                    Margin="8,0"
+                    Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
+                    <iconPacks:PackIconModern 
+                        Width="14"
+                        Height="14"
+                        Kind="Refresh" />
                 </Button>
             </StackPanel>
         </Grid>
-        <ListBox Grid.Row="3" ItemsSource="{Binding SelectedPage.Features}" SelectedItem="{Binding SelectedPage.SelectedFeature, Mode=TwoWay, Converter={StaticResource ObjectToEditableModelConverter}}" ItemContainerStyle="{StaticResource FeatureListBoxItemStyle}" Margin="8,8">
+        <ListBox x:Name="FeatureList"  Grid.Row="3" ItemsSource="{Binding SelectedPage.Features}" SelectedItem="{Binding SelectedPage.SelectedFeature, Mode=TwoWay, Converter={StaticResource ObjectToEditableModelConverter}}" Margin="8,8">
             <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="local:Feature">
+                <DataTemplate DataType="local:Feature">
                     <Grid Margin="12">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -174,13 +126,13 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Title}" />
-                        <TextBlock Grid.RowSpan="2" Grid.Column="1" Text="{Binding AlternativeTitle}" FontSize="12" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding SubTitle}" TextTrimming="WordEllipsis" FontSize="11" Foreground="CadetBlue" />
+                        <TextBlock Grid.RowSpan="2" Grid.Column="1" Text="{Binding AlternativeTitle}" FontSize="12" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding SubTitle}" TextTrimming="WordEllipsis" FontSize="11" />
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <Grid Grid.Row="4" MinHeight="200">
+        <Grid Grid.Row="4" MinHeight="100">
             <Frame x:Name="EditorFrame" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Grid>
     </Grid>

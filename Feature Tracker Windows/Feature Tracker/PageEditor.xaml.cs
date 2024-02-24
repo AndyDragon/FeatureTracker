@@ -1,45 +1,45 @@
 ﻿using System;
-using Windows.UI.Xaml.Media.Animation;
-using Windows.UI.Xaml.Navigation;
+using System.Diagnostics;
 
 namespace FeatureTracker
 {
     /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// Interaction logic for PageEditor.xaml
     /// </summary>
-    public sealed partial class PageEditor : Windows.UI.Xaml.Controls.Page
+    public partial class PageEditor : System.Windows.Controls.Page
     {
-        public static readonly BlankViewModel blankViewModel = new BlankViewModel { Message = "Select a feature" };
+        public static readonly BlankViewModel blankViewModel = new() { Message = "Select a feature" };
 
-        public PageEditor()
+        public PageEditor(MainViewModel? viewModel)
         {
-            this.InitializeComponent();
-            EditorFrame.Navigate(typeof(BlankPage), blankViewModel, new DrillInNavigationTransitionInfo());
-        }
+            InitializeComponent();
+            DataContext = viewModel;
+            EditorFrame.Navigate(new BlankPage(blankViewModel));
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
-
-            if (DataContext is MainViewModel viewModel && e.Parameter is Page page)
+            if (viewModel != null)
             {
-                ConnectPage(viewModel, page);
+                ConnectViewModel(viewModel);
             }
         }
 
-        private void ConnectPage(MainViewModel viewModel, Page page)
+        private void ConnectViewModel(MainViewModel viewModel)
         {
-            page.PropertyChanged += (sender, e) =>
+            if (viewModel.SelectedPage == null)
+            {
+                return;
+            }
+            viewModel.SelectedPage.PropertyChanged += (sender, e) =>
             {
                 if (e.PropertyName == "SelectedFeature")
                 {
-                    if (page.SelectedFeature != null && page.SelectedFeature.EditorPageType != null)
+                    if (viewModel.SelectedPage?.SelectedFeature != null && viewModel.SelectedPage?.SelectedFeature?.EditorPageFactory != null)
                     {
-                        EditorFrame.Navigate(page.SelectedFeature.EditorPageType, page.SelectedFeature, new DrillInNavigationTransitionInfo());
+                        EditorFrame.Navigate(viewModel.SelectedPage.SelectedFeature.EditorPageFactory(viewModel));
+                        FeatureList.ScrollIntoView(viewModel.SelectedPage.SelectedFeature);
                     }
                     else
                     {
-                        EditorFrame.Navigate(typeof(BlankPage), blankViewModel, new DrillInNavigationTransitionInfo());
+                        EditorFrame.Navigate(new BlankPage(blankViewModel));
                     }
                 }
             };

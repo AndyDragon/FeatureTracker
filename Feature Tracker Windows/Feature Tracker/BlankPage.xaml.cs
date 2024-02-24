@@ -1,29 +1,23 @@
 ﻿using System;
-using Windows.UI.Xaml.Navigation;
 
 namespace FeatureTracker
 {
     /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// Interaction logic for BlankPage.xaml
     /// </summary>
-    public sealed partial class BlankPage : Windows.UI.Xaml.Controls.Page
+    public partial class BlankPage : System.Windows.Controls.Page
     {
-        public BlankPage()
+        public BlankPage(BlankViewModel viewModel)
         {
-            this.InitializeComponent();
-        }
-
-        protected override void OnNavigatedTo(NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
-            DataContext = e.Parameter;
+            InitializeComponent();
+            DataContext = viewModel;
         }
     }
 
     public class BlankViewModel : NotifyPropertyChanged
     {
-        private string message;
-        public string Message
+        private string? message;
+        public string? Message
         {
             get => message;
             set => Set(ref message, value);
