@@ -7,16 +7,28 @@
     xmlns:local="clr-namespace:FeatureTracker"
     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+    xmlns:notifications="clr-namespace:Notification.Wpf.Controls;assembly=Notification.Wpf"
     mc:Ignorable="d"
     Title="Feature Tracker" 
     Height="600" 
     Width="960"
+    MinWidth="800"
+    MinHeight="600"
     GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
     ResizeMode="CanResizeWithGrip">
 
     <Window.DataContext>
         <local:MainViewModel />
     </Window.DataContext>
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <Color x:Key="SystemBaseMediumColor">#99FFFFFF</Color>
+            <SolidColorBrush x:Key="SplitViewBackgroundBrush" Opacity="1" Color="{StaticResource SystemBaseMediumColor}" />
+            <Style x:Key="PageListTextBlock" TargetType="TextBlock">
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
 
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands>
@@ -29,50 +41,49 @@
             <Button Command="{Binding AddPageCommand}" ToolTip="Adds a new page or challenge">
                 <iconPacks:PackIconBootstrapIcons 
                     Width="22"
-                    Height="22"
+                    Height="18"
                     Kind="FilePlus" />
             </Button>
-            <mah:DropDownButton>
-                <mah:DropDownButton.Items>
-                    <Button Command="{Binding SortByNameCommand}" HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal">
+            <mah:DropDownButton
+                ItemsSource="{Binding PageSortOptions}">
+                <mah:DropDownButton.ItemTemplate>
+                    <DataTemplate DataType="local:SortOption">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
                             <iconPacks:PackIconBootstrapIcons
-                                Width="18"
-                                Height="18"
-                                Kind="{Binding SortedByNameCheck}" />
-                            <TextBlock Text="Sort by Name" Margin="8,0,0,0" />
-                        </StackPanel>
-                    </Button>
-                    <Button Command="{Binding SortByCountCommand}" HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconBootstrapIcons
-                                Width="18"
-                                Height="18"
-                                Kind="{Binding SortedByCountCheck}" />
-                            <TextBlock Text="Sort by Count" Margin="8,0,0,0" />
-                        </StackPanel>
-                    </Button>
-                    <Button Command="{Binding SortByFeaturesCommand}" HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconBootstrapIcons
-                                Width="18"
-                                Height="18"
-                                Kind="{Binding SortedByFeaturesCheck}" />
-                            <TextBlock Text="Sort by Features" Margin="8,0,0,0" />
-                        </StackPanel>
-                    </Button>
-                </mah:DropDownButton.Items>
+                                Grid.Column="0"
+                                Width="16"
+                                Height="16"
+                                Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Kind="Check"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Left" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{Binding Label}" />
+                        </Grid>
+                    </DataTemplate>
+                </mah:DropDownButton.ItemTemplate>
+                <mah:DropDownButton.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource {x:Type MenuItem}}" TargetType="{x:Type MenuItem}">
+                        <Setter Property="Command" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type mah:DropDownButton}}, Path=DataContext.SetPageSortCommand}" />
+                        <Setter Property="CommandParameter" Value="{Binding CompareMode}" />
+                    </Style>
+                </mah:DropDownButton.ItemContainerStyle>
                 <mah:DropDownButton.Icon>
                     <iconPacks:PackIconBoxIcons 
                         Width="22"
-                        Height="22"
+                        Height="16"
                         Kind="RegularSortAlt2" />
                 </mah:DropDownButton.Icon>
             </mah:DropDownButton>
             <Button Command="{Binding RefreshPagesCommand}" ToolTip="Refreshes the page list">
                 <iconPacks:PackIconModern 
                     Width="22"
-                    Height="22"
+                    Height="20"
                     Kind="Refresh" />
             </Button>
         </mah:WindowCommands>
@@ -102,27 +113,34 @@
                         Height="22"
                         Kind="Book" />
             </Button>
-            <mah:DropDownButton>
-                <mah:DropDownButton.Items>
-                    <Button Command="{Binding BackupCommand}" HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
-                            <iconPacks:PackIconMaterial 
+            <mah:DropDownButton
+                ItemsSource="{Binding BackupOperationOptions}">
+                <mah:DropDownButton.ItemTemplate>
+                    <DataTemplate DataType="local:BackupOperationOption">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <iconPacks:PackIconMaterial
+                                Grid.Column="0"
                                 Width="18"
                                 Height="18"
-                                Kind="ClipboardArrowUpOutline" />
-                            <TextBlock Text="Backup to Clipboard" Margin="8,0,0,0" />
-                        </StackPanel>
-                    </Button>
-                    <Button Command="{Binding RestoreCommand}" HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
-                            <iconPacks:PackIconMaterial 
-                                Width="18"
-                                Height="18"
-                                Kind="ClipboardArrowDownOutline" />
-                            <TextBlock Text="Restore from Clipboard" Margin="8,0,0,0" />
-                        </StackPanel>
-                    </Button>
-                </mah:DropDownButton.Items>
+                                Kind="{Binding IconKind}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Left" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{Binding Label}" />
+                        </Grid>
+                    </DataTemplate>
+                </mah:DropDownButton.ItemTemplate>
+                <mah:DropDownButton.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource {x:Type MenuItem}}" TargetType="{x:Type MenuItem}">
+                        <Setter Property="Command" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type mah:DropDownButton}}, Path=DataContext.StartBackupOperationCommand}" />
+                        <Setter Property="CommandParameter" Value="{Binding Operation}" />
+                    </Style>
+                </mah:DropDownButton.ItemContainerStyle>
                 <mah:DropDownButton.Icon>
                     <iconPacks:PackIconMaterial 
                         Width="22"
@@ -133,41 +151,42 @@
         </mah:WindowCommands>
     </mah:MetroWindow.RightWindowCommands>
 
-    <Window.Resources>
-        <ResourceDictionary>
-            <Color x:Key="SystemBaseMediumColor">#99FFFFFF</Color>
-            <SolidColorBrush x:Key="SplitViewBackgroundBrush" Opacity="1" Color="{StaticResource SystemBaseMediumColor}" />
-            <Style x:Key="PageListTextBlock" TargetType="TextBlock">
-                <Setter Property="Foreground" Value="#404048" />
-                <Setter Property="Background" Value="Transparent" />
-            </Style>
-        </ResourceDictionary>
-    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-    <Grid Background="Silver">
+        <notifications:NotificationArea x:Name="WindowArea" Grid.Row="0" Position="TopRight" MaxItems="4" />
+
         <mah:SplitView x:Name="PageSplitview"
+                       Grid.Row="0" 
                        DisplayMode="Inline"
                        IsPaneOpen="{Binding IsSplitViewPaneOpen}"
                        CanResizeOpenPane="True"
-                       OpenPaneLength="260"
-                       PaneBackground="White">
+                       OpenPaneLength="260" 
+                       Background="{DynamicResource MahApps.Brushes.Gray.SemiTransparent}">
             <mah:SplitView.Pane>
                 <Grid>
-                    <ListBox x:Name="PageList"  ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage}" Margin="0,8,0,8">
+                    <ListBox 
+                        x:Name="PageList"  
+                        ItemsSource="{Binding Pages}" 
+                        SelectedItem="{Binding SelectedPage}" 
+                        Margin="0">
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="local:Page">
-                                <Grid Margin="8 0 8 4" HorizontalAlignment="Stretch">
+                                <Grid 
+                                    x:Name="EntryGrid"
+                                    Margin="12,6">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="3*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Title, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" FontSize="16" TextTrimming="WordEllipsis" Foreground="{Binding Foreground, Mode=OneWay}" />
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding SubTitle, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" FontSize="10" TextTrimming="WordEllipsis" Foreground="#505058"/>
-                                    <TextBlock Grid.RowSpan="2" Grid.Column="1" Text="{Binding AlternativeTitle, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" FontSize="12" TextTrimming="WordEllipsis" Foreground="{Binding Foreground, Mode=OneWay}" />
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Title, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" FontSize="16" TextTrimming="WordEllipsis" FontWeight="{Binding FontWeight, Mode=OneWay}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding AlternativeTitle, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" Margin="8,0,0,0" FontSize="14" TextTrimming="WordEllipsis" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="1" Text="{Binding SubTitle, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" FontSize="10" TextTrimming="WordEllipsis"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -175,11 +194,38 @@
                 </Grid>
             </mah:SplitView.Pane>
 
-            <Grid Grid.Row="1" Background="CornflowerBlue">
+            <Grid Grid.Row="1">
                 <Frame x:Name="EditorFrame" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="20" NavigationUIVisibility="Hidden" />
             </Grid>
 
         </mah:SplitView>
+
+        <Grid Margin="0" Grid.Row="2">
+            <Grid.Background>
+                <SolidColorBrush Color="{DynamicResource MahApps.Colors.Accent2}"/>
+            </Grid.Background>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button 
+                Grid.Column="1" 
+                BorderThickness="0" 
+                Padding="12,2" 
+                Command="{Binding RotateThemeCommand}" 
+                VerticalAlignment="Center"
+                Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Theme: "/>
+                    <TextBlock Text="{Binding ThemeName}" />
+                </StackPanel>
+            </Button>
+            <TextBlock Text="Version:" Grid.Column="2" Margin="16,0,8,0" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding Version}" Grid.Column="3" VerticalAlignment="Center" Margin="0,0,24,0" />
+        </Grid>
+
     </Grid>
-    
+
 </mah:MetroWindow>

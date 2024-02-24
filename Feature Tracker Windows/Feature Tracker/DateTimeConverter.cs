@@ -8,13 +8,13 @@ namespace FeatureTracker
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return new DateTimeOffset(((DateTime)value).ToUniversalTime());
+            return ((DateTime)value).ToUniversalTime();
 
         }
 
         public object ConvertBack(object value, Type targetType, object parameter,  CultureInfo culture)
         {
-            return ((DateTimeOffset)value).DateTime;
+            return ((DateTime)value).ToLocalTime();
         }
     }
 }

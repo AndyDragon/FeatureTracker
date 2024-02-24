@@ -8,12 +8,17 @@ using System.IO.IsolatedStorage;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
 using Newtonsoft.Json;
+using Notification.Wpf;
 
 namespace FeatureTracker
 {
+    using ControlzEx.Theming;
+    using MahApps.Metro.Controls.Dialogs;
+    using MahApps.Metro.IconPacks;
     using Properties;
+    using System.Reflection;
+    using System.Windows.Threading;
 
     public class MainViewModel : NotifyPropertyChanged, IDataManager
     {
@@ -29,24 +34,24 @@ namespace FeatureTracker
                 Pages.Add(page);
                 SelectedPage = page;
             });
-            sortByNameCommand = new Command(() =>
+            setPageSortCommand = new CommandWithParameter((parameter) =>
             {
-                pageSort = PageComparer.NameComparer;
-                Settings.Default.PageSort = (int)PageComparer.CompareMode.Name;
-                Settings.Default.Save();
-                RefreshPages();
-            });
-            sortByCountCommand = new Command(() =>
-            {
-                pageSort = PageComparer.CountComparer;
-                Settings.Default.PageSort = (int)PageComparer.CompareMode.Count;
-                Settings.Default.Save();
-                RefreshPages();
-            });
-            sortByFeaturesCommand = new Command(() =>
-            {
-                pageSort = PageComparer.FeaturesComparer;
-                Settings.Default.PageSort = (int)PageComparer.CompareMode.Features;
+                var compareMode = parameter != null 
+                    ? (PageComparer.CompareMode)parameter 
+                    : PageComparer.CompareMode.Name;
+                switch (compareMode)
+                {
+                    case PageComparer.CompareMode.Name:
+                        pageSort = PageComparer.NameComparer;
+                        break;
+                    case PageComparer.CompareMode.Count:
+                        pageSort = PageComparer.CountComparer;
+                        break;
+                    case PageComparer.CompareMode.Features:
+                        pageSort = PageComparer.FeaturesComparer;
+                        break;
+                }
+                Settings.Default.PageSort = (int)compareMode;
                 Settings.Default.Save();
                 RefreshPages();
             });
@@ -56,16 +61,27 @@ namespace FeatureTracker
             });
             populateDefaultsCommand = new Command(PopulateDefaultPages);
             generateReportCommand = new Command(GenerateReport);
-            backupCommand = new Command(BackupToClipboard);
-            restoreCommand = new Command(RestoreFromClipboard);
-            closePageCommand = new Command(() => SelectedPage = null);
-            deletePageCommand = new Command(() =>
+            startBackupOperationCommand = new CommandWithParameter((parameter) =>
             {
-                if (MessageBox.Show(
-                    "Are you sure you want to delete this page / challenge and all the features?",
-                    "Delete confirmation", 
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                var operation = (parameter != null) 
+                    ? (BackupOperation)parameter 
+                    : BackupOperation.BackupToClipboard;
+                switch (operation)
+                {
+                    case BackupOperation.BackupToClipboard:
+                        BackupToClipboard();
+                        break;
+                    case BackupOperation.RestoreFromClipboard:
+                        RestoreFromClipboard();
+                        break;
+                }
+            });
+            closePageCommand = new Command(() => SelectedPage = null);
+            deletePageCommand = new Command(async () =>
+            {
+                if (!await ShowConfirmationMessage(
+                    "Delete page / challenge",
+                    "Are you sure you want to delete this page / challenge and all the features, this cannot be undone!"))
                 {
                     return;
                 }
@@ -76,7 +92,9 @@ namespace FeatureTracker
                     Pages.Remove(page);
                     RemoveModel(page);
                 }
+                ShowToast("Deleted page", "Removed the page or challenge and all the features", NotificationType.Notification);
             });
+            rotateThemeCommand = new Command(RotateTheme);
 
             pageSort = (PageComparer.CompareMode)Settings.Default.PageSort switch
             {
@@ -89,6 +107,11 @@ namespace FeatureTracker
             LoadPages();
             Pages.SortBy(pageSort);
             StopOperation();
+            foreach (var pageSortOption in pageSortOptions)
+            {
+                pageSortOption.IsSelected = pageSortOption.Comparer == pageSort;
+            }
+            OnPropertyChanged(nameof(PageSortOptions));
         }
 
         private void LoadPages()
@@ -135,7 +158,11 @@ namespace FeatureTracker
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
-                // TODO notify the user loading data failed.
+                ShowToast(
+                    "Loading data failed",
+                    "An error occurred loading the data from storage: " + ex.Message,
+                    NotificationType.Error,
+                    TimeSpan.FromSeconds(10));
             }
         }
 
@@ -169,26 +196,112 @@ namespace FeatureTracker
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
-                // TODO notify the user saving data failed.
+                ShowToast(
+                    "Saving data failed",
+                    "An error occurred saving the data to storage: " + ex.Message,
+                    NotificationType.Error,
+                    TimeSpan.FromSeconds(10));
             }
         }
 
         private void RefreshPages()
         {
+            SetBusy(true);
             StartOperation();
             var oldSelectedPage = SelectedPage;
             SelectedPage = null;
             Pages.SortBy(pageSort);
             StopOperation();
             SelectedPage = oldSelectedPage;
-            OnPropertyChanged(nameof(SortedByNameCheck));
-            OnPropertyChanged(nameof(SortedByCountCheck));
-            OnPropertyChanged(nameof(SortedByFeaturesCheck));
+            foreach (var pageSortOption in pageSortOptions)
+            {
+                pageSortOption.IsSelected = pageSortOption.Comparer == pageSort;
+            }
+            OnPropertyChanged(nameof(PageSortOptions));
         }
+
+        private static bool IsBusy { get; set; } = false;
+        public static void SetBusy(bool busy)
+        {
+            if (busy != IsBusy)
+            {
+                IsBusy = busy;
+                Mouse.OverrideCursor = IsBusy ? Cursors.Wait : null;
+                if (IsBusy)
+                {
+                    _ = new DispatcherTimer(TimeSpan.FromSeconds(0.5), DispatcherPriority.ApplicationIdle, OnDispatcherTimerTick, Application.Current.Dispatcher);
+                }
+            }
+        }
+
+        private static void OnDispatcherTimerTick(object? sender, EventArgs e)
+        {
+            if (sender is DispatcherTimer dispatcherTimer)
+            {
+                SetBusy(false);
+                dispatcherTimer.Stop();
+            }
+        }
+
+        public void ShowToast(
+            string title,
+            string message,
+            NotificationType type = NotificationType.Success,
+            TimeSpan? duration = null)
+        {
+            notificationManager.Show(title, message, type: type, areaName: "WindowArea", expirationTime: duration ?? TimeSpan.FromSeconds(3));
+        }
+
+        public static async Task<bool> ShowConfirmationMessage(
+            string title,
+            string message)
+        {
+            // This demo runs on .Net 4.0, but we're using the Microsoft.Bcl.Async package so we have async/await support
+            // The package is only used by the demo and not a dependency of the library!
+            var settings = new MetroDialogSettings()
+            {
+                AffirmativeButtonText = "  Yes please  ",
+                NegativeButtonText = "  No thanks  ",
+                DialogButtonFontSize = 16D,
+                DefaultButtonFocus = MessageDialogResult.Negative,
+            };
+
+            if (Application.Current?.MainWindow is MahApps.Metro.Controls.MetroWindow mainWindow)
+            {
+                return (await mainWindow.ShowMessageAsync(
+                    title,
+                    message,
+                    MessageDialogStyle.AffirmativeAndNegative,
+                    settings)) == MessageDialogResult.Affirmative;
+            }
+            else
+            {
+                return MessageBox.Show(
+                    message,
+                    title,
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question) == MessageBoxResult.Yes;
+            }
+        }
+
+        private readonly NotificationManager notificationManager = new();
 
         public SortableModelCollection<Page> Pages { get; } = [];
 
         private PageComparer pageSort = PageComparer.NameComparer;
+
+        private readonly SortOption<Page>[] pageSortOptions = [
+            new SortOption<Page> { Comparer = PageComparer.NameComparer, Label = "Sort by Name", IsSelected = false, CompareMode = (int)PageComparer.CompareMode.Name },
+            new SortOption<Page> { Comparer = PageComparer.CountComparer, Label = "Sort by Count", IsSelected = false, CompareMode = (int)PageComparer.CompareMode.Count },
+            new SortOption<Page> { Comparer = PageComparer.FeaturesComparer, Label = "Sort by Features", IsSelected = false, CompareMode = (int)PageComparer.CompareMode.Features },
+        ];
+        public SortOption<Page>[] PageSortOptions => pageSortOptions;
+
+        private readonly BackupOperationOption[] backupOperationOptions = [
+            new BackupOperationOption { Label = "Backup to Clipboard", IconKind = PackIconMaterialKind.ClipboardArrowUpOutline, Operation = BackupOperation.BackupToClipboard },
+            new BackupOperationOption { Label = "Restore from Clipboard", IconKind = PackIconMaterialKind.ClipboardArrowDownOutline, Operation = BackupOperation.RestoreFromClipboard },
+        ];
+        public BackupOperationOption[] BackupOperationOptions => backupOperationOptions;
 
         private Page? selectedPage = null;
         public Page? SelectedPage
@@ -210,14 +323,8 @@ namespace FeatureTracker
         private readonly ICommand addPageCommand;
         public ICommand AddPageCommand => addPageCommand;
 
-        private readonly ICommand sortByNameCommand;
-        public ICommand SortByNameCommand => sortByNameCommand;
-
-        private readonly ICommand sortByCountCommand;
-        public ICommand SortByCountCommand => sortByCountCommand;
-
-        private readonly ICommand sortByFeaturesCommand;
-        public ICommand SortByFeaturesCommand => sortByFeaturesCommand;
+        private readonly ICommand setPageSortCommand;
+        public ICommand SetPageSortCommand => setPageSortCommand;
 
         private readonly ICommand refreshPagesCommand;
         public ICommand RefreshPagesCommand => refreshPagesCommand;
@@ -228,11 +335,8 @@ namespace FeatureTracker
         private readonly ICommand generateReportCommand;
         public ICommand GenerateReportCommand => generateReportCommand;
 
-        private readonly ICommand backupCommand;
-        public ICommand BackupCommand => backupCommand;
-
-        private readonly ICommand restoreCommand;
-        public ICommand RestoreCommand => restoreCommand;
+        private readonly ICommand startBackupOperationCommand;
+        public ICommand StartBackupOperationCommand => startBackupOperationCommand;
 
         private readonly ICommand closePageCommand;
         public ICommand ClosePageCommand => closePageCommand;
@@ -240,13 +344,45 @@ namespace FeatureTracker
         private readonly ICommand deletePageCommand;
         public ICommand DeletePageCommand => deletePageCommand;
 
-        public string SortedByNameCheck => pageSort == PageComparer.NameComparer ? "Check" : "";
+        private readonly ICommand rotateThemeCommand;
+        public ICommand RotateThemeCommand => rotateThemeCommand;
 
-        public string SortedByCountCheck => pageSort == PageComparer.CountComparer ? "Check" : "";
+        private Theme? theme = ThemeManager.Current.DetectTheme();
+        private Theme? Theme
+        {
+            get => theme;
+            set
+            {
+                if (Set(ref theme, value))
+                {
+                    OnPropertyChanged(nameof(ThemeName));
 
-        public string SortedByFeaturesCheck => pageSort == PageComparer.FeaturesComparer ? "Check" : "";
+                }
+            }
+        }
+        public string ThemeName
+        {
+            get => Theme?.DisplayName ?? "unknown";
+        }
 
-        private void PopulateDefaultPages()
+        public static string Version => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "---";
+
+        private void RotateTheme()
+        {
+            var themes = ThemeManager.Current.Themes;
+            var indexOfCurrent = Theme != null ? themes.IndexOf(Theme) : -1;
+            var newTheme = themes[0];
+            if (indexOfCurrent != -1 && indexOfCurrent != themes.Count - 1)
+            {
+                newTheme = themes[indexOfCurrent + 1];
+            }
+            ThemeManager.Current.ChangeTheme(Application.Current, newTheme);
+            Theme = newTheme;
+            Settings.Default.Theme = newTheme.Name;
+            Settings.Default.Save();
+        }
+
+        private async void PopulateDefaultPages()
         {
             var singleFeaturePages = new[] {
                 "abandoned",
@@ -337,15 +473,14 @@ namespace FeatureTracker
                 "writings"
             };
 
-            if (MessageBox.Show(
-                "This will remove all features and custom pages and cannot be undone!", 
-                "Are you sure?", 
-                MessageBoxButton.YesNo, 
-                MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            if (!await ShowConfirmationMessage(
+                "Populate defaults",
+                "Are you sure you want to remove all features and custom pages, this cannot be undone!"))
             {
                 return;
             }
 
+            SetBusy(true);
             StartOperation();
 
             foreach (var page in Pages)
@@ -369,7 +504,7 @@ namespace FeatureTracker
 
             StopOperation(true);
 
-            // TODO show toast
+            ShowToast("Populated the defaults", $"Populated {Pages.Count} default pages and challenges");
         }
 
         private int GetFeatures()
@@ -458,6 +593,8 @@ namespace FeatureTracker
 
         private void GenerateReport()
         {
+            SetBusy(true);
+
             var builder = new StringBuilder();
             builder.AppendLine("Report of features");
             builder.AppendLine("------------------");
@@ -510,22 +647,37 @@ namespace FeatureTracker
             }
 
             Clipboard.SetText(builder.ToString());
+
+            ShowToast("Report generated", "Copied the report of features to the clipboard");
         }
 
         private void BackupToClipboard()
         {
+            SetBusy(true);
+
             var jsonPages = Pages.OrderBy(page => page.Name).Select(page => page.ToJson());
             var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
             Clipboard.SetText(json);
+
+            ShowToast("Backup complete", "Copied a backup of the pages and features to the clipboard");
         }
 
-        private void RestoreFromClipboard()
+        private async void RestoreFromClipboard()
         {
             if (Clipboard.ContainsText())
             {
+                SetBusy(true);
+
                 string json = Clipboard.GetText();
                 try
                 {
+                    if (!await ShowConfirmationMessage(
+                        "Restore from clipboard",
+                        "Are you sure you want to reset all features and pages to the backup, this cannot be undone!"))
+                    {
+                        return;
+                    }
+
                     var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
                     if (loadedPages != null)
                     {
@@ -543,18 +695,35 @@ namespace FeatureTracker
                         }
                         Pages.SortBy(pageSort);
                         StopOperation(true);
-                        // TODO notify the user the restore succeeded...
+
+                        ShowToast("Restore complete", $"Restored {Pages.Count} pages and challenges from the clipboard");
                     }
                     else
                     {
-                        // TODO notify the user the restore failed...
+                        ShowToast(
+                            "Restore failed",
+                            "Failed to restore from clipboard, there were no pages loaded",
+                            NotificationType.Error,
+                            TimeSpan.FromSeconds(5));
                     }
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine(ex.Message);
-                    // TODO notify the user the restore failed...
+                    ShowToast(
+                        "Restore failed",
+                        "An error occurred restoring from clipboard, invalid data: " + ex.Message,
+                        NotificationType.Error,
+                        TimeSpan.FromSeconds(5));
                 }
+            }
+            else
+            {
+                ShowToast(
+                    "Restore failed",
+                    "The clipboard did not include any text to restore",
+                    NotificationType.Error,
+                    TimeSpan.FromSeconds(5));
             }
         }
 
@@ -620,15 +789,15 @@ namespace FeatureTracker
                 StorePages();
             }
         }
+
+        internal void ResetTheme(Theme theme)
+        {
+            Theme = theme;
+        }
     }
 
     public class Page : EditableModel
     {
-        private static readonly SolidColorBrush DarkBrush = new(Color.FromRgb(0x40, 0x40, 0x48));
-        private static readonly SolidColorBrush CadetBlueBrush = new(Colors.CadetBlue);
-
-        private readonly Func<int, string> GetSuffix = count => count != 1 ? "s" : "";
-
         public Page()
         {
             refreshFeaturesCommand = new Command(() =>
@@ -643,13 +812,11 @@ namespace FeatureTracker
                 SelectedFeature = feature;
             });
             closeFeatureCommand = new Command(() => SelectedFeature = null);
-            deleteFeatureCommand = new Command(() =>
+            deleteFeatureCommand = new Command(async () =>
             {
-                if (MessageBox.Show(
-                    "Are you sure you want to delete this feature?",
-                    "Delete confirmation",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                if (!await MainViewModel.ShowConfirmationMessage(
+                    "Delete feature",
+                    "Are you sure you want to delete this feature, this cannot be undone!"))
                 {
                     return;
                 }
@@ -660,16 +827,17 @@ namespace FeatureTracker
                     Features.Remove(feature);
                     DataManager?.RemoveModel(feature);
                 }
+                DataManager?.ShowToast("Deleted feature", "Removed the page or challenge and all the features", NotificationType.Notification);
             });
             Features.CollectionChanged += (sender, e) =>
             {
-                Foreground = Features.Count == 0 ? DarkBrush : CadetBlueBrush;
-                AlternativeTitle = $"{Features.Count} feature{GetSuffix(Features.Count)}";
+                FontWeight = Features.Count > 0 ? FontWeights.Bold : FontWeights.Normal;
+                AlternativeTitle = $"({Features.Count})";
                 OnPropertyChanged(nameof(FeaturesCount));
             };
             Title = Name.ToUpper();
-            Foreground = Features.Count == 0 ? DarkBrush : CadetBlueBrush;
-            AlternativeTitle = $"{Features.Count} feature{GetSuffix(Features.Count)}";
+            FontWeight = Features.Count > 0 ? FontWeights.Bold : FontWeights.Normal;
+            AlternativeTitle = $"({Features.Count})";
             SubTitle = $"(counts as {Count})";
             EditorPageFactory = (parameter) => new PageEditor(parameter as MainViewModel);
         }
@@ -703,6 +871,7 @@ namespace FeatureTracker
 
         private void RefreshFeatures()
         {
+            MainViewModel.SetBusy(true);
             DataManager?.StartOperation();
             var oldSelectedFeature = SelectedFeature;
             SelectedFeature = null;
@@ -807,13 +976,10 @@ namespace FeatureTracker
 
     public class Feature : EditableModel
     {
-        private static readonly SolidColorBrush WhiteBrush = new(Colors.White);
-
         public Feature()
         {
             Id = Guid.NewGuid();
             Title = Date.ToString("D");
-            Foreground = WhiteBrush;
             AlternativeTitle = Raw ? "RAW" : "";
             SubTitle = Notes;
             EditorPageFactory = (parameter) => new FeatureEditor(parameter as MainViewModel);
@@ -930,5 +1096,36 @@ namespace FeatureTracker
         {
             return new Guid((reader.Value as string) ?? "");
         }
+    }
+
+    public class SortOption<T>: NotifyPropertyChanged where T : Model
+    {
+        public IComparer<T>? Comparer { get; set; }
+
+        public string? Label { get; set; }
+
+        private bool isSelected = false;
+        public bool IsSelected 
+        { 
+            get => isSelected;
+            set => Set(ref isSelected, value);
+        }
+
+        public int CompareMode { get; set; }
+    }
+
+    public enum BackupOperation
+    {
+        BackupToClipboard,
+        RestoreFromClipboard,
+    }
+
+    public class BackupOperationOption
+    {
+        public string? Label { get; set; }
+
+        public PackIconMaterialKind IconKind { get; set; }
+
+        public BackupOperation Operation { get; set; }
     }
 }

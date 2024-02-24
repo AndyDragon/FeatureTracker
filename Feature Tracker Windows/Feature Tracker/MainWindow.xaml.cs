@@ -1,4 +1,6 @@
-﻿using MahApps.Metro.Controls;
+﻿using ControlzEx.Theming;
+using FeatureTracker.Properties;
+using MahApps.Metro.Controls;
 using System.Diagnostics;
 using System.Text;
 using System.Windows;
@@ -10,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml.Linq;
 
 namespace FeatureTracker
 {
@@ -28,6 +31,17 @@ namespace FeatureTracker
 
             if (DataContext is MainViewModel viewModel)
             {
+                var lastThemeName = Settings.Default.Theme;
+                if (!string.IsNullOrEmpty(lastThemeName))
+                {
+                    var theme = ThemeManager.Current.Themes.FirstOrDefault(theme => string.Equals(theme.Name, lastThemeName));
+                    if (theme != null)
+                    {
+                        ThemeManager.Current.ChangeTheme(Application.Current, theme);
+                        viewModel.ResetTheme(theme);
+                    }
+                }
+
                 ConnectViewModel(viewModel);
             }
         }

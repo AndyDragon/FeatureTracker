@@ -26,4 +26,28 @@ namespace FeatureTracker
             execute();
         }
     }
+
+    internal class CommandWithParameter(Action<object?> execute, Func<object?, bool>? canExecute = null) : ICommand
+    {
+        public event EventHandler? CanExecuteChanged;
+
+        private readonly Action<object?> execute = execute ?? throw new ArgumentNullException("execute");
+        private readonly Func<object?, bool> canExecute = canExecute ?? ((parameter) => true);
+
+        public void OnCanExecuteChanged()
+        {
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public bool CanExecute(object? sender) => canExecute(sender);
+
+        public void Execute(object? sender)
+        {
+            if (!CanExecute(sender))
+            {
+                return;
+            }
+            execute(sender);
+        }
+    }
 }

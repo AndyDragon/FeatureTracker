@@ -657,7 +657,7 @@ struct ContentView: View {
             }))
             let json = try encoder.encode(codablePages)
             copyToClipboard(String(decoding: json, as: UTF8.self))
-            showToast("Backed up!", "Copied a backup of the features to the clipboard")
+            showToast("Backed up!", "Copied a backup of the pages and features to the clipboard")
         } catch {
             exceptionError = error.localizedDescription
             backupOperation = .backup
@@ -683,7 +683,7 @@ struct ContentView: View {
                 let fileUrl = containerUrl.appendingPathComponent("features.json")
                 try String(decoding: json, as: UTF8.self).write(to: fileUrl, atomically: true, encoding: .utf8)
                 
-                showToast("Backed up to iCloud!", "Stored a backup of the features to your iCloud documents")
+                showToast("Backed up to iCloud!", "Stored a backup of the pages and features to your iCloud documents")
             }
         } catch {
             exceptionError = error.localizedDescription

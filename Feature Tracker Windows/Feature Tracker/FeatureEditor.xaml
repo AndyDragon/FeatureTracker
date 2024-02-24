@@ -10,7 +10,7 @@
     mc:Ignorable="d" 
     d:DesignHeight="450" d:DesignWidth="800"
     Title="FeatureEditor">
-    <Grid Margin="20">
+    <Grid Margin="0,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <!-- Header -->
@@ -24,16 +24,26 @@
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="Feature:" VerticalAlignment="Bottom" />
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-                <Button Command="{Binding SelectedPage.DeleteFeatureCommand}" ToolTip="Delete this feature">
+                <Button 
+                    Command="{Binding SelectedPage.DeleteFeatureCommand}" 
+                    ToolTip="Delete this feature"
+                    Width="20"
+                    Margin="8,0"
+                    Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
                     <iconPacks:PackIconBootstrapIcons 
-                        Width="16"
-                        Height="16"
+                        Width="14"
+                        Height="14"
                         Kind="Trash" />
                 </Button>
-                <Button Command="{Binding SelectedPage.CloseFeatureCommand}" ToolTip="Close this feature">
+                <Button 
+                    Command="{Binding SelectedPage.CloseFeatureCommand}" 
+                    ToolTip="Close this feature"
+                    Width="20"
+                    Margin="8,0"
+                    Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
                     <iconPacks:PackIconModern 
-                        Width="16"
-                        Height="16"
+                        Width="14"
+                        Height="14"
                         Kind="Close" />
                 </Button>
             </StackPanel>
@@ -50,8 +60,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Date:" VerticalAlignment="Center" HorizontalAlignment="Right" />
-            <!--<CalendarDatePicker Grid.Row="0" Grid.Column="1" Date="{Binding SelectedPage.SelectedFeature.Date, Mode=TwoWay, Converter={StaticResource DateTimeConverter}}" DateFormat="{}{dayofweek.full}, {month.full} {day.integer}, {year.full}" Margin="8,0,0,0" VerticalAlignment="Center" />-->
-            <mah:DateTimePicker Grid.Row="0" Grid.Column="1" SelectedDateTime="{Binding SelectedPage.SelectedFeature.Date, Mode=TwoWay, Converter={StaticResource DateTimeConverter}}" Margin="8,0,0,0" VerticalAlignment="Center" />
+            <DatePicker Grid.Row="0" Grid.Column="1" SelectedDate="{Binding SelectedPage.SelectedFeature.Date, Mode=TwoWay, Converter={StaticResource DateTimeConverter}}" Margin="8,0,0,0" VerticalAlignment="Center" />
             <CheckBox Grid.Row="0" Grid.Column="2" Content="RAW" IsChecked="{Binding SelectedPage.SelectedFeature.Raw, Mode=TwoWay}" Margin="8,0,0,0" VerticalAlignment="Center" />
             <TextBlock Grid.Row="2" Grid.Column="0" Text="Notes:" VerticalAlignment="Center" HorizontalAlignment="Right" />
             <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedPage.SelectedFeature.Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />

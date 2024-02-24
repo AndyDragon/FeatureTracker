@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
+using Notification.Wpf;
 
 namespace FeatureTracker
 {
@@ -24,6 +25,8 @@ namespace FeatureTracker
         void RemoveModel(Model model);
 
         void RemoveModelCollection<T>(ObservableCollection<T> collection) where T : Model;
+
+        void ShowToast(string title, string message, NotificationType type = NotificationType.Success, TimeSpan? duration = null);
     }
 
     public abstract class Model : NotifyPropertyChanged

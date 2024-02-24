@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows;
 using System.Windows.Media;
 
 namespace FeatureTracker
@@ -33,11 +34,11 @@ namespace FeatureTracker
             set => Set(ref alternativeTitle, value);
         }
 
-        private SolidColorBrush foreground = new(Colors.Black);
-        public SolidColorBrush Foreground
+        private FontWeight fontWeight = FontWeights.Normal;
+        public FontWeight FontWeight
         {
-            get => foreground;
-            set => Set(ref foreground, value);
+            get => fontWeight;
+            set => Set(ref fontWeight, value);
         }
 
         private Func<object, System.Windows.Controls.Page>? editorPageFactory = null;

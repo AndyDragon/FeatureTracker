@@ -9,7 +9,7 @@
       d:DesignHeight="450" 
       d:DesignWidth="800"
       Title="PageEditor">
-    <Grid Margin="20">
+    <Grid Margin="20,10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <!-- Header -->
@@ -27,18 +27,28 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="Page:" VerticalAlignment="Bottom" />
+            <TextBlock Grid.Column="0" Text="Page / challenge:" VerticalAlignment="Bottom" />
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-                <Button Command="{Binding DeletePageCommand}" ToolTip="Delete this page / challenge">
+                <Button 
+                    Command="{Binding DeletePageCommand}" 
+                    ToolTip="Delete this page / challenge"
+                    Width="20"
+                    Margin="8,0"
+                    Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
                     <iconPacks:PackIconBootstrapIcons 
-                        Width="16"
-                        Height="16"
+                        Width="14"
+                        Height="14"
                         Kind="Trash" />
                 </Button>
-                <Button Command="{Binding ClosePageCommand}" ToolTip="Close this page / challenge">
+                <Button 
+                    Command="{Binding ClosePageCommand}" 
+                    ToolTip="Close this page / challenge"
+                    Width="20"
+                    Margin="8,0"
+                    Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
                     <iconPacks:PackIconModern 
-                        Width="16"
-                        Height="16"
+                        Width="14"
+                        Height="14"
                         Kind="Close" />
                 </Button>
             </StackPanel>
@@ -50,15 +60,17 @@
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="4" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="4" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center" HorizontalAlignment="Right" />
             <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedPage.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="Notes:" VerticalAlignment="Center" HorizontalAlignment="Right" />
-            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedPage.Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="Count as:" VerticalAlignment="Center" HorizontalAlignment="Right" />
-            <Grid Grid.Row="2" Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Notes:" VerticalAlignment="Center" HorizontalAlignment="Right" />
+            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedPage.Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Count as:" VerticalAlignment="Center" HorizontalAlignment="Right" />
+            <Grid Grid.Row="4" Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -77,16 +89,26 @@
                 <TextBlock Text="{Binding SelectedPage.FeaturesCount, Mode=OneWay}" VerticalAlignment="Bottom" Margin="12, 0, 0, 0" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-                <Button Command="{Binding SelectedPage.AddFeatureCommand}" ToolTip="Adds a new feature for this page / challenge">
+                <Button 
+                    Command="{Binding SelectedPage.AddFeatureCommand}" 
+                    ToolTip="Adds a new feature for this page / challenge"
+                    Width="20"
+                    Margin="8,0"
+                    Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
                     <iconPacks:PackIconModern 
-                        Width="16"
-                        Height="16"
+                        Width="14"
+                        Height="14"
                         Kind="Add" />
                 </Button>
-                <Button Command="{Binding SelectedPage.RefreshFeaturesCommand}" ToolTip="Refresh the feature list">
+                <Button 
+                    Command="{Binding SelectedPage.RefreshFeaturesCommand}" 
+                    ToolTip="Refresh the feature list"
+                    Width="20"
+                    Margin="8,0"
+                    Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
                     <iconPacks:PackIconModern 
-                        Width="16"
-                        Height="16"
+                        Width="14"
+                        Height="14"
                         Kind="Refresh" />
                 </Button>
             </StackPanel>
@@ -104,13 +126,13 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Title}" />
-                        <TextBlock Grid.RowSpan="2" Grid.Column="1" Text="{Binding AlternativeTitle}" FontSize="12" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding SubTitle}" TextTrimming="WordEllipsis" FontSize="11" Foreground="CadetBlue" />
+                        <TextBlock Grid.RowSpan="2" Grid.Column="1" Text="{Binding AlternativeTitle}" FontSize="12" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding SubTitle}" TextTrimming="WordEllipsis" FontSize="11" />
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <Grid Grid.Row="4" MinHeight="200">
+        <Grid Grid.Row="4" MinHeight="100">
             <Frame x:Name="EditorFrame" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Grid>
     </Grid>
