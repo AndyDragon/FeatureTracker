@@ -1,24 +1,28 @@
-﻿using System;
+﻿using FontAwesome.UWP;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.IsolatedStorage;
+using System.Linq;
 using System.Text;
-using System.Windows;
+using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Windows.Media;
-using Newtonsoft.Json;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
+using Windows.UI;
+using Windows.UI.Xaml.Media;
 
 namespace FeatureTracker
 {
-    using FontAwesome5;
-    using Properties;
-
     public class MainViewModel : NotifyPropertyChanged, IDataManager
     {
         private int operationCount = 0;
+
+        private readonly ApplicationDataContainer SettingsContainer = ApplicationData.Current.RoamingSettings;
 
         public MainViewModel()
         {
@@ -33,22 +37,19 @@ namespace FeatureTracker
             sortByNameCommand = new Command(() =>
             {
                 pageSort = PageComparer.NameComparer;
-                Settings.Default.PageSort = (int)PageComparer.CompareMode.Name;
-                Settings.Default.Save();
+                SettingsContainer.Values["PageSort"] = (int)PageComparer.CompareMode.Name;
                 RefreshPages();
             });
             sortByCountCommand = new Command(() =>
             {
                 pageSort = PageComparer.CountComparer;
-                Settings.Default.PageSort = (int)PageComparer.CompareMode.Count;
-                Settings.Default.Save();
+                SettingsContainer.Values["PageSort"] = (int)PageComparer.CompareMode.Count;
                 RefreshPages();
             });
             sortByFeaturesCommand = new Command(() =>
             {
                 pageSort = PageComparer.FeaturesComparer;
-                Settings.Default.PageSort = (int)PageComparer.CompareMode.Features;
-                Settings.Default.Save();
+                SettingsContainer.Values["PageSort"] = (int)PageComparer.CompareMode.Features;
                 RefreshPages();
             });
             refreshPagesCommand = new Command(() =>
@@ -58,25 +59,33 @@ namespace FeatureTracker
             populateDefaultsCommand = new Command(PopulateDefaultPages);
             generateReportCommand = new Command(GenerateReport);
             backupCommand = new Command(BackupToClipboard);
-            restoreCommand = new Command(RestoreFromClipboard);
+            restoreCommand = new Command(() => _ = RestoreFromClipboard());
             closePageCommand = new Command(() => SelectedPage = null);
             deletePageCommand = new Command(() =>
             {
                 var page = SelectedPage;
                 SelectedPage = null;
-                if (page != null)
-                {
-                    Pages.Remove(page);
-                    RemoveModel(page);
-                }
+                Pages.Remove(page);
+                RemoveModel(page);
             });
+            Pages = new SortableModelCollection<Page>();
 
-            pageSort = (PageComparer.CompareMode)Settings.Default.PageSort switch
+            if (SettingsContainer.Values.ContainsKey("PageSort"))
             {
-                PageComparer.CompareMode.Count => PageComparer.CountComparer,
-                PageComparer.CompareMode.Features => PageComparer.FeaturesComparer,
-                _ => PageComparer.NameComparer,
-            };
+                switch ((PageComparer.CompareMode)SettingsContainer.Values["PageSort"])
+                {
+                    case PageComparer.CompareMode.Count:
+                        pageSort = PageComparer.CountComparer;
+                        break;
+                    case PageComparer.CompareMode.Features:
+                        pageSort = PageComparer.FeaturesComparer;
+                        break;
+                    default:
+                        pageSort = PageComparer.NameComparer;
+                        break;
+                }
+            }
+
             AddModelCollection(Pages);
             StartOperation();
             LoadPages();
@@ -88,41 +97,43 @@ namespace FeatureTracker
         {
             try
             {
-                using var isoStore =
+                using (var isoStore =
                 IsolatedStorageFile.GetStore(
                     IsolatedStorageScope.User |
                     IsolatedStorageScope.Assembly |
                     IsolatedStorageScope.Roaming,
                     null,
-                    null);
-                if (isoStore != null)
+                    null))
                 {
-                    using (var stream = isoStore.OpenFile("PagesStore", FileMode.Open))
+                    if (isoStore != null)
                     {
-                        if (stream != null)
+                        using (var stream = isoStore.OpenFile("PagesStore", FileMode.Open))
                         {
-                            using (var streamReader = new StreamReader(stream))
+                            if (stream != null)
                             {
-                                var json = streamReader.ReadToEnd();
-                                if (!string.IsNullOrEmpty(json))
+                                using (var streamReader = new StreamReader(stream))
                                 {
-                                    var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
-                                    if (loadedPages != null)
+                                    var json = streamReader.ReadToEnd();
+                                    if (!string.IsNullOrEmpty(json))
                                     {
-                                        foreach (var loadedPage in loadedPages)
+                                        var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
+                                        if (loadedPages != null)
                                         {
-                                            var page = new Page(loadedPage);
-                                            AddModel(page);
-                                            Pages.Add(page);
+                                            foreach (var loadedPage in loadedPages)
+                                            {
+                                                var page = new Page(loadedPage);
+                                                AddModel(page);
+                                                Pages.Add(page);
+                                            }
                                         }
                                     }
+                                    streamReader.Close();
                                 }
-                                streamReader.Close();
+                                stream.Close();
                             }
-                            stream.Close();
                         }
+                        isoStore.Close();
                     }
-                    isoStore.Close();
                 }
             }
             catch (Exception ex)
@@ -136,27 +147,29 @@ namespace FeatureTracker
         {
             try
             {
-                using var isoStore =
+                using (var isoStore =
                     IsolatedStorageFile.GetStore(
                         IsolatedStorageScope.User |
                         IsolatedStorageScope.Assembly |
                         IsolatedStorageScope.Roaming,
                         null,
-                        null);
-                if (isoStore != null)
+                        null))
                 {
-                    using (var stream = isoStore.OpenFile("PagesStore", FileMode.Create))
+                    if (isoStore != null)
                     {
-                        var jsonPages = Pages.Select(page => page.ToJson());
-                        var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
-                        using (var streamWriter = new StreamWriter(stream))
+                        using (var stream = isoStore.OpenFile("PagesStore", FileMode.Create))
                         {
-                            streamWriter.Write(json);
-                            streamWriter.Flush();
+                            var jsonPages = Pages.Select(page => page.ToJson());
+                            var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
+                            using (var streamWriter = new StreamWriter(stream))
+                            {
+                                streamWriter.Write(json);
+                                streamWriter.Flush();
+                            }
+                            stream.Close();
                         }
-                        stream.Close();
+                        isoStore.Close();
                     }
-                    isoStore.Close();
                 }
             }
             catch (Exception ex)
@@ -179,15 +192,21 @@ namespace FeatureTracker
             OnPropertyChanged(nameof(SortedByFeaturesCheck));
         }
 
-        public SortableModelCollection<Page> Pages { get; } = [];
+        public SortableModelCollection<Page> Pages { get; private set; }
 
         private PageComparer pageSort = PageComparer.NameComparer;
 
-        private Page? selectedPage = null;
-        public Page? SelectedPage
+        private Page selectedPage = null;
+        public Page SelectedPage
         {
             get => selectedPage;
-            set => Set(ref selectedPage, value);
+            set
+            {
+                if (Set(ref selectedPage, value))
+                {
+
+                }
+            }
         }
 
         private bool isSplitViewPaneOpen = true;
@@ -233,11 +252,11 @@ namespace FeatureTracker
         private readonly ICommand deletePageCommand;
         public ICommand DeletePageCommand => deletePageCommand;
 
-        public EFontAwesomeIcon SortedByNameCheck => pageSort == PageComparer.NameComparer ? EFontAwesomeIcon.Solid_Check : EFontAwesomeIcon.None;
+        public FontAwesomeIcon SortedByNameCheck => pageSort == PageComparer.NameComparer ? FontAwesomeIcon.Check : FontAwesomeIcon.None;
 
-        public EFontAwesomeIcon SortedByCountCheck => pageSort == PageComparer.CountComparer ? EFontAwesomeIcon.Solid_Check : EFontAwesomeIcon.None;
+        public FontAwesomeIcon SortedByCountCheck => pageSort == PageComparer.CountComparer ? FontAwesomeIcon.Check : FontAwesomeIcon.None;
 
-        public EFontAwesomeIcon SortedByFeaturesCheck => pageSort == PageComparer.FeaturesComparer ? EFontAwesomeIcon.Solid_Check : EFontAwesomeIcon.None;
+        public FontAwesomeIcon SortedByFeaturesCheck => pageSort == PageComparer.FeaturesComparer ? FontAwesomeIcon.Check : FontAwesomeIcon.None;
 
         private void PopulateDefaultPages()
         {
@@ -394,7 +413,7 @@ namespace FeatureTracker
             return count;
         }
 
-        private static string GetStringForCount(int count, string baseString, string? pluralString = null)
+        private string GetStringForCount(int count, string baseString, string pluralString = null)
         {
             if (count == 1)
             {
@@ -491,21 +510,34 @@ namespace FeatureTracker
                 }
             }
 
-            Clipboard.SetText(builder.ToString());
+            SetClipboard(builder.ToString());
+        }
+
+        private void SetClipboard(string text)
+        {
+            // Set the clipboard.
+            var package = new DataPackage
+            {
+                RequestedOperation = DataPackageOperation.Copy
+            };
+            package.SetText(text);
+            Clipboard.SetContent(package);
+
         }
 
         private void BackupToClipboard()
         {
             var jsonPages = Pages.OrderBy(page => page.Name).Select(page => page.ToJson());
             var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
-            Clipboard.SetText(json);
+            SetClipboard(json);
         }
 
-        private void RestoreFromClipboard()
+        private async Task RestoreFromClipboard()
         {
-            if (Clipboard.ContainsText())
+            DataPackageView dataPackageView = Clipboard.GetContent();
+            if (dataPackageView.Contains(StandardDataFormats.Text))
             {
-                string json = Clipboard.GetText();
+                string json = await dataPackageView.GetTextAsync();
                 try
                 {
                     var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
@@ -540,7 +572,7 @@ namespace FeatureTracker
             }
         }
 
-        private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
+        private void OnModelChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (sender is Model model)
             {
@@ -569,7 +601,7 @@ namespace FeatureTracker
             model.PropertyChanged -= OnModelChanged;
         }
 
-        private void OnModelCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        private void OnModelCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             // TODO trigger debouncer to save data...
             if (operationCount == 0)
@@ -606,8 +638,8 @@ namespace FeatureTracker
 
     public class Page : EditableModel
     {
-        private static readonly SolidColorBrush WhiteBrush = new(Colors.White);
-        private static readonly SolidColorBrush CadetBlueBrush = new(Colors.CadetBlue);
+        private static readonly SolidColorBrush WhiteBrush = new SolidColorBrush(Colors.White);
+        private static readonly SolidColorBrush CadetBlueBrush = new SolidColorBrush(Colors.CadetBlue);
 
         private readonly Func<int, string> GetSuffix = count => count != 1 ? "s" : "";
 
@@ -620,7 +652,7 @@ namespace FeatureTracker
             addFeatureCommand = new Command(() =>
             {
                 var feature = new Feature() { Date = DateTime.Now };
-                DataManager?.AddModel(feature);
+                DataManager.AddModel(feature);
                 Features.Add(feature);
                 SelectedFeature = feature;
             });
@@ -629,17 +661,15 @@ namespace FeatureTracker
             {
                 var feature = SelectedFeature;
                 SelectedFeature = null;
-                if (feature != null)
-                {
-                    Features.Remove(feature);
-                    DataManager?.RemoveModel(feature);
-                }
+                Features.Remove(feature);
+                DataManager.RemoveModel(feature);
             });
+            Features = new SortableModelCollection<Feature>();
             Features.CollectionChanged += (sender, e) =>
             {
                 Foreground = Features.Count == 0 ? WhiteBrush : CadetBlueBrush;
                 AlternativeTitle = $"{Features.Count} Feature{GetSuffix(Features.Count)}";
-                OnPropertyChanged(nameof(FeaturesCount));
+                OnPropertyChanged("FeaturesCount");
             };
             Title = Name.ToUpper();
             Foreground = Features.Count == 0 ? WhiteBrush : CadetBlueBrush;
@@ -673,15 +703,15 @@ namespace FeatureTracker
             };
         }
 
-        public SortableModelCollection<Feature> Features { get; } = [];
+        public SortableModelCollection<Feature> Features { get; private set; }
 
         private void RefreshFeatures()
         {
-            DataManager?.StartOperation();
+            DataManager.StartOperation();
             var oldSelectedFeature = SelectedFeature;
             SelectedFeature = null;
             Features.SortBy(FeatureComparer.DateComparer);
-            DataManager?.StopOperation();
+            DataManager.StopOperation();
             SelectedFeature = oldSelectedFeature;
         }
 
@@ -694,11 +724,17 @@ namespace FeatureTracker
             }
         }
 
-        private Feature? selectedFeature = null;
-        public Feature? SelectedFeature
+        private Feature selectedFeature = null;
+        public Feature SelectedFeature
         {
             get => selectedFeature;
-            set => Set(ref selectedFeature, value);
+            set
+            {
+                if (Set(ref selectedFeature, value))
+                {
+
+                }
+            }
         }
 
         public Guid Id { get; private set; }
@@ -748,12 +784,12 @@ namespace FeatureTracker
         private readonly ICommand deleteFeatureCommand;
         public ICommand DeleteFeatureCommand => deleteFeatureCommand;
 
-        public override string[] ModelProperties => [nameof(Name), nameof(Notes), nameof(Count)];
+        public override string[] ModelProperties => new[] { nameof(Name), nameof(Notes), nameof(Count) };
 
-        public override string[] ModelCollectionProperties => [nameof(Features)];
+        public override string[] ModelCollectionProperties => new[] { nameof(Features) };
 
-        private IDataManager? dataManager;
-        public override IDataManager? DataManager
+        private IDataManager dataManager;
+        public override IDataManager DataManager
         {
             get => dataManager;
             set
@@ -781,7 +817,7 @@ namespace FeatureTracker
 
     public class Feature : EditableModel
     {
-        private static readonly SolidColorBrush WhiteBrush = new(Colors.White);
+        private static readonly SolidColorBrush WhiteBrush = new SolidColorBrush(Colors.White);
 
         public Feature()
         {
@@ -853,11 +889,11 @@ namespace FeatureTracker
             }
         }
 
-        public override string[] ModelProperties => [nameof(Date), nameof(Notes), nameof(Raw)];
+        public override string[] ModelProperties => new[] { nameof(Date), nameof(Notes), nameof(Raw) };
 
-        public override string[] ModelCollectionProperties => [];
+        public override string[] ModelCollectionProperties => new string[] { };
 
-        public override IDataManager? DataManager { get; set; }
+        public override IDataManager DataManager { get; set; }
     }
 
     public class JsonPage
@@ -866,7 +902,7 @@ namespace FeatureTracker
         public int Count { get; set; } = 1;
 
         [JsonProperty(PropertyName = "features", NullValueHandling = NullValueHandling.Ignore)]
-        public IList<JsonFeature> Features { get; set; } = [];
+        public IList<JsonFeature> Features { get; set; } = new List<JsonFeature>();
 
         [JsonProperty(PropertyName = "id"), JsonConverter(typeof(UppercaseGuidConverter))]
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -902,7 +938,7 @@ namespace FeatureTracker
 
         public override Guid ReadJson(JsonReader reader, Type objectType, Guid existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            return new Guid((reader.Value as string) ?? "");
+            return new Guid((string)reader.Value);
         }
     }
 }

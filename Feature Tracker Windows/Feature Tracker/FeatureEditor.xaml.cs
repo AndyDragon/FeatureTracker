@@ -1,33 +1,28 @@
 ﻿using System;
-using Windows.UI.Xaml.Navigation;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
 
 namespace FeatureTracker
 {
     /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// Interaction logic for FeatureEditor.xaml
     /// </summary>
-    public sealed partial class FeatureEditor : Windows.UI.Xaml.Controls.Page
+    public partial class FeatureEditor : System.Windows.Controls.Page
     {
         public FeatureEditor()
         {
-            this.InitializeComponent();
-        }
-
-        protected override void OnNavigatedTo(NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
-
-            if (DataContext is MainViewModel viewModel && e.Parameter is Feature feature)
-            {
-                ConnectFeature(viewModel, feature);
-            }
-        }
-
-        private void ConnectFeature(MainViewModel viewModel, Feature feature)
-        {
-            feature.PropertyChanged += (sender, e) =>
-            {
-            };
+            InitializeComponent();
         }
     }
 }

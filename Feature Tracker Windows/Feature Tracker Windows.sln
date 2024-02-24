@@ -1,51 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.5.33424.131
+VisualStudioVersion = 17.9.34607.119
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Feature Tracker", "Feature Tracker\Feature Tracker.csproj", "{69C94AEE-D468-408F-A1F0-D799D3957FB8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Feature Tracker", "Feature Tracker\Feature Tracker.csproj", "{EBDA9BAA-9FF6-459F-A228-6A8EC1068784}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|ARM = Debug|ARM
-		Debug|ARM64 = Debug|ARM64
-		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
-		Release|ARM = Release|ARM
-		Release|ARM64 = Release|ARM64
-		Release|x64 = Release|x64
-		Release|x86 = Release|x86
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|ARM.ActiveCfg = Debug|ARM
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|ARM.Build.0 = Debug|ARM
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|ARM.Deploy.0 = Debug|ARM
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|ARM64.ActiveCfg = Debug|ARM64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|ARM64.Build.0 = Debug|ARM64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|ARM64.Deploy.0 = Debug|ARM64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|x64.ActiveCfg = Debug|x64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|x64.Build.0 = Debug|x64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|x64.Deploy.0 = Debug|x64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|x86.ActiveCfg = Debug|x86
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|x86.Build.0 = Debug|x86
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Debug|x86.Deploy.0 = Debug|x86
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|ARM.ActiveCfg = Release|ARM
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|ARM.Build.0 = Release|ARM
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|ARM.Deploy.0 = Release|ARM
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|ARM64.ActiveCfg = Release|ARM64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|ARM64.Build.0 = Release|ARM64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|ARM64.Deploy.0 = Release|ARM64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|x64.ActiveCfg = Release|x64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|x64.Build.0 = Release|x64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|x64.Deploy.0 = Release|x64
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|x86.ActiveCfg = Release|x86
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|x86.Build.0 = Release|x86
-		{69C94AEE-D468-408F-A1F0-D799D3957FB8}.Release|x86.Deploy.0 = Release|x86
+		{EBDA9BAA-9FF6-459F-A228-6A8EC1068784}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBDA9BAA-9FF6-459F-A228-6A8EC1068784}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBDA9BAA-9FF6-459F-A228-6A8EC1068784}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBDA9BAA-9FF6-459F-A228-6A8EC1068784}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {B5D7F41C-2A03-43D7-A43A-14C3E94D7861}
+		SolutionGuid = {0256B0D9-8D4F-40F0-8969-CDFE7DD752FF}
 	EndGlobalSection
 EndGlobal

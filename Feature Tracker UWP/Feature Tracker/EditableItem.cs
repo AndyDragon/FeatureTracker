@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Windows.Media;
+using Windows.UI.Xaml.Media;
 
 namespace FeatureTracker
 {
@@ -33,15 +33,15 @@ namespace FeatureTracker
             set => Set(ref alternativeTitle, value);
         }
 
-        private SolidColorBrush foreground = new(Colors.Black);
+        private SolidColorBrush foreground = new SolidColorBrush(Windows.UI.Colors.Black);
         public SolidColorBrush Foreground
         {
             get => foreground;
             set => Set(ref foreground, value);
         }
 
-        private Type? editorPageType = null;
-        public Type? EditorPageType
+        private Type editorPageType = null;
+        public Type EditorPageType
         {
             get => editorPageType;
             set => Set(ref editorPageType, value);

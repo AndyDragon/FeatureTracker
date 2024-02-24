@@ -1,49 +1,14 @@
-﻿<Page
-    x:Class="FeatureTracker.FeatureEditor"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:FeatureTracker"
-    xmlns:fa="using:FontAwesome.UWP"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-    mc:Ignorable="d"
-    d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
-    Background="{ThemeResource SystemControlAcrylicWindowBrush}">
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" /> <!-- Header -->
-            <RowDefinition Height="Auto" /> <!-- Feature properties -->
-        </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="Feature:" VerticalAlignment="Bottom" />
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-                <Button Command="{Binding SelectedPage.DeleteFeatureCommand}" Style="{StaticResource SmIconButtonStyle}">
-                    <fa:FontAwesome Icon="TrashOutline"  />
-                </Button>
-                <Button Command="{Binding SelectedPage.CloseFeatureCommand}" Style="{StaticResource SmIconButtonStyle}">
-                    <fa:FontAwesome Icon="Times"  />
-                </Button>
-            </StackPanel>
-        </Grid>
-        <Grid Grid.Row="1" Margin="8,8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="Date:" VerticalAlignment="Center" HorizontalAlignment="Right" />
-            <CalendarDatePicker Grid.Row="0" Grid.Column="1" Date="{Binding SelectedPage.SelectedFeature.Date, Mode=TwoWay, Converter={StaticResource DateTimeConverter}}" DateFormat="{}{dayofweek.full}, {month.full} {day.integer}, {year.full}" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <CheckBox Grid.Row="0" Grid.Column="2" Content="RAW" IsChecked="{Binding SelectedPage.SelectedFeature.Raw, Mode=TwoWay}" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="Notes:" VerticalAlignment="Center" HorizontalAlignment="Right" />
-            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedPage.SelectedFeature.Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />
-        </Grid>
+﻿<Page x:Class="FeatureTracker.FeatureEditor"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:FeatureTracker"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="FeatureEditor">
+
+    <Grid>
+        
     </Grid>
 </Page>

@@ -1,12 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace FeatureTracker
 {
-    public class NotifyDataChangedEventArgs(string? propertyName) : EventArgs
+    public class NotifyDataChangedEventArgs : EventArgs
     {
-        public string? PropertyName { get; private set; } = propertyName;
+        public NotifyDataChangedEventArgs(string propertyName) 
+        { 
+            PropertyName = propertyName;
+        }
+
+        public string PropertyName { get; private set; }
     }
 
     public delegate void NotifyDataChangedEventHandler(object sender, NotifyDataChangedEventArgs e);
@@ -32,14 +39,14 @@ namespace FeatureTracker
 
         public abstract string[] ModelCollectionProperties { get; }
         
-        public abstract IDataManager? DataManager { get; set; }
+        public abstract IDataManager DataManager { get; set; }
 
-        public void OnDataChanged([CallerMemberName] string? propertyName = null)
+        public void OnDataChanged([CallerMemberName] string propertyName = null)
         {
             DataChanged?.Invoke(this, new NotifyDataChangedEventArgs(propertyName));
         }
 
-        public event NotifyDataChangedEventHandler? DataChanged;
+        public event NotifyDataChangedEventHandler DataChanged;
     }
 
     public class SortableModelCollection<T> : ObservableCollection<T> where T : Model
@@ -71,27 +78,35 @@ namespace FeatureTracker
 
         readonly CompareMode mode;
 
-        public int Compare(Page? x, Page? y)
+        public int Compare(Page x, Page y)
         {
-            if (x == null && y == null) return 0;
-            if (x == null) return -1;
-            if (y == null) return 1;
-            return mode switch
+            switch (mode)
             {
-                CompareMode.Name => string.Compare(x.Name, y.Name),
-                CompareMode.Features => (x.Features.Count != y.Features.Count) ? (y.Features.Count - x.Features.Count) : string.Compare(x.Name, y.Name),
-                CompareMode.Count => (x.Count != y.Count) ? (y.Count - x.Count) : string.Compare(x.Name, y.Name),
-                _ => 0
-            };
+                case CompareMode.Name:
+                    return string.Compare(x.Name, y.Name);
+                case CompareMode.Features:
+                    if (x.Features.Count != y.Features.Count)
+                    {
+                        return y.Features.Count - x.Features.Count;
+                    }
+                    return string.Compare(x.Name, y.Name);
+                case CompareMode.Count:
+                    if (x.Count != y.Count)
+                    {
+                        return y.Count - x.Count;
+                    }
+                    return string.Compare(x.Name, y.Name);
+            }
+            return 0;
         }
 
-        private static readonly PageComparer nameComparer = new(CompareMode.Name);
+        private static readonly PageComparer nameComparer = new PageComparer(CompareMode.Name);
         public static PageComparer NameComparer { get => nameComparer; }
 
-        private static readonly PageComparer featuresComparer = new(CompareMode.Features);
+        private static readonly PageComparer featuresComparer = new PageComparer(CompareMode.Features);
         public static PageComparer FeaturesComparer { get => featuresComparer; }
 
-        private static readonly PageComparer countComparer = new(CompareMode.Count);
+        private static readonly PageComparer countComparer = new PageComparer(CompareMode.Count);
         public static PageComparer CountComparer { get => countComparer; }
     }
 
@@ -109,19 +124,17 @@ namespace FeatureTracker
 
         readonly CompareMode mode;
 
-        public int Compare(Feature? x, Feature? y)
+        public int Compare(Feature x, Feature y)
         {
-            if (x == null && y == null) return 0;
-            if (x == null) return -1;
-            if (y == null) return 1;
-            return mode switch
+            switch (mode)
             {
-                CompareMode.Date => DateTime.Compare(y.Date, x.Date),
-                _ => 0,
-            };
+                case CompareMode.Date:
+                    return DateTime.Compare(y.Date, x.Date);
+            }
+            return 0;
         }
 
-        private static readonly FeatureComparer dateComparer = new(CompareMode.Date);
+        private static readonly FeatureComparer dateComparer = new FeatureComparer(CompareMode.Date);
         public static FeatureComparer DateComparer { get => dateComparer; }
     }
 }
