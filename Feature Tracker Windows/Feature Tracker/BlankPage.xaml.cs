@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows;
 
 namespace FeatureTracker
 {
@@ -16,6 +17,21 @@ namespace FeatureTracker
 
     public class BlankViewModel : NotifyPropertyChanged
     {
+        public Visibility SummaryVisibility => MainViewModel != null ? Visibility.Visible : Visibility.Collapsed;
+
+        private MainViewModel? mainViewModel;
+        public MainViewModel? MainViewModel 
+        {
+            get => mainViewModel;
+            set
+            {
+                if (Set(ref mainViewModel, value))
+                {
+                    OnPropertyChanged(nameof(SummaryVisibility));
+                }
+            }
+        }
+
         private string? message;
         public string? Message
         {

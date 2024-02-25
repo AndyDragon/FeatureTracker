@@ -112,6 +112,7 @@ namespace FeatureTracker
                 pageSortOption.IsSelected = pageSortOption.Comparer == pageSort;
             }
             OnPropertyChanged(nameof(PageSortOptions));
+            UpdateSummary();
         }
 
         private void LoadPages()
@@ -145,6 +146,7 @@ namespace FeatureTracker
                                             AddModel(page);
                                             Pages.Add(page);
                                         }
+                                        UpdateSummary();
                                     }
                                 }
                                 streamReader.Close();
@@ -316,6 +318,8 @@ namespace FeatureTracker
             get => isSplitViewPaneOpen;
             set => Set(ref isSplitViewPaneOpen, value);
         }
+
+        public Summary Summary { get; } = new Summary();
 
         private readonly ICommand toggleSplitViewCommand;
         public ICommand ToggleSplitViewCommand => toggleSplitViewCommand;
@@ -503,6 +507,7 @@ namespace FeatureTracker
             Pages.SortBy(pageSort);
 
             StopOperation(true);
+            UpdateSummary();
 
             ShowToast("Populated the defaults", $"Populated {Pages.Count} default pages and challenges");
         }
@@ -589,6 +594,31 @@ namespace FeatureTracker
                 return "Elite Member";
             }
             return "Hall of Fame Member";
+        }
+
+        private void UpdateSummary()
+        {
+            var featuresCount = GetFeatures();
+            var totalFeaturesCount = GetTotalFeatures();
+            if (featuresCount != totalFeaturesCount)
+            {
+                Summary.Features = $"Total features: {featuresCount} (counts as {totalFeaturesCount})";
+            }
+            else
+            {
+                Summary.Features = $"Total features: {featuresCount}";
+            }
+            var pagesCount = GetPages();
+            var totalPagesCount = GetTotalPages();
+            if (pagesCount != totalPagesCount)
+            {
+                Summary.Pages = $"Total pages with features: {pagesCount} (counts as {totalPagesCount})";
+            }
+            else
+            {
+                Summary.Pages = $"Total pages with features: {pagesCount}";
+            }
+            Summary.Membership = $"Membership level: {GetMembership()}";
         }
 
         private void GenerateReport()
@@ -695,6 +725,7 @@ namespace FeatureTracker
                         }
                         Pages.SortBy(pageSort);
                         StopOperation(true);
+                        UpdateSummary();
 
                         ShowToast("Restore complete", $"Restored {Pages.Count} pages and challenges from the clipboard");
                     }
@@ -748,12 +779,14 @@ namespace FeatureTracker
         {
             model.PropertyChanged += OnModelChanged;
             model.DataManager = this;
+            UpdateSummary();
         }
 
         public void RemoveModel(Model model)
         {
             model.DataManager = null;
             model.PropertyChanged -= OnModelChanged;
+            UpdateSummary();
         }
 
         private void OnModelCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -763,17 +796,20 @@ namespace FeatureTracker
             {
                 Debug.WriteLine("Saving data from collection changed...");
                 StorePages();
+                UpdateSummary();
             }
         }
 
         public void AddModelCollection<T>(ObservableCollection<T> collection) where T : Model
         {
             collection.CollectionChanged += OnModelCollectionChanged;
+            UpdateSummary();
         }
 
         public void RemoveModelCollection<T>(ObservableCollection<T> collection) where T : Model
         {
             collection.CollectionChanged -= OnModelCollectionChanged;
+            UpdateSummary();
         }
 
         public void StartOperation()
@@ -1127,5 +1163,29 @@ namespace FeatureTracker
         public PackIconMaterialKind IconKind { get; set; }
 
         public BackupOperation Operation { get; set; }
+    }
+
+    public class Summary : NotifyPropertyChanged
+    {
+        private string? features;
+        public string? Features
+        {
+            get => features;
+            set => Set(ref features, value);
+        }
+
+        private string? pages;
+        public string? Pages
+        {
+            get => pages;
+            set => Set(ref pages, value);
+        }
+
+        private string? membership;
+        public string? Membership
+        {
+            get => membership;
+            set => Set(ref membership, value);
+        }
     }
 }

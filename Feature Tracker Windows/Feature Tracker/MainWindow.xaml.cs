@@ -27,10 +27,9 @@ namespace FeatureTracker
         {
             InitializeComponent();
 
-            EditorFrame.Navigate(new BlankPage(blankViewModel));
-
             if (DataContext is MainViewModel viewModel)
             {
+                blankViewModel.MainViewModel = viewModel;
                 var lastThemeName = Settings.Default.Theme;
                 if (!string.IsNullOrEmpty(lastThemeName))
                 {
@@ -44,6 +43,8 @@ namespace FeatureTracker
 
                 ConnectViewModel(viewModel);
             }
+
+            EditorFrame.Navigate(new BlankPage(blankViewModel));
         }
 
         private void ConnectViewModel(MainViewModel viewModel)
