@@ -4,7 +4,6 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.IO.IsolatedStorage;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -16,8 +15,8 @@ namespace FeatureTracker
     using ControlzEx.Theming;
     using MahApps.Metro.Controls.Dialogs;
     using MahApps.Metro.IconPacks;
-    using Properties;
     using System.Reflection;
+    using System.Security.Principal;
     using System.Windows.Threading;
 
     public class MainViewModel : NotifyPropertyChanged, IDataManager
@@ -51,8 +50,7 @@ namespace FeatureTracker
                         pageSort = PageComparer.FeaturesComparer;
                         break;
                 }
-                Settings.Default.PageSort = (int)compareMode;
-                Settings.Default.Save();
+                UserSettings.StoreInt("pageSort", (int)compareMode);
                 RefreshPages();
             });
             refreshPagesCommand = new Command(() =>
@@ -102,7 +100,7 @@ namespace FeatureTracker
             });
             rotateThemeCommand = new Command(RotateTheme);
 
-            pageSort = (PageComparer.CompareMode)Settings.Default.PageSort switch
+            pageSort = (PageComparer.CompareMode)(UserSettings.GetInt("pageSort") ?? 0) switch
             {
                 PageComparer.CompareMode.Count => PageComparer.CountComparer,
                 PageComparer.CompareMode.Features => PageComparer.FeaturesComparer,
@@ -121,46 +119,55 @@ namespace FeatureTracker
             UpdateSummary();
         }
 
+        private static string GetDataLocationPath()
+        {
+            var user = WindowsIdentity.GetCurrent();
+            var dataLocationPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "AndyDragonSoftware",
+                "FeatureTracker",
+                user.Name);
+            if (!Directory.Exists(dataLocationPath))
+            {
+                Directory.CreateDirectory(dataLocationPath);
+            }
+            return dataLocationPath;
+        }
+
+        private static string GetDataPath()
+        {
+            var dataLocationPath = GetDataLocationPath();
+            return Path.Combine(dataLocationPath, "database.json");
+        }
+
+        public static string GetUserSettingsPath()
+        {
+            var dataLocationPath = GetDataLocationPath();
+            return Path.Combine(dataLocationPath, "settings.json");
+        }
+
         private void LoadPages()
         {
             try
             {
-                using var isoStore =
-                IsolatedStorageFile.GetStore(
-                    IsolatedStorageScope.User |
-                    IsolatedStorageScope.Assembly |
-                    IsolatedStorageScope.Roaming,
-                    null,
-                    null);
-                if (isoStore != null)
+                var dataPath = GetDataPath();
+                if (File.Exists(dataPath))
                 {
-                    using (var stream = isoStore.OpenFile("PagesStore", FileMode.Open))
+                    var json = File.ReadAllText(dataPath);
+                    if (!string.IsNullOrEmpty(json))
                     {
-                        if (stream != null)
+                        var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
+                        if (loadedPages != null)
                         {
-                            using (var streamReader = new StreamReader(stream))
+                            foreach (var loadedPage in loadedPages)
                             {
-                                var json = streamReader.ReadToEnd();
-                                if (!string.IsNullOrEmpty(json))
-                                {
-                                    var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
-                                    if (loadedPages != null)
-                                    {
-                                        foreach (var loadedPage in loadedPages)
-                                        {
-                                            var page = new Page(loadedPage);
-                                            AddModel(page);
-                                            Pages.Add(page);
-                                        }
-                                        UpdateSummary();
-                                    }
-                                }
-                                streamReader.Close();
+                                var page = new Page(loadedPage);
+                                AddModel(page);
+                                Pages.Add(page);
                             }
-                            stream.Close();
+                            UpdateSummary();
                         }
                     }
-                    isoStore.Close();
                 }
             }
             catch (Exception ex)
@@ -178,28 +185,10 @@ namespace FeatureTracker
         {
             try
             {
-                using var isoStore =
-                    IsolatedStorageFile.GetStore(
-                        IsolatedStorageScope.User |
-                        IsolatedStorageScope.Assembly |
-                        IsolatedStorageScope.Roaming,
-                        null,
-                        null);
-                if (isoStore != null)
-                {
-                    using (var stream = isoStore.OpenFile("PagesStore", FileMode.Create))
-                    {
-                        var jsonPages = Pages.Select(page => page.ToJson());
-                        var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
-                        using (var streamWriter = new StreamWriter(stream))
-                        {
-                            streamWriter.Write(json);
-                            streamWriter.Flush();
-                        }
-                        stream.Close();
-                    }
-                    isoStore.Close();
-                }
+                var dataPath = GetDataPath();
+                var jsonPages = Pages.Select(page => page.ToJson());
+                var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
+                File.WriteAllText(dataPath, json);
             }
             catch (Exception ex)
             {
@@ -390,8 +379,7 @@ namespace FeatureTracker
             }
             ThemeManager.Current.ChangeTheme(Application.Current, newTheme);
             Theme = newTheme;
-            Settings.Default.Theme = newTheme.Name;
-            Settings.Default.Save();
+            UserSettings.StoreString("theme", newTheme.Name);
         }
 
         private async void PopulateDefaultPages()

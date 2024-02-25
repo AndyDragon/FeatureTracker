@@ -1,18 +1,5 @@
-﻿using ControlzEx.Theming;
-using FeatureTracker.Properties;
-using MahApps.Metro.Controls;
-using System.Diagnostics;
-using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Xml.Linq;
+﻿using System.Windows;
+using ControlzEx.Theming;
 
 namespace FeatureTracker
 {
@@ -30,7 +17,7 @@ namespace FeatureTracker
             if (DataContext is MainViewModel viewModel)
             {
                 blankViewModel.MainViewModel = viewModel;
-                var lastThemeName = Settings.Default.Theme;
+                var lastThemeName = UserSettings.GetString("theme");
                 if (!string.IsNullOrEmpty(lastThemeName))
                 {
                     var theme = ThemeManager.Current.Themes.FirstOrDefault(theme => string.Equals(theme.Name, lastThemeName));
