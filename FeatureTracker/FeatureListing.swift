@@ -39,14 +39,6 @@ struct FeatureListing: View {
                     }
                 }
             }
-            .onDelete(perform: deleteFeatures)
-        }
-    }
-    
-    func deleteFeatures(_ indexSet: IndexSet) {
-        selectedFeature = nil
-        for index in indexSet {
-            page.features!.remove(at: index)
         }
     }
 }

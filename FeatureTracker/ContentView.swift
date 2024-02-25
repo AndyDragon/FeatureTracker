@@ -17,7 +17,6 @@ struct ContentView: View {
     @State private var path = [Page]()
     @State private var selectedPage: Page?
     @State private var selectedFeature: Feature?
-    @State private var showingRepopulateAlert = false
     @State private var exceptionError = ""
     @State private var backupOperation = BackupOperation.none
     @State private var showingBackupRestoreErrorAlert = false
@@ -28,9 +27,10 @@ struct ContentView: View {
     @State private var toastSubTitle = ""
     @State private var toastCompleteAction: () -> Void = {}
     @State private var isShowingToast = false
-    @State private var deleteAlertText = ""
-    @State private var deleteAlertAction: (() -> Void)? = nil
-    @State private var showDeleteAlert = false
+    @State private var confirmationAlertTitle = ""
+    @State private var confirmationAlertText = ""
+    @State private var confirmationAlertAction: (() -> Void)? = nil
+    @State private var showConfirmationAlert = false
     @State private var isShowingDuplicatePages = false;
     @State private var selectedDuplicatePage = UUID();
     private var duplicatePages = DuplicatePages();
@@ -53,14 +53,21 @@ struct ContentView: View {
                         .listStyle(.sidebar)
                         .onDeleteCommand {
                             if let page = selectedPage {
-                                deleteAlertText = "Are you sure you want to delete this page?"
-                                deleteAlertAction = {
+                                confirmationAlertTitle = "Confirm delete"
+                                confirmationAlertText = String {
+                                    "Are you sure you want to delete this page / challenge?"
+                                    "This cannot be undone."
+                                }
+                                confirmationAlertAction = {
                                     selectedFeature = nil
                                     selectedPage = nil
                                     modelContext.delete(page)
-                                    showToast("Deleted page!", "Removed the page and all the features")
+                                    showToast(
+                                        "Deleted page / challenge!",
+                                        "Removed the page / challenge and all the features",
+                                        duration: 15.0)
                                 }
-                                showDeleteAlert.toggle()
+                                showConfirmationAlert.toggle()
                             }
                         }
                         .navigationSplitViewColumnWidth(min: 280, ideal: 320)
@@ -168,22 +175,36 @@ struct ContentView: View {
                         .fontWeight(.bold)
                         Spacer()
                         PageEditor(page: page, selectedFeature: $selectedFeature, onDelete: {
-                            deleteAlertText = "Are you sure you want to delete this page?"
-                            deleteAlertAction = {
+                            confirmationAlertTitle = "Confirm delete"
+                            confirmationAlertText = String {
+                                "Are you sure you want to delete this page / challenge?"
+                                "This cannot be undone."
+                            }
+                            confirmationAlertAction = {
                                 selectedFeature = nil
                                 selectedPage = nil
                                 modelContext.delete(page)
-                                showToast("Deleted page!", "Removed the page and all the features", duration: 15.0)
+                                showToast(
+                                    "Deleted page / challenge!",
+                                    "Removed the page / challenge and all the features",
+                                    duration: 15.0)
                             }
-                            showDeleteAlert.toggle()
+                            showConfirmationAlert.toggle()
                         }, onDeleteFeature: { feature in
-                            deleteAlertText = "Are you sure you want to delete this feature?"
-                            deleteAlertAction = {
+                            confirmationAlertTitle = "Confirm delete"
+                            confirmationAlertText = String {
+                                "Are you sure you want to delete this feature?"
+                                "This cannot be undone."
+                            }
+                            confirmationAlertAction = {
                                 selectedFeature = nil
                                 page.features!.remove(element: feature)
-                                showToast("Deleted feature!", "Removed the feature", duration: 15.0)
+                                showToast(
+                                    "Deleted feature!",
+                                    "Removed the feature",
+                                    duration: 15.0)
                             }
-                            showDeleteAlert.toggle()
+                            showConfirmationAlert.toggle()
                         }, onClose: {
                             withAnimation {
                                 selectedFeature = nil
@@ -228,8 +249,15 @@ struct ContentView: View {
             }
             .blur(radius: isAnyToastShowing ? 4 : 0)
             .toolbar {
-                Button("Populate defaults", action: { showingRepopulateAlert.toggle() })
-                    .disabled(isAnyToastShowing)
+                Button("Populate defaults", action: {
+                    confirmationAlertTitle = "Confirm reset to defaults"
+                    confirmationAlertText = String {
+                        "Are you sure you want to restore everything to the defaults?"
+                        "This cannot be undone!"
+                    }
+                    showConfirmationAlert.toggle()
+                })
+                .disabled(isAnyToastShowing)
                 Button("Generate report", systemImage: "menucard", action: generateReport)
                     .disabled(isAnyToastShowing)
                 Button("Validate data", systemImage: "checkmark.rectangle.stack", action: validateData)
@@ -244,10 +272,30 @@ struct ContentView: View {
                         }
                     }
                     Section(header: Text("Restore from:")) {
-                        Button(action: restore) {
+                        Button(action: {
+                            confirmationAlertTitle = "Confirm restore"
+                            confirmationAlertText = String {
+                                "Are you sure you want to restore from clipboard?"
+                                "This cannot be undone!"
+                            }
+                            confirmationAlertAction = {
+                                restore()
+                            }
+                            showConfirmationAlert.toggle()
+                        }) {
                             Label("Clipboard", systemImage: "tray.and.arrow.up")
                         }
-                        Button(action: restoreFromCloud) {
+                        Button(action: {
+                            confirmationAlertTitle = "Confirm restore"
+                            confirmationAlertText = String {
+                                "Are you sure you want to restore from iCloud?"
+                                "This cannot be undone!"
+                            }
+                            confirmationAlertAction = {
+                                restoreFromCloud()
+                            }
+                            showConfirmationAlert.toggle()
+                        }) {
                             Label("iCloud Documents", systemImage: "icloud.and.arrow.down")
                         }
                     }
@@ -256,29 +304,15 @@ struct ContentView: View {
             }
         }
         .alert(
-            "Are you sure?",
-            isPresented: $showingRepopulateAlert,
+            confirmationAlertTitle,
+            isPresented: $showConfirmationAlert,
             actions: {
-                Button(role: .destructive, action: {
-                    populateDefaultPages()
-                }) {
+                Button(role: .destructive, action: confirmationAlertAction ?? { }) {
                     Text("Yes")
                 }
             },
             message: {
-                Text("This will remove all features and custom pages and cannot be undone.")
-            }
-        )
-        .alert(
-            "Delete confirmation",
-            isPresented: $showDeleteAlert,
-            actions: {
-                Button(role: .destructive, action: deleteAlertAction ?? { }) {
-                    Text("Yes")
-                }
-            },
-            message: {
-                Text(deleteAlertText)
+                Text(confirmationAlertText)
             }
         )
         .alert(

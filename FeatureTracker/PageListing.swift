@@ -69,7 +69,6 @@ struct PageListing: View {
                     }
                 }
             }
-            .onDelete(perform: deletePages)
         }
     }
 
@@ -78,12 +77,5 @@ struct PageListing: View {
             return "\(count) \(countLabel)"
         }
         return "\(count) \(countLabel)s"
-    }
-
-    func deletePages(_ indexSet: IndexSet) {
-        for index in indexSet {
-            let page = pages[index]
-            modelContext.delete(page)
-        }
     }
 }
