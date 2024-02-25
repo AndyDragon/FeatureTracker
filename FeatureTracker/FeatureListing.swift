@@ -34,7 +34,9 @@ struct FeatureListing: View {
                     Spacer()                    
                 }
                 .onTapGesture {
-                    selectedFeature = feature
+                    withAnimation {
+                        selectedFeature = feature
+                    }
                 }
             }
             .onDelete(perform: deleteFeatures)

@@ -64,7 +64,9 @@ struct PageListing: View {
                 }
                 .onTapGesture {
                     selectedFeature = nil
-                    selectedPage = page
+                    withAnimation {
+                        selectedPage = page
+                    }
                 }
             }
             .onDelete(perform: deletePages)

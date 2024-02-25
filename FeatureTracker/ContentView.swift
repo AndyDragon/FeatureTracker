@@ -111,53 +111,62 @@ struct ContentView: View {
         } detail: {
             ZStack {
                 VStack {
-                    HStack(alignment: .top) {
-                        Spacer()
-                        VStack(alignment: .center) {
-                            let featuresCount = getFeatures()
-                            let totalFeaturesCount = getTotalFeatures()
-                            if (featuresCount != totalFeaturesCount) {
-                                Text("Total features: \(featuresCount) (\(totalFeaturesCount))")
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .help("Total count including features which count more than one is \(totalFeaturesCount)")
-                            } else {
-                                Text("Total features: \(featuresCount)")
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                            }
-                        }
-                        Spacer()
-                        VStack(alignment: .center) {
-                            let pagesCount = getPages()
-                            let totalPagesCount = getTotalPages()
-                            if pagesCount != totalPagesCount {
-                                Text("Total pages: \(pagesCount) (\(totalPagesCount))")
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .help("Total count including pages which count more than one is \(totalPagesCount)")
-                            } else {
-                                Text("Total pages: \(pagesCount)")
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                            }
-                        }
-                        Spacer()
-                        VStack(alignment: .center) {
-                            Text("Membership: \(getMembership())")
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                        }
-                        Spacer()
-                    }
-                    .padding([.leading, .trailing])
-                    .padding([.top, .bottom], 6)
-                    .border(.black, edges: [.bottom], width: 1)
-                    .background(Color.gray)
-                    .foregroundColor(.black)
-                    .fontWeight(.bold)
-                    Spacer()
                     if let page = selectedPage {
+                        HStack(alignment: .top) {
+                            Spacer()
+                            VStack(alignment: .center) {
+                                let featuresCount = getFeatures()
+                                let totalFeaturesCount = getTotalFeatures()
+                                if (featuresCount != totalFeaturesCount) {
+                                    Text("Total features: \(featuresCount) (\(totalFeaturesCount))")
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .foregroundColor(.blue)
+                                        .brightness(0.3)
+                                        .help("Total count including features which count more than one is \(totalFeaturesCount)")
+                                } else {
+                                    Text("Total features: \(featuresCount)")
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .foregroundColor(.blue)
+                                        .brightness(0.3)
+                                }
+                            }
+                            Spacer()
+                            VStack(alignment: .center) {
+                                let pagesCount = getPages()
+                                let totalPagesCount = getTotalPages()
+                                if pagesCount != totalPagesCount {
+                                    Text("Total pages: \(pagesCount) (\(totalPagesCount))")
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .foregroundColor(.blue)
+                                        .brightness(0.3)
+                                        .help("Total count including pages which count more than one is \(totalPagesCount)")
+                                } else {
+                                    Text("Total pages: \(pagesCount)")
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .foregroundColor(.blue)
+                                        .brightness(0.3)
+                                }
+                            }
+                            Spacer()
+                            VStack(alignment: .center) {
+                                Text("Membership: \(getMembership())")
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .foregroundColor(.blue)
+                                    .brightness(0.3)
+                            }
+                            Spacer()
+                        }
+                        .padding([.leading, .trailing])
+                        .padding([.top], 6)
+                        .padding([.bottom], 7)
+                        .border(.black, edges: [.bottom], width: 1)
+                        .fontWeight(.bold)
+                        Spacer()
                         PageEditor(page: page, selectedFeature: $selectedFeature, onDelete: {
                             deleteAlertText = "Are you sure you want to delete this page?"
                             deleteAlertAction = {
@@ -176,19 +185,40 @@ struct ContentView: View {
                             }
                             showDeleteAlert.toggle()
                         }, onClose: {
-                            selectedFeature = nil
-                            selectedPage = nil
+                            withAnimation {
+                                selectedFeature = nil
+                                selectedPage = nil
+                            }
                         }, onCloseFeature: {
-                            selectedFeature = nil
+                            withAnimation {
+                                selectedFeature = nil
+                            }
                         })
                     } else {
-                        HStack {
+                        VStack {
+                            Spacer()
+                            Text("Summary of features")
+                                .fontWeight(.bold)
+                                .font(.system(size: 36))
+                                .foregroundColor(.blue)
+                                .brightness(0.3)
+                                .padding([.bottom])
+                            Text(getFeaturesSummary())
+                                .fontWeight(.bold)
+                                .font(.system(size: 24))
+                                .padding([.bottom])
+                            Text(getPagesSummary())
+                                .fontWeight(.bold)
+                                .font(.system(size: 24))
+                                .padding([.bottom])
+                            Text(getMembershipSummary())
+                                .fontWeight(.black)
+                                .font(.system(size: 24))
                             Spacer()
                             Text("Select page from the list to edit")
                                 .foregroundColor(.gray)
                             Spacer()
                         }
-                        Spacer()
                     }
                 }
                 ToastDismissShield(
@@ -394,17 +424,17 @@ struct ContentView: View {
     func getBackupOperationErrorMessage(_ operation: BackupOperation, _ message: String) -> String {
         switch operation {
         case .backup:
-            return "Could to backup to the clipboard: \(exceptionError)"
+            return "Could to backup to the clipboard: \(message)"
         case .cloudBackup:
-            return "Could to backup to your iCloud documents: \(exceptionError)"
+            return "Could to backup to your iCloud documents: \(message)"
         case .restore:
-            return "Could to restore from the clipboard: \(exceptionError)"
+            return "Could to restore from the clipboard: \(message)"
         case .cloudRestore:
-            return "Could to restore from your iCloud documents: \(exceptionError)"
+            return "Could to restore from your iCloud documents: \(message)"
         case .none:
             break
         }
-        return exceptionError
+        return message
     }
     
     func getVersionSubTitle() -> String {
@@ -513,29 +543,39 @@ struct ContentView: View {
         }
         return "\(count) \(countLabel)s"
     }
+    
+    func getFeaturesSummary() -> String {
+        let featuresCount = getFeatures()
+        let totalFeaturesCount = getTotalFeatures()
+        if (featuresCount != totalFeaturesCount) {
+            return "Total features: \(featuresCount) (counts as \(totalFeaturesCount))"
+        }
+        return "Total features: \(featuresCount)"
+    }
+    
+    func getPagesSummary() -> String {
+        let pagesCount = getPages()
+        let totalPagesCount = getTotalPages()
+        if (pagesCount != totalPagesCount) {
+            return "Total pages with features: \(pagesCount) (counts as \(totalPagesCount))"
+        }
+        return "Total pages with features: \(pagesCount)"
+    }
+    
+    func getMembershipSummary() -> String {
+        return "Membership level: \(getMembership())"
+    }
 
     func generateReport() -> Void {
         var lines = [String]()
         lines.append("Report of features")
         lines.append("------------------")
         lines.append("")
-        let featuresCount = getFeatures()
-        let totalFeaturesCount = getTotalFeatures()
-        if (featuresCount != totalFeaturesCount) {
-            lines.append("Total features: \(featuresCount) (counts as \(totalFeaturesCount))")
-        } else {
-            lines.append("Total features: \(featuresCount)")
-        }
+        lines.append(getFeaturesSummary())
         lines.append("")
-        let pagesCount = getPages()
-        let totalPagesCount = getTotalPages()
-        if (pagesCount != totalPagesCount) {
-            lines.append("Total pages with features: \(pagesCount) (counts as \(totalPagesCount))")
-        } else {
-            lines.append("Total pages with features: \(pagesCount)")
-        }
+        lines.append(getPagesSummary())
         lines.append("")
-        lines.append("Membership level: \(getMembership())")
+        lines.append(getMembershipSummary())
         for page in pages.sorted(by: { left, right in
             if pageSorting == .name {
                 return left.name < right.name
