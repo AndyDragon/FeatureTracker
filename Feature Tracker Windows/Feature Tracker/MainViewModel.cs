@@ -71,8 +71,14 @@ namespace FeatureTracker
                     case BackupOperation.BackupToClipboard:
                         BackupToClipboard();
                         break;
+                    case BackupOperation.BackupToDocuments:
+                        BackupToDocuments();
+                        break;
                     case BackupOperation.RestoreFromClipboard:
                         RestoreFromClipboard();
+                        break;
+                    case BackupOperation.RestoreFromDocuments:
+                        RestoreFromDocuments();
                         break;
                 }
             });
@@ -301,7 +307,9 @@ namespace FeatureTracker
 
         private readonly BackupOperationOption[] backupOperationOptions = [
             new BackupOperationOption { Label = "Backup to Clipboard", IconKind = PackIconMaterialKind.ClipboardArrowUpOutline, Operation = BackupOperation.BackupToClipboard },
+            new BackupOperationOption { Label = "Backup to Documents", IconKind = PackIconMaterialKind.DatabaseArrowUpOutline, Operation = BackupOperation.BackupToDocuments },
             new BackupOperationOption { Label = "Restore from Clipboard", IconKind = PackIconMaterialKind.ClipboardArrowDownOutline, Operation = BackupOperation.RestoreFromClipboard },
+            new BackupOperationOption { Label = "Restore from Documents", IconKind = PackIconMaterialKind.DatabaseArrowDownOutline, Operation = BackupOperation.RestoreFromDocuments },
         ];
         public BackupOperationOption[] BackupOperationOptions => backupOperationOptions;
 
@@ -692,6 +700,18 @@ namespace FeatureTracker
             ShowToast("Backup complete", "Copied a backup of the pages and features to the clipboard");
         }
 
+        private void BackupToDocuments()
+        {
+            var backupFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FeatureTrackerBackup.json");
+            SetBusy(true);
+
+            var jsonPages = Pages.OrderBy(page => page.Name).Select(page => page.ToJson());
+            var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
+            File.WriteAllText(backupFilePath, json, Encoding.UTF8);
+
+            ShowToast("Backup complete", "Copied a backup of the pages and features to your documents folder");
+        }
+
         private async void RestoreFromClipboard()
         {
             if (Clipboard.ContainsText())
@@ -753,6 +773,72 @@ namespace FeatureTracker
                 ShowToast(
                     "Restore failed",
                     "The clipboard did not include any text to restore",
+                    NotificationType.Error,
+                    TimeSpan.FromSeconds(5));
+            }
+        }
+
+        private async void RestoreFromDocuments()
+        {
+            var backupFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FeatureTrackerBackup.json");
+            if (File.Exists(backupFilePath))
+            {
+                SetBusy(true);
+
+                try
+                {
+                    if (!await ShowConfirmationMessage(
+                        "Restore from documents folder",
+                        "Are you sure you want to reset all features and pages to the backup, this cannot be undone!"))
+                    {
+                        return;
+                    }
+
+                    var json = File.ReadAllText(backupFilePath);
+                    var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
+                    if (loadedPages != null)
+                    {
+                        StartOperation();
+                        foreach (var page in Pages)
+                        {
+                            RemoveModel(page);
+                        }
+                        Pages.Clear();
+                        foreach (var loadedPage in loadedPages)
+                        {
+                            var page = new Page(loadedPage);
+                            AddModel(page);
+                            Pages.Add(page);
+                        }
+                        Pages.SortBy(pageSort);
+                        StopOperation(true);
+
+                        ShowToast("Restore complete", $"Restored {Pages.Count} pages and challenges from the clipboard");
+                    }
+                    else
+                    {
+                        ShowToast(
+                            "Restore failed",
+                            "Failed to restore from clipboard, there were no pages loaded",
+                            NotificationType.Error,
+                            TimeSpan.FromSeconds(5));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                    ShowToast(
+                        "Restore failed",
+                        "An error occurred restoring from clipboard, invalid data: " + ex.Message,
+                        NotificationType.Error,
+                        TimeSpan.FromSeconds(5));
+                }
+            }
+            else
+            {
+                ShowToast(
+                    "Restore failed",
+                    "Could not find the backup file in your documents folder",
                     NotificationType.Error,
                     TimeSpan.FromSeconds(5));
             }
@@ -1153,7 +1239,9 @@ namespace FeatureTracker
     public enum BackupOperation
     {
         BackupToClipboard,
+        BackupToDocuments,
         RestoreFromClipboard,
+        RestoreFromDocuments,
     }
 
     public class BackupOperationOption
