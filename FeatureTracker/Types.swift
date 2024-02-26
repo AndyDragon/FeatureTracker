@@ -15,7 +15,7 @@ struct CloudKitConfiguration {
 #endif
 }
 
-enum BackupOperation: Int, Codable, CaseIterable {
+enum BackupOperation: CaseIterable {
     case none,
          backup,
          cloudBackup,

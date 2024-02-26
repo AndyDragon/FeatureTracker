@@ -61,7 +61,7 @@ struct FeatureEditor: View {
         }
     }
     
-    func storeInFlightData() {
+    private func storeInFlightData() {
         if let oldFeature = currentFeature {
             oldFeature.date = date
             oldFeature.raw = raw
@@ -69,7 +69,7 @@ struct FeatureEditor: View {
         }
     }
     
-    func loadDataIntoEditor() {
+    private func loadDataIntoEditor() {
         date = feature.date
         raw  = feature.raw
         notes = feature.notes

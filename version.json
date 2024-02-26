@@ -1,7 +1,7 @@
 {
     "macOS": {
-        "current": "1.0.13",
-        "link": "https://github.com/AndyDragon/FeatureTracker/releases/tag/build_13",
+        "current": "1.0.14",
+        "link": "https://github.com/AndyDragon/FeatureTracker/releases/tag/macos_build_14",
         "vital": false
     }
 }

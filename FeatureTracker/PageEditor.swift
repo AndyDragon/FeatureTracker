@@ -21,11 +21,12 @@ struct PageEditor: View {
     @State private var name = ""
     @State private var notes = ""
     @State private var count = 1
+    @State private var isChallenge = false
 
     var body: some View {
         VStack {
             HStack {
-                Text("Page:")
+                Text("Page / challenge:")
                     .frame(alignment: .center)
                     .fontWeight(.bold)
                 Spacer()
@@ -43,10 +44,17 @@ struct PageEditor: View {
                     .onChange(of: name, debounceTime: 1) { newValue in
                         page.name = newValue
                     }
+                
                 TextField("Notes: ", text: $notes, axis: .vertical)
                     .onChange(of: notes, debounceTime: 1) { newValue in
                         page.notes = newValue
                     }
+                
+                Toggle(" Was challenge", isOn: $isChallenge)
+                    .onChange(of: isChallenge, debounceTime: 1) { newValue in
+                        page.isChallenge = newValue
+                    }
+
                 Picker("Counts as: ", selection: $count) {
                     ForEach(1..<6) {
                         Text("\($0)").tag($0)
@@ -100,17 +108,19 @@ struct PageEditor: View {
         }
     }
     
-    func storeInFlightData() {
+    private func storeInFlightData() {
         if let oldPage = currentPage {
             oldPage.name = name
             oldPage.notes = notes
             oldPage.count = count
+            oldPage.isChallenge = isChallenge
         }
     }
     
-    func loadDataIntoEditor() {
+    private func loadDataIntoEditor() {
         name = page.name
         notes = page.notes
         count  = page.count
+        isChallenge = page.isChallenge
     }
 }

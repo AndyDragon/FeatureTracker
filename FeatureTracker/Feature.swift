@@ -42,11 +42,11 @@ class CodableFeature: Codable {
     }
     
     enum CodingKeys: CodingKey {
-        case id
-        case date
-        case dateV2
-        case raw
-        case notes
+        case id,
+             date,
+             dateV2,
+             raw,
+             notes
     }
     
     required init(from decoder: Decoder) throws {

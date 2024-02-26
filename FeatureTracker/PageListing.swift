@@ -15,7 +15,6 @@ enum PageSorting: Int, Codable, CaseIterable {
          features
 }
 
-
 struct PageListing: View {
     @Environment(\.modelContext) var modelContext
     @Query var pages: [Page]
@@ -42,18 +41,20 @@ struct PageListing: View {
                 return left.name < right.name
             }), id: \.self) { page in
                 HStack {
-                    VStack(alignment: .leading) {
-                        HStack (alignment: .bottom) {
-                            Text(page.name.uppercased())
-                                .font(.headline)
-                                .foregroundColor(page.features!.count > 0 ? .blue : Color(.textColor))
-                                .brightness(page.features!.count > 0 ? 0.3 : 0)
-                            Text("(counts as \(page.count))")
+                    HStack (alignment: .center, spacing: 0) {
+                        Image(systemName: page.isChallenge ? "calendar.badge.checkmark" : "book.pages.fill")
+                            .frame(width: 24, height: 24)
+                        Text(page.name.uppercased())
+                            .font(.headline)
+                            .foregroundColor(page.features!.count > 0 ? .blue : Color(.textColor))
+                            .brightness(page.features!.count > 0 ? 0.3 : 0)
+                        if page.count > 1 {
+                            Text("(\(page.count))")
                                 .font(.subheadline)
-                                .padding([.leading], 4)
+                                .padding([.leading], 8)
                                 .foregroundColor(.gray)
+                                .help("Counts as \(page.count)")
                         }
-                        Text("Notes: " + page.notes)
                     }
                     Spacer()
                     Text("\(getStringForCount(page.features!.count, "feature"))")
@@ -72,7 +73,7 @@ struct PageListing: View {
         }
     }
 
-    func getStringForCount(_ count: Int, _ countLabel: String) -> String {
+    private func getStringForCount(_ count: Int, _ countLabel: String) -> String {
         if count == 1 {
             return "\(count) \(countLabel)"
         }
