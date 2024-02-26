@@ -1,23 +1,22 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using System.Security.Principal;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
+using ControlzEx.Theming;
+using MahApps.Metro.Controls.Dialogs;
+using MahApps.Metro.IconPacks;
 using Newtonsoft.Json;
 using Notification.Wpf;
 
 namespace FeatureTracker
 {
-    using ControlzEx.Theming;
-    using MahApps.Metro.Controls.Dialogs;
-    using MahApps.Metro.IconPacks;
-    using System.Reflection;
-    using System.Security.Principal;
-    using System.Windows.Threading;
 
     public class MainViewModel : NotifyPropertyChanged, IDataManager
     {
@@ -35,8 +34,8 @@ namespace FeatureTracker
             });
             setPageSortCommand = new CommandWithParameter((parameter) =>
             {
-                var compareMode = parameter != null 
-                    ? (PageComparer.CompareMode)parameter 
+                var compareMode = parameter != null
+                    ? (PageComparer.CompareMode)parameter
                     : PageComparer.CompareMode.Name;
                 switch (compareMode)
                 {
@@ -61,8 +60,8 @@ namespace FeatureTracker
             generateReportCommand = new Command(GenerateReport);
             startBackupOperationCommand = new CommandWithParameter((parameter) =>
             {
-                var operation = (parameter != null) 
-                    ? (BackupOperation)parameter 
+                var operation = (parameter != null)
+                    ? (BackupOperation)parameter
                     : BackupOperation.BackupToClipboard;
                 switch (operation)
                 {
@@ -78,6 +77,13 @@ namespace FeatureTracker
                     case BackupOperation.RestoreFromDocuments:
                         RestoreFromDocuments();
                         break;
+                }
+            });
+            setThemeCommand = new CommandWithParameter((parameter) => 
+            {
+                if (parameter is Theme theme)
+                {
+                    Theme = theme;
                 }
             });
             closePageCommand = new Command(() => SelectedPage = null);
@@ -98,7 +104,6 @@ namespace FeatureTracker
                 }
                 ShowToast("Deleted page", "Removed the page or challenge and all the features", NotificationType.Notification);
             });
-            rotateThemeCommand = new Command(RotateTheme);
 
             pageSort = (PageComparer.CompareMode)(UserSettings.GetInt("pageSort") ?? 0) switch
             {
@@ -306,8 +311,16 @@ namespace FeatureTracker
         public Page? SelectedPage
         {
             get => selectedPage;
-            set => Set(ref selectedPage, value);
+            set
+            {
+                if (Set(ref selectedPage, value))
+                {
+                    OnPropertyChanged(nameof(SummaryHeaderVisibility));
+                }
+            }
         }
+
+        public Visibility SummaryHeaderVisibility => SelectedPage != null ? Visibility.Visible : Visibility.Collapsed;
 
         private bool isSplitViewPaneOpen = true;
         public bool IsSplitViewPaneOpen
@@ -339,48 +352,35 @@ namespace FeatureTracker
         private readonly ICommand startBackupOperationCommand;
         public ICommand StartBackupOperationCommand => startBackupOperationCommand;
 
+        private readonly ICommand setThemeCommand;
+        public ICommand SetThemeCommand => setThemeCommand;
+
         private readonly ICommand closePageCommand;
         public ICommand ClosePageCommand => closePageCommand;
 
         private readonly ICommand deletePageCommand;
         public ICommand DeletePageCommand => deletePageCommand;
 
-        private readonly ICommand rotateThemeCommand;
-        public ICommand RotateThemeCommand => rotateThemeCommand;
-
         private Theme? theme = ThemeManager.Current.DetectTheme();
-        private Theme? Theme
+        public Theme? Theme
         {
             get => theme;
             set
             {
                 if (Set(ref theme, value))
                 {
-                    OnPropertyChanged(nameof(ThemeName));
-
+                    if (Theme != null)
+                    {
+                        ThemeManager.Current.ChangeTheme(Application.Current, Theme);
+                        UserSettings.StoreString("theme", Theme.Name);
+                    }
                 }
             }
         }
-        public string ThemeName
-        {
-            get => Theme?.DisplayName ?? "unknown";
-        }
+
+        public ThemeOption[] Themes => [.. ThemeManager.Current.Themes.OrderBy(theme => theme.Name).Select(theme => new ThemeOption(theme, theme == Theme))];
 
         public static string Version => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "---";
-
-        private void RotateTheme()
-        {
-            var themes = ThemeManager.Current.Themes;
-            var indexOfCurrent = Theme != null ? themes.IndexOf(Theme) : -1;
-            var newTheme = themes[0];
-            if (indexOfCurrent != -1 && indexOfCurrent != themes.Count - 1)
-            {
-                newTheme = themes[indexOfCurrent + 1];
-            }
-            ThemeManager.Current.ChangeTheme(Application.Current, newTheme);
-            Theme = newTheme;
-            UserSettings.StoreString("theme", newTheme.Name);
-        }
 
         private async void PopulateDefaultPages()
         {
@@ -599,20 +599,24 @@ namespace FeatureTracker
             if (featuresCount != totalFeaturesCount)
             {
                 Summary.Features = $"Total features: {featuresCount} (counts as {totalFeaturesCount})";
+                Summary.ShortFeatures = $"Features: {featuresCount} ({totalFeaturesCount})";
             }
             else
             {
                 Summary.Features = $"Total features: {featuresCount}";
+                Summary.ShortFeatures = $"Features: {featuresCount}";
             }
             var pagesCount = GetPages();
             var totalPagesCount = GetTotalPages();
             if (pagesCount != totalPagesCount)
             {
                 Summary.Pages = $"Total pages with features: {pagesCount} (counts as {totalPagesCount})";
+                Summary.ShortPages = $"Pages: {pagesCount} ({totalPagesCount})";
             }
             else
             {
                 Summary.Pages = $"Total pages with features: {pagesCount}";
+                Summary.ShortPages = $"Pages: {pagesCount}";
             }
             Summary.Membership = $"Membership level: {GetMembership()}";
         }
@@ -653,15 +657,16 @@ namespace FeatureTracker
                 if (page.Features.Count != 0)
                 {
                     builder.AppendLine();
+                    var pageType = page.IsChallenge ? "Challenge" : "Page";
                     if (page.Count != 1)
                     {
                         builder.AppendLine(
-                            $"Page: {page.Name.ToUpper()} - {GetStringForCount(page.Features.Count, "feature")} (counts as {page.Count * page.Features.Count})");
+                            $"{pageType}: {page.Name.ToUpper()} - {GetStringForCount(page.Features.Count, "feature")} (counts as {page.Count * page.Features.Count})");
                     }
                     else
                     {
                         builder.AppendLine(
-                            $"Page: {page.Name.ToUpper()} - {GetStringForCount(page.Features.Count, "feature")}");
+                            $"{pageType}: {page.Name.ToUpper()} - {GetStringForCount(page.Features.Count, "feature")}");
                     }
                     foreach (var feature in page.Features.OrderBy(feature => feature, FeatureComparer.DateComparer))
                     {
@@ -941,14 +946,14 @@ namespace FeatureTracker
             });
             Features.CollectionChanged += (sender, e) =>
             {
-                FontWeight = Features.Count > 0 ? FontWeights.Bold : FontWeights.Normal;
-                AlternativeTitle = $"({Features.Count})";
+                FontWeight = Features.Count > 0 ? FontWeights.SemiBold : FontWeights.Light;
+                AlternativeTitle = (Count > 1) ? $"({Features.Count} x {Count})" : $"({Features.Count})";
                 OnPropertyChanged(nameof(FeaturesCount));
             };
             Title = Name.ToUpper();
-            FontWeight = Features.Count > 0 ? FontWeights.Bold : FontWeights.Normal;
-            AlternativeTitle = $"({Features.Count})";
-            SubTitle = $"(counts as {Count})";
+            FontWeight = Features.Count > 0 ? FontWeights.SemiBold : FontWeights.Light;
+            AlternativeTitle = (Count > 1) ? $"({Features.Count} x {Count})" : $"({Features.Count})";
+            IconKind = IsChallenge ? PackIconModernKind.Calendar : PackIconModernKind.Page;
             EditorPageFactory = (parameter) => new PageEditor(parameter as MainViewModel);
         }
 
@@ -958,6 +963,7 @@ namespace FeatureTracker
             Name = jsonPage.Name;
             Notes = jsonPage.Notes;
             Count = jsonPage.Count;
+            IsChallenge = jsonPage.IsChallenge;
             foreach (var jsonFeature in jsonPage.Features)
             {
                 var feature = new Feature(jsonFeature);
@@ -973,6 +979,7 @@ namespace FeatureTracker
                 Name = Name,
                 Notes = Notes,
                 Count = Count,
+                IsChallenge = IsChallenge,
                 Features = new List<JsonFeature>(Features.Select(feature => feature.ToJson()))
             };
         }
@@ -1036,7 +1043,20 @@ namespace FeatureTracker
             {
                 if (Set(ref count, value))
                 {
-                    SubTitle = $"(counts as {Count})";
+                    AlternativeTitle = (Count > 1) ? $"({Features.Count} x {Count})" : $"({Features.Count})";
+                }
+            }
+        }
+
+        private bool isChallenge = false;
+        public bool IsChallenge
+        {
+            get => isChallenge;
+            set
+            {
+                if (Set(ref isChallenge, value))
+                {
+                    IconKind = IsChallenge ? PackIconModernKind.Calendar : PackIconModernKind.Page;
                 }
             }
         }
@@ -1053,7 +1073,7 @@ namespace FeatureTracker
         private readonly ICommand deleteFeatureCommand;
         public ICommand DeleteFeatureCommand => deleteFeatureCommand;
 
-        public override string[] ModelProperties => [nameof(Name), nameof(Notes), nameof(Count)];
+        public override string[] ModelProperties => [nameof(Name), nameof(Notes), nameof(Count), nameof(IsChallenge)];
 
         public override string[] ModelCollectionProperties => [nameof(Features)];
 
@@ -1173,6 +1193,9 @@ namespace FeatureTracker
         [JsonProperty(PropertyName = "id"), JsonConverter(typeof(UppercaseGuidConverter))]
         public Guid Id { get; set; } = Guid.NewGuid();
 
+        [JsonProperty(PropertyName = "isChallenge")]
+        public bool IsChallenge { get; set; } = false;
+
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; } = "";
 
@@ -1241,6 +1264,13 @@ namespace FeatureTracker
         public BackupOperation Operation { get; set; }
     }
 
+    public class ThemeOption(Theme theme, bool isSelected = false)
+    {
+        public Theme Theme { get; } = theme;
+
+        public bool IsSelected { get; } = isSelected;
+    }
+
     public class Summary : NotifyPropertyChanged
     {
         private string? features;
@@ -1262,6 +1292,20 @@ namespace FeatureTracker
         {
             get => membership;
             set => Set(ref membership, value);
+        }
+
+        private string? shortFeatures;
+        public string? ShortFeatures
+        {
+            get => shortFeatures;
+            set => Set(ref shortFeatures, value);
+        }
+
+        private string? shortPages;
+        public string? ShortPages
+        {
+            get => shortPages;
+            set => Set(ref shortPages, value);
         }
     }
 }

@@ -95,9 +95,7 @@
                 <Setter Property="mah:ControlsHelper.ContentCharacterCasing" Value="Normal" />
             </Style>
 
-            <local:ObjectToEditableModelConverter x:Key="ObjectToEditableModelConverter" />
             <local:DateTimeConverter x:Key="DateTimeConverter" />
-            <local:GridLengthRemainingConverter x:Key="GridLengthRemainingConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

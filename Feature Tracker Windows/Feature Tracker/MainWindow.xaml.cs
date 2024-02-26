@@ -1,14 +1,11 @@
-﻿using System.Windows;
-using ControlzEx.Theming;
-
-namespace FeatureTracker
+﻿namespace FeatureTracker
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow
     {
-        public static readonly BlankViewModel blankViewModel = new() { Message = "Select a page" };
+        public static readonly BlankViewModel blankViewModel = new() { Message = "Select a page from the list" };
 
         public MainWindow()
         {
@@ -17,17 +14,6 @@ namespace FeatureTracker
             if (DataContext is MainViewModel viewModel)
             {
                 blankViewModel.MainViewModel = viewModel;
-                var lastThemeName = UserSettings.GetString("theme");
-                if (!string.IsNullOrEmpty(lastThemeName))
-                {
-                    var theme = ThemeManager.Current.Themes.FirstOrDefault(theme => string.Equals(theme.Name, lastThemeName));
-                    if (theme != null)
-                    {
-                        ThemeManager.Current.ChangeTheme(Application.Current, theme);
-                        viewModel.ResetTheme(theme);
-                    }
-                }
-
                 ConnectViewModel(viewModel);
             }
 

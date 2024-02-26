@@ -8,9 +8,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>AppIcon.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.3.0</AssemblyVersion>
-    <FileVersion>1.0.3.0</FileVersion>
-    <Version>1.0.3</Version>
+    <AssemblyVersion>1.0.4.0</AssemblyVersion>
+    <FileVersion>1.0.4.0</FileVersion>
+    <Version>1.0.4</Version>
+    <PackageReleaseNotes>Fixed issue with dark themes and startup colors, added page types and set up theme menu.</PackageReleaseNotes>
+    <Copyright>Copyright (c) 2024 AndyDragon Software, all rights reserved</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

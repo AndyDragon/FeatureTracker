@@ -1,19 +1,17 @@
-﻿using System;
-using System.Diagnostics;
-
-namespace FeatureTracker
+﻿namespace FeatureTracker
 {
     /// <summary>
     /// Interaction logic for PageEditor.xaml
     /// </summary>
     public partial class PageEditor : System.Windows.Controls.Page
     {
-        public static readonly BlankViewModel blankViewModel = new() { Message = "Select a feature" };
+        public static readonly BlankViewModel blankViewModel = new() { Message = "Select a feature from the list" };
 
         public PageEditor(MainViewModel? viewModel)
         {
             InitializeComponent();
             DataContext = viewModel;
+
             EditorFrame.Navigate(new BlankPage(blankViewModel));
 
             if (viewModel != null)

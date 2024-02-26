@@ -25,8 +25,6 @@
         <ResourceDictionary>
             <Color x:Key="SystemBaseMediumColor">#99FFFFFF</Color>
             <SolidColorBrush x:Key="SplitViewBackgroundBrush" Opacity="1" Color="{StaticResource SystemBaseMediumColor}" />
-            <Style x:Key="PageListTextBlock" TargetType="TextBlock">
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -48,7 +46,7 @@
                 ItemsSource="{Binding PageSortOptions}">
                 <mah:DropDownButton.ItemTemplate>
                     <DataTemplate DataType="local:SortOption">
-                        <Grid>
+                        <Grid Margin="0,0,12,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32" />
                                 <ColumnDefinition Width="*" />
@@ -63,7 +61,8 @@
                                 HorizontalAlignment="Left" />
                             <TextBlock
                                 Grid.Column="1"
-                                Text="{Binding Label}" />
+                                Text="{Binding Label}"
+                                VerticalAlignment="Center" />
                         </Grid>
                     </DataTemplate>
                 </mah:DropDownButton.ItemTemplate>
@@ -75,8 +74,8 @@
                 </mah:DropDownButton.ItemContainerStyle>
                 <mah:DropDownButton.Icon>
                     <iconPacks:PackIconBoxIcons 
-                        Width="22"
-                        Height="16"
+                        Width="18"
+                        Height="12"
                         Kind="RegularSortAlt2" />
                 </mah:DropDownButton.Icon>
             </mah:DropDownButton>
@@ -178,15 +177,11 @@
                                 <Grid 
                                     x:Name="EntryGrid"
                                     Margin="12,6">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
                                     <StackPanel Grid.Row="0" Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Title, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" FontSize="16" TextTrimming="WordEllipsis" FontWeight="{Binding FontWeight, Mode=OneWay}" VerticalAlignment="Center" />
-                                        <TextBlock Text="{Binding AlternativeTitle, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" Margin="8,0,0,0" FontSize="14" TextTrimming="WordEllipsis" VerticalAlignment="Center" />
+                                        <iconPacks:PackIconModern Kind="{Binding IconKind, Mode=OneWay}" Width="14" Height="14" VerticalAlignment="Center" Foreground="{DynamicResource MahApps.Brushes.Accent}" />
+                                        <TextBlock Text="{Binding Title, Mode=OneWay}" Margin="8,0,0,0" FontSize="16" TextTrimming="WordEllipsis" FontWeight="{Binding FontWeight, Mode=OneWay}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding AlternativeTitle, Mode=OneWay}" Margin="8,0,0,0" FontSize="14" TextTrimming="WordEllipsis" VerticalAlignment="Center" />
                                     </StackPanel>
-                                    <TextBlock Grid.Row="1" Text="{Binding SubTitle, Mode=OneWay}" Style="{StaticResource PageListTextBlock}" FontSize="10" TextTrimming="WordEllipsis"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -195,7 +190,27 @@
             </mah:SplitView.Pane>
 
             <Grid Grid.Row="1">
-                <Frame x:Name="EditorFrame" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="20" NavigationUIVisibility="Hidden" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}" Visibility="{Binding SummaryHeaderVisibility}">
+                    <Grid Margin="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1" Text="{Binding Summary.ShortFeatures}" FontWeight="Bold" ToolTip="{Binding Summary.Features}" />
+                        <TextBlock Grid.Column="3" Text="{Binding Summary.ShortPages}" FontWeight="Bold" ToolTip="{Binding Summary.Pages}" />
+                        <TextBlock Grid.Column="5" Text="{Binding Summary.Membership}" FontWeight="Bold" />
+                    </Grid>
+                </Border>
+                <Frame Grid.Row="1" x:Name="EditorFrame" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="20" NavigationUIVisibility="Hidden" />
             </Grid>
 
         </mah:SplitView>
@@ -210,20 +225,61 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Button 
-                Grid.Column="1" 
-                BorderThickness="0" 
-                Padding="12,2" 
-                Command="{Binding RotateThemeCommand}" 
-                VerticalAlignment="Center"
-                Style="{DynamicResource MahApps.Styles.Button.Chromeless}">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Theme: "/>
-                    <TextBlock Text="{Binding ThemeName}" />
-                </StackPanel>
-            </Button>
-            <TextBlock Text="Version:" Grid.Column="2" Margin="16,0,8,0" VerticalAlignment="Center" />
-            <TextBlock Text="{Binding Version}" Grid.Column="3" VerticalAlignment="Center" Margin="0,0,24,0" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <TextBlock Text="Theme: " VerticalAlignment="Center" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}" Opacity="0.5" />
+                <mah:DropDownButton
+                    BorderThickness="0"
+                    Content="{Binding Theme.DisplayName}"
+                    FontSize="8pt"
+                    ItemsSource="{Binding Themes}"
+                    VerticalAlignment="Center"
+                    Style="{DynamicResource MahApps.Styles.DropDownButton.WindowCommands}">
+                    <mah:DropDownButton.ItemTemplate>
+                        <DataTemplate DataType="local:ThemeOption">
+                            <Grid Margin="0,0,20,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="32" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <iconPacks:PackIconBootstrapIcons
+                                    Grid.Column="0"
+                                    Width="12"
+                                    Height="12"
+                                    Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Kind="Check"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Left" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Text="{Binding Theme.DisplayName}"
+                                    FontSize="8pt"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </mah:DropDownButton.ItemTemplate>
+                    <mah:DropDownButton.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource {x:Type MenuItem}}" TargetType="{x:Type MenuItem}">
+                            <Setter Property="Command" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type mah:DropDownButton}}, Path=DataContext.SetThemeCommand}" />
+                            <Setter Property="CommandParameter" Value="{Binding Theme}" />
+                        </Style>
+                    </mah:DropDownButton.ItemContainerStyle>
+                </mah:DropDownButton>
+            </StackPanel>
+            <TextBlock Grid.Column="2" Text="|" Margin="8,0,8,2" VerticalAlignment="Center" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}" Opacity="0.5" />
+            <StackPanel Grid.Column="3" Orientation="Horizontal">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property= "Opacity" Value="0.5" />
+                        <Style.Triggers>
+                            <Trigger Property ="IsMouseOver" Value="True">
+                                <Setter Property= "Opacity" Value="1" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <TextBlock Text="Version:" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}" />
+                <TextBlock Text="{Binding Version}" VerticalAlignment="Center" Margin="0,0,24,0" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}" />
+            </StackPanel>
         </Grid>
 
     </Grid>

@@ -1,6 +1,5 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Media;
+﻿using System.Windows;
+using MahApps.Metro.IconPacks;
 
 namespace FeatureTracker
 {
@@ -32,6 +31,13 @@ namespace FeatureTracker
         {
             get => alternativeTitle;
             set => Set(ref alternativeTitle, value);
+        }
+
+        private PackIconModernKind iconKind = PackIconModernKind.Box;
+        public PackIconModernKind IconKind
+        {
+            get => iconKind;
+            set => Set(ref iconKind, value);
         }
 
         private FontWeight fontWeight = FontWeights.Normal;

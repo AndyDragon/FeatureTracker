@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace FeatureTracker.Json
+﻿namespace FeatureTracker.Json
 {
     public class PagesCatalog
     {
