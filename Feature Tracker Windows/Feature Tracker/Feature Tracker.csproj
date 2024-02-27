@@ -13,6 +13,8 @@
     <Version>1.0.4</Version>
     <PackageReleaseNotes>Fixed issue with dark themes and startup colors, added page types and set up theme menu.</PackageReleaseNotes>
     <Copyright>Copyright (c) 2024 AndyDragon Software, all rights reserved</Copyright>
+    <Authors>Andrew Forget</Authors>
+    <Company>AndyDragon Software</Company>
   </PropertyGroup>
 
   <ItemGroup>
