@@ -8,13 +8,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>AppIcon.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.4.0</AssemblyVersion>
-    <FileVersion>1.0.4.0</FileVersion>
-    <Version>1.0.4</Version>
-    <PackageReleaseNotes>Fixed issue with dark themes and startup colors, added page types and set up theme menu.</PackageReleaseNotes>
+    <PackageId>FeatureTracker</PackageId>
+    <Title>Feature Tracker</Title>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
+    <DelaySign>False</DelaySign>
     <Copyright>Copyright (c) 2024 AndyDragon Software, all rights reserved</Copyright>
-    <Authors>Andrew Forget</Authors>
     <Company>AndyDragon Software</Company>
+    <Authors>Andrew Forget</Authors>
+    <Version>1.0.4</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FontAwesome5" Version="2.1.11" />
     <PackageReference Include="MahApps.Metro" Version="2.4.10" />
     <PackageReference Include="MahApps.Metro.IconPacks" Version="4.11.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
