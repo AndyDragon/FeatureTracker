@@ -1,0 +1,53 @@
+[
+    {
+        "version": "1.0.0",
+        "notes": [
+            {
+                "date": "Feb 2024",
+                "notes": [
+                    "Initial release, internal release only"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.1",
+        "notes": [
+            {
+                "date": "Feb 2024",
+                "notes": [
+                    "Second internal release"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.2",
+        "notes": [
+            {
+                "date": "Feb 2024",
+                "notes": [
+                    "Third internal release"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.4",
+        "notes": [
+            {
+                "date": "Feb 27, 2024",
+                "notes": [
+                    "Internal release",
+                    "Added themes to the application"
+                ]
+            },
+            {
+                "date": "Feb 21, 2024",
+                "notes": [
+                    "test entry"
+                ]
+            }
+        ]
+    }
+]
