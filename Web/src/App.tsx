@@ -70,7 +70,7 @@ function App() {
                             <div style={{ display: "flex", flexDirection: "column" }}>
                                 <Title3>macOS</Title3>
                                 <div style={{ marginLeft: "20px", display: "flex", flexDirection: "column" }}>
-                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/macOS">
+                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/macInstall">
                                         Install
                                     </Link>
                                     <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 0 0" }} to="/macReleaseNotes">
@@ -81,7 +81,7 @@ function App() {
                             <div style={{ display: "flex", flexDirection: "column", marginTop: "40px" }}>
                                 <Title3>Windows</Title3>
                                 <div style={{ marginLeft: "20px", display: "flex", flexDirection: "column" }}>
-                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/windows">
+                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/windowsInstall">
                                         Install
                                     </Link>
                                     <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 0 0" }} to="/windowsReleaseNotes">
@@ -131,7 +131,7 @@ function App() {
                                     <Title3 style={{opacity: "0.3"}}>&lt;- &nbsp;select a link for more information</Title3>
                                 </div>
                             )} />
-                            <Route path="/macOS" element={(
+                            <Route path="/macInstall" element={(
                                 <General
                                     applicationName={applicationName}
                                     platform="macOS"
@@ -145,7 +145,7 @@ function App() {
                                     versionLocation={versionLocation}
                                 />
                             )} />
-                            <Route path="/windows" element={(
+                            <Route path="/windowsInstall" element={(
                                 <General
                                     applicationName={applicationName}
                                     platform="windows"
