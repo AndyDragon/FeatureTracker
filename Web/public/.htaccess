@@ -7,4 +7,12 @@ AddHandler server-parsed .htm
         Header set Access-Control-Allow-Origin "*"
     </IfModule>
 </FilesMatch>
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /app/featuretracker/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-l
+RewriteRule . /app/featuretracker/index.html [L]
+</IfModule>
 Options -Indexes
