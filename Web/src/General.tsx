@@ -51,10 +51,15 @@ export default function General(props: GeneralProps) {
 
     return (
         <div style={{ margin: "10px" }}>
-            <Subtitle1>{applicationName} v{currentVersion} is available for installation now for {platformString[platform]}.</Subtitle1><br /><br />
+            <Subtitle1>{applicationName} v{currentVersion} for {platformString[platform]} is available for installation now.</Subtitle1><br /><br />
             {links[platform]?.actions.map(flavor => {
                 const location = "https://vero.andydragon.com/app/" + links[platform]?.location(currentVersion, flavor.suffix);
-                return (<><Subtitle2 key={"link-" + (index++)}>You can {flavor.action} the {flavor.name} version <Link target={flavor.target} href={location}>here</Link>.</Subtitle2><br /><br /></>);
+                return (
+                    <>
+                        <Subtitle2 key={"link-" + (index++)} style={{ marginLeft: "40px" }}>You can {flavor.action} the <Link target={flavor.target} href={location}>{flavor.name} version here</Link></Subtitle2>
+                        <br /><br />
+                    </>
+                );
             })}
         </div>
     );

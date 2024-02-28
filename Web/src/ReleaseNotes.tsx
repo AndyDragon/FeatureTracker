@@ -1,7 +1,7 @@
 import React from "react";
 import { Platform, platformString } from "./config";
 import { Version, readVersion } from "./version";
-import { Body1, Body2, Spinner, Title2, makeStyles, shorthands } from "@fluentui/react-components";
+import { Body1, Body2, Spinner, Title3, makeStyles, shorthands } from "@fluentui/react-components";
 
 export interface ReleaseNotesProps {
     readonly applicationName: string;
@@ -30,13 +30,15 @@ export default function ReleaseNotes(props: ReleaseNotesProps) {
             setVersion(await readVersion(versionLocation));
             try {
                 console.log("Fetching the release notes data from " + location);
-                const releaseNotesRequest = await fetch(location, {
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    }
-                });
+                const releaseNotesRequest = await fetch(
+                    location,
+                    {
+                        mode: 'no-cors',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    });
                 setReleaseNotes(await releaseNotesRequest.json());
             } catch (error) {
                 console.warn("Failed to fetch the release notes data: '" + error + "' from " + location);
@@ -121,9 +123,9 @@ export default function ReleaseNotes(props: ReleaseNotesProps) {
     return (
         <div style={{ margin: "40px" }}>
             <div style={{ fontFamily: "monospace" }}>
-                <Title2 style={{ textDecoration: "underline", fontFamily: "monospace" }}>
+                <Title3 style={{ textDecoration: "underline", fontFamily: "monospace" }}>
                     Release notes for {applicationName} v{version?.[platform]?.current} for {platformString[platform]}
-                </Title2>
+                </Title3>
                 <div style={{ margin: "8px 20px" }}>{renderedReleaseNotes}</div>
             </div>
         </div>

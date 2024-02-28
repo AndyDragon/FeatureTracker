@@ -5,6 +5,8 @@ AddHandler server-parsed .htm
 <FilesMatch "\.(jsonc?)$">
     <IfModule mod_headers.c>
         Header set Access-Control-Allow-Origin "*"
+        Header set Access-Control-Allow-Methods "GET,HEAD,OPTIONS"
+        Header set Access-Control-Allow-Headers "Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
     </IfModule>
 </FilesMatch>
 <IfModule mod_rewrite.c>

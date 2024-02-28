@@ -1,4 +1,15 @@
 export const applicationName = "Feature Tracker";
+export const applicationDescription = "Feature Tracker is a small utility app to track Vero features.";
+export const applicationDetails = (
+    <>
+        This utility lets you track your snap hub features on Vero and will calculate what your membership level should be
+        based on the feature count and pages with a feature count. This includes multiple point features and challenges.
+    </>
+);
+export const macScreenshotWidth = 1024;
+export const macScreenshotHeight = 630;
+
+export const deploymentWebLocation = "/app/featuretracker";
 
 export const versionLocation = "featuretracker/version.json";
 

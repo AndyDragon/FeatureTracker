@@ -8,15 +8,15 @@ import {
     DrawerHeaderTitle,
     Image,
     InlineDrawer,
-    Title1,
     Title3,
     makeStyles,
     shorthands,
     teamsDarkTheme,
 } from "@fluentui/react-components";
 import { Dismiss24Regular, PanelLeftExpand24Regular } from "@fluentui/react-icons";
+import { applicationName, deploymentWebLocation, macReleaseNotesLocation, versionLocation } from "./config";
+import About from "./About";
 import General from "./General";
-import { applicationName, macReleaseNotesLocation, versionLocation } from "./config";
 import ReleaseNotes from "./ReleaseNotes";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 
@@ -42,7 +42,7 @@ function App() {
 
     return (
         <div className="App">
-            <Router basename={"/app/featuretracker"}>
+            <Router basename={deploymentWebLocation}>
                 <InlineDrawer open={open} position="start">
                     <DrawerHeader style={{ backgroundColor: teamsDarkTheme.colorBrandBackground }}>
                         <DrawerHeaderTitle
@@ -55,19 +55,17 @@ function App() {
                                 />
                             }
                         >
-                            <div style={{ marginTop: "40px", marginBottom: "40px" }}>
-                                <Title1>Information</Title1>
+                            <div style={{ height: "48px" }}>
+                                &nbsp;
                             </div>
                         </DrawerHeaderTitle>
                     </DrawerHeader>
                     <DrawerBody style={{ marginTop: "40px"}}>
                         <nav>
-                            {/* TODO : work on this some day:
                             <Link className={styles.cleanLink} style={{ fontSize: "20pt", marginTop: "40px" }} to="/">
                                 About
                             </Link>
-                            */}
-                            <div style={{ display: "flex", flexDirection: "column" }}>
+                            <div style={{ display: "flex", flexDirection: "column", marginTop: "32px" }}>
                                 <Title3>macOS</Title3>
                                 <div style={{ marginLeft: "20px", display: "flex", flexDirection: "column" }}>
                                     <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/macInstall">
@@ -112,7 +110,7 @@ function App() {
                     }}
                 >
                     <div style={{ display: "flex", flexDirection: "row", width: "100%" }}>
-                        <Image alt="Application Icon" src="./AppIcon.png" width={128} height={128} style={{ marginRight: "20px" }} />
+                        <Image alt="Application Icon" src={process.env.PUBLIC_URL + "/AppIcon.png"} width={128} height={128} style={{ marginRight: "20px" }} />
                         <Display>{applicationName}</Display>
                     </div>
                     <div
@@ -127,9 +125,9 @@ function App() {
                     >
                         <Routes>
                             <Route path="/" element={(
-                                <div style={{ marginTop: "200px", textAlign: "center" }}>
-                                    <Title3 style={{opacity: "0.3"}}>&lt;- &nbsp;select a link for more information</Title3>
-                                </div>
+                                <About
+                                    applicationName={applicationName}
+                                    versionLocation={versionLocation} />
                             )} />
                             <Route path="/macInstall" element={(
                                 <General
