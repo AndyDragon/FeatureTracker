@@ -1,12 +1,12 @@
 {
     "macOS": {
         "current": "1.0.14",
-        "link": "https://github.com/AndyDragon/FeatureTracker/releases/tag/macos_build_14",
+        "link": "https://vero.andydragon.com/app/featuretracker/macInstall",
         "vital": false
     },
     "windows": {
         "current": "1.0.4",
-        "link": "https://github.com/AndyDragon/FeatureTracker/releases/tag/windows_build_4",
+        "link": "https://vero.andydragon.com/app/featuretracker/windowsInstall",
         "vital": false
     }
 }
