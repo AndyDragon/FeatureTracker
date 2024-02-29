@@ -1,4 +1,9 @@
-﻿using System.Collections.ObjectModel;
+﻿using ControlzEx.Theming;
+using MahApps.Metro.Controls.Dialogs;
+using MahApps.Metro.IconPacks;
+using Newtonsoft.Json;
+using Notification.Wpf;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -9,11 +14,6 @@ using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
-using ControlzEx.Theming;
-using MahApps.Metro.Controls.Dialogs;
-using MahApps.Metro.IconPacks;
-using Newtonsoft.Json;
-using Notification.Wpf;
 
 namespace FeatureTracker
 {
@@ -24,15 +24,15 @@ namespace FeatureTracker
 
         public MainViewModel()
         {
-            toggleSplitViewCommand = new Command(() => this.IsSplitViewPaneOpen = !this.IsSplitViewPaneOpen);
-            addPageCommand = new Command(() =>
+            ToggleSplitViewCommand = new Command(() => this.IsSplitViewPaneOpen = !this.IsSplitViewPaneOpen);
+            AddPageCommand = new Command(() =>
             {
                 var page = new Page() { Name = "new page" };
                 AddModel(page);
                 Pages.Add(page);
                 SelectedPage = page;
             });
-            setPageSortCommand = new CommandWithParameter((parameter) =>
+            SetPageSortCommand = new CommandWithParameter((parameter) =>
             {
                 var compareMode = parameter != null
                     ? (PageComparer.CompareMode)parameter
@@ -52,13 +52,10 @@ namespace FeatureTracker
                 UserSettings.StoreInt("pageSort", (int)compareMode);
                 RefreshPages();
             });
-            refreshPagesCommand = new Command(() =>
-            {
-                RefreshPages();
-            });
-            populateDefaultsCommand = new Command(PopulateDefaultPages);
-            generateReportCommand = new Command(GenerateReport);
-            startBackupOperationCommand = new CommandWithParameter((parameter) =>
+            RefreshPagesCommand = new Command(RefreshPages);
+            PopulateDefaultsCommand = new Command(PopulateDefaultPages);
+            GenerateReportCommand = new Command(GenerateReport);
+            StartBackupOperationCommand = new CommandWithParameter((parameter) =>
             {
                 var operation = (parameter != null)
                     ? (BackupOperation)parameter
@@ -79,15 +76,15 @@ namespace FeatureTracker
                         break;
                 }
             });
-            setThemeCommand = new CommandWithParameter((parameter) => 
+            SetThemeCommand = new CommandWithParameter((parameter) =>
             {
                 if (parameter is Theme theme)
                 {
                     Theme = theme;
                 }
             });
-            closePageCommand = new Command(() => SelectedPage = null);
-            deletePageCommand = new Command(async () =>
+            ClosePageCommand = new Command(() => SelectedPage = null);
+            DeletePageCommand = new Command(async () =>
             {
                 if (!await ShowConfirmationMessage(
                     "Delete page / challenge",
@@ -116,7 +113,7 @@ namespace FeatureTracker
             LoadPages();
             Pages.SortBy(pageSort);
             StopOperation();
-            foreach (var pageSortOption in pageSortOptions)
+            foreach (var pageSortOption in PageSortOptions)
             {
                 pageSortOption.IsSelected = pageSortOption.Comparer == pageSort;
             }
@@ -215,7 +212,7 @@ namespace FeatureTracker
             Pages.SortBy(pageSort);
             StopOperation();
             SelectedPage = oldSelectedPage;
-            foreach (var pageSortOption in pageSortOptions)
+            foreach (var pageSortOption in PageSortOptions)
             {
                 pageSortOption.IsSelected = pageSortOption.Comparer == pageSort;
             }
@@ -268,22 +265,17 @@ namespace FeatureTracker
                 DefaultButtonFocus = MessageDialogResult.Negative,
             };
 
-            if (Application.Current?.MainWindow is MahApps.Metro.Controls.MetroWindow mainWindow)
-            {
-                return (await mainWindow.ShowMessageAsync(
+            return Application.Current?.MainWindow is MahApps.Metro.Controls.MetroWindow mainWindow
+                ? (await mainWindow.ShowMessageAsync(
                     title,
                     message,
                     MessageDialogStyle.AffirmativeAndNegative,
-                    settings)) == MessageDialogResult.Affirmative;
-            }
-            else
-            {
-                return MessageBox.Show(
+                    settings)) == MessageDialogResult.Affirmative
+                : MessageBox.Show(
                     message,
                     title,
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question) == MessageBoxResult.Yes;
-            }
         }
 
         private readonly NotificationManager notificationManager = new();
@@ -292,20 +284,18 @@ namespace FeatureTracker
 
         private PageComparer pageSort = PageComparer.NameComparer;
 
-        private readonly SortOption<Page>[] pageSortOptions = [
+        public SortOption<Page>[] PageSortOptions { get; } = [
             new SortOption<Page> { Comparer = PageComparer.NameComparer, Label = "Sort by Name", IsSelected = false, CompareMode = (int)PageComparer.CompareMode.Name },
             new SortOption<Page> { Comparer = PageComparer.CountComparer, Label = "Sort by Count", IsSelected = false, CompareMode = (int)PageComparer.CompareMode.Count },
             new SortOption<Page> { Comparer = PageComparer.FeaturesComparer, Label = "Sort by Features", IsSelected = false, CompareMode = (int)PageComparer.CompareMode.Features },
         ];
-        public SortOption<Page>[] PageSortOptions => pageSortOptions;
 
-        private readonly BackupOperationOption[] backupOperationOptions = [
+        public BackupOperationOption[] BackupOperationOptions { get; } = [
             new BackupOperationOption { Label = "Backup to Clipboard", IconKind = PackIconMaterialKind.ClipboardArrowUpOutline, Operation = BackupOperation.BackupToClipboard },
             new BackupOperationOption { Label = "Backup to Documents", IconKind = PackIconMaterialKind.DatabaseArrowUpOutline, Operation = BackupOperation.BackupToDocuments },
             new BackupOperationOption { Label = "Restore from Clipboard", IconKind = PackIconMaterialKind.ClipboardArrowDownOutline, Operation = BackupOperation.RestoreFromClipboard },
             new BackupOperationOption { Label = "Restore from Documents", IconKind = PackIconMaterialKind.DatabaseArrowDownOutline, Operation = BackupOperation.RestoreFromDocuments },
         ];
-        public BackupOperationOption[] BackupOperationOptions => backupOperationOptions;
 
         private Page? selectedPage = null;
         public Page? SelectedPage
@@ -330,36 +320,25 @@ namespace FeatureTracker
         }
 
         public Summary Summary { get; } = new Summary();
+        public ICommand ToggleSplitViewCommand { get; }
 
-        private readonly ICommand toggleSplitViewCommand;
-        public ICommand ToggleSplitViewCommand => toggleSplitViewCommand;
+        public ICommand AddPageCommand { get; }
 
-        private readonly ICommand addPageCommand;
-        public ICommand AddPageCommand => addPageCommand;
+        public ICommand SetPageSortCommand { get; }
 
-        private readonly ICommand setPageSortCommand;
-        public ICommand SetPageSortCommand => setPageSortCommand;
+        public ICommand RefreshPagesCommand { get; }
 
-        private readonly ICommand refreshPagesCommand;
-        public ICommand RefreshPagesCommand => refreshPagesCommand;
+        public ICommand PopulateDefaultsCommand { get; }
 
-        private readonly ICommand populateDefaultsCommand;
-        public ICommand PopulateDefaultsCommand => populateDefaultsCommand;
+        public ICommand GenerateReportCommand { get; }
 
-        private readonly ICommand generateReportCommand;
-        public ICommand GenerateReportCommand => generateReportCommand;
+        public ICommand StartBackupOperationCommand { get; }
 
-        private readonly ICommand startBackupOperationCommand;
-        public ICommand StartBackupOperationCommand => startBackupOperationCommand;
+        public ICommand SetThemeCommand { get; }
 
-        private readonly ICommand setThemeCommand;
-        public ICommand SetThemeCommand => setThemeCommand;
+        public ICommand ClosePageCommand { get; }
 
-        private readonly ICommand closePageCommand;
-        public ICommand ClosePageCommand => closePageCommand;
-
-        private readonly ICommand deletePageCommand;
-        public ICommand DeletePageCommand => deletePageCommand;
+        public ICommand DeletePageCommand { get; }
 
         private Theme? theme = ThemeManager.Current.DetectTheme();
         public Theme? Theme
@@ -915,19 +894,16 @@ namespace FeatureTracker
     {
         public Page()
         {
-            refreshFeaturesCommand = new Command(() =>
-            {
-                RefreshFeatures();
-            });
-            addFeatureCommand = new Command(() =>
+            RefreshFeaturesCommand = new Command(RefreshFeatures);
+            AddFeatureCommand = new Command(() =>
             {
                 var feature = new Feature() { Date = DateTime.Now };
                 DataManager?.AddModel(feature);
                 Features.Add(feature);
                 SelectedFeature = feature;
             });
-            closeFeatureCommand = new Command(() => SelectedFeature = null);
-            deleteFeatureCommand = new Command(async () =>
+            CloseFeatureCommand = new Command(() => SelectedFeature = null);
+            DeleteFeatureCommand = new Command(async () =>
             {
                 if (!await MainViewModel.ShowConfirmationMessage(
                     "Delete feature",
@@ -1061,17 +1037,13 @@ namespace FeatureTracker
             }
         }
 
-        private readonly ICommand addFeatureCommand;
-        public ICommand AddFeatureCommand => addFeatureCommand;
+        public ICommand AddFeatureCommand { get; }
 
-        private readonly ICommand refreshFeaturesCommand;
-        public ICommand RefreshFeaturesCommand => refreshFeaturesCommand;
+        public ICommand RefreshFeaturesCommand { get; }
 
-        private readonly ICommand closeFeatureCommand;
-        public ICommand CloseFeatureCommand => closeFeatureCommand;
+        public ICommand CloseFeatureCommand { get; }
 
-        private readonly ICommand deleteFeatureCommand;
-        public ICommand DeleteFeatureCommand => deleteFeatureCommand;
+        public ICommand DeleteFeatureCommand { get; }
 
         public override string[] ModelProperties => [nameof(Name), nameof(Notes), nameof(Count), nameof(IsChallenge)];
 
@@ -1231,15 +1203,15 @@ namespace FeatureTracker
         }
     }
 
-    public class SortOption<T>: NotifyPropertyChanged where T : Model
+    public class SortOption<T> : NotifyPropertyChanged where T : Model
     {
         public IComparer<T>? Comparer { get; set; }
 
         public string? Label { get; set; }
 
         private bool isSelected = false;
-        public bool IsSelected 
-        { 
+        public bool IsSelected
+        {
             get => isSelected;
             set => Set(ref isSelected, value);
         }

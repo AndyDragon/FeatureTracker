@@ -1,4 +1,4 @@
-﻿namespace FeatureTracker.Json
+﻿namespace FeatureTracker
 {
     public class PagesCatalog
     {

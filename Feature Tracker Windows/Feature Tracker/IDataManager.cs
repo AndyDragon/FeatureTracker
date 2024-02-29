@@ -1,6 +1,6 @@
-﻿using System.Collections.ObjectModel;
+﻿using Notification.Wpf;
+using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
-using Notification.Wpf;
 
 namespace FeatureTracker
 {
@@ -14,7 +14,7 @@ namespace FeatureTracker
     public interface IDataManager
     {
         void StartOperation();
-        
+
         void StopOperation(bool saveData = false);
 
         void AddModel(Model model);
@@ -33,7 +33,7 @@ namespace FeatureTracker
         public abstract string[] ModelProperties { get; }
 
         public abstract string[] ModelCollectionProperties { get; }
-        
+
         public abstract IDataManager? DataManager { get; set; }
 
         public void OnDataChanged([CallerMemberName] string? propertyName = null)
@@ -87,14 +87,9 @@ namespace FeatureTracker
             };
         }
 
-        private static readonly PageComparer nameComparer = new(CompareMode.Name);
-        public static PageComparer NameComparer { get => nameComparer; }
-
-        private static readonly PageComparer featuresComparer = new(CompareMode.Features);
-        public static PageComparer FeaturesComparer { get => featuresComparer; }
-
-        private static readonly PageComparer countComparer = new(CompareMode.Count);
-        public static PageComparer CountComparer { get => countComparer; }
+        public static PageComparer NameComparer { get; } = new(CompareMode.Name);
+        public static PageComparer FeaturesComparer { get; } = new(CompareMode.Features);
+        public static PageComparer CountComparer { get; } = new(CompareMode.Count);
     }
 
     public class FeatureComparer : IComparer<Feature>
@@ -123,7 +118,6 @@ namespace FeatureTracker
             };
         }
 
-        private static readonly FeatureComparer dateComparer = new(CompareMode.Date);
-        public static FeatureComparer DateComparer { get => dateComparer; }
+        public static FeatureComparer DateComparer { get; } = new(CompareMode.Date);
     }
 }

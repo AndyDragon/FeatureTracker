@@ -19,7 +19,7 @@ namespace FeatureTracker
         public Visibility SummaryVisibility => MainViewModel != null ? Visibility.Visible : Visibility.Collapsed;
 
         private MainViewModel? mainViewModel;
-        public MainViewModel? MainViewModel 
+        public MainViewModel? MainViewModel
         {
             get => mainViewModel;
             set
