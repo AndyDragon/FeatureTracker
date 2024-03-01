@@ -78,7 +78,6 @@
 		494202B12B745BEC00227660 /* FeatureTracker */ = {
 			isa = PBXGroup;
 			children = (
-				49AD862B2B74AB3B006722B3 /* Info.plist */,
 				494202B22B745BEC00227660 /* FeatureTrackerApp.swift */,
 				494202B42B745BEC00227660 /* ContentView.swift */,
 				494202C52B74703600227660 /* PageListing.swift */,
@@ -92,6 +91,7 @@
 				49A6DA7B2B8295680008A319 /* ToastDismissShield.swift */,
 				49A6DA7C2B8295680008A319 /* VersionCheckAppState.swift */,
 				494202B62B745BED00227660 /* Assets.xcassets */,
+				49AD862B2B74AB3B006722B3 /* Info.plist */,
 				494202BB2B745BED00227660 /* FeatureTracker.entitlements */,
 				49FAC3872B7D56350054D2D3 /* CloudSync.xcconfig */,
 				494202B82B745BED00227660 /* Preview Content */,
