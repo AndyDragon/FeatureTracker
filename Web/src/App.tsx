@@ -14,7 +14,7 @@ import {
     teamsDarkTheme,
 } from "@fluentui/react-components";
 import { Dismiss24Regular, PanelLeftExpand24Regular } from "@fluentui/react-icons";
-import { applicationName, deploymentWebLocation, macReleaseNotesLocation, versionLocation } from "./config";
+import { applicationName, deploymentWebLocation, macReleaseNotesLocation, versionLocation, windowsReleaseNotesLocation } from "./config";
 import About from "./About";
 import General from "./General";
 import ReleaseNotes from "./ReleaseNotes";
@@ -153,7 +153,7 @@ function App() {
                                 <ReleaseNotes
                                     applicationName={applicationName}
                                     platform="windows"
-                                    location={macReleaseNotesLocation}
+                                    location={windowsReleaseNotesLocation}
                                     versionLocation={versionLocation}
                                 />
                             )} />
