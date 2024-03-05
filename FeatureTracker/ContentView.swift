@@ -36,13 +36,18 @@ struct ContentView: View {
     private var duplicatePages = DuplicatePages();
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
     @ObservedObject private var syncMonitor = SyncMonitor.shared
-    var appState: VersionCheckAppState
+    private var appState: VersionCheckAppState
     private var isAnyToastShowing: Bool {
         isShowingToast || appState.isShowingVersionAvailableToast.wrappedValue || appState.isShowingVersionRequiredToast.wrappedValue
     }
 
     init(_ appState: VersionCheckAppState) {
         self.appState = appState
+    }
+    
+    @MainActor
+    private func setAuthor(container: ModelContainer, authorName: String) {
+        container.mainContext.managedObjectContext?.transactionAuthor = authorName
     }
 
     var body: some View {
@@ -85,6 +90,29 @@ struct ContentView: View {
                             .disabled(isAnyToastShowing)
                         }
                     if CloudKitConfiguration.Enabled {
+                        HStack {
+                            Image(systemName: syncMonitor.syncStateSummary.symbolName)
+                                .foregroundColor(syncMonitor.syncStateSummary.symbolColor)
+                                .help(syncMonitor.syncError
+                                      ? (syncMonitor.syncStateSummary.description + " " + (syncMonitor.lastError?.localizedDescription ?? "unknown"))
+                                      : syncMonitor.syncStateSummary.description)
+                            if showSyncAccountStatus {
+                                if case .accountNotAvailable = syncMonitor.syncStateSummary {
+                                    Text("Not logged into iCloud account, changes will not be synced to iCloud storage")
+                                }
+                            }
+                            Spacer()
+                        }
+                        .padding([.top], 4)
+                        .padding([.bottom], 16)
+                        .padding([.leading], 20)
+                        .task {
+                            do {
+                                try await Task.sleep(nanoseconds: 5_000_000_000)
+                                showSyncAccountStatus = true
+                            } catch {}
+                        }
+                    } else if CloudKitConfiguration.AutoSync {
                         HStack {
                             Image(systemName: syncMonitor.syncStateSummary.symbolName)
                                 .foregroundColor(syncMonitor.syncStateSummary.symbolColor)

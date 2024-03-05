@@ -9,9 +9,14 @@ import Foundation
 
 struct CloudKitConfiguration {
 #if CLOUDSYNC
-    static var Enabled = true
+    static var Enabled = false // TODO true
+    static var AutoSync = false
+#elseif CLOUDAUTOSYNC
+    static var Enabled = false
+    static var AutoSync = true
 #else
     static var Enabled = false
+    static var AutoSync = false
 #endif
 }
 
