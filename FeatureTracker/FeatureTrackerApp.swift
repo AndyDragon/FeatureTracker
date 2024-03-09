@@ -23,7 +23,7 @@ struct FeatureTrackerApp: App {
             schema: schema,
             isStoredInMemoryOnly: false,
             cloudKitDatabase: CloudKitConfiguration.Enabled ? .automatic : .none)
-        
+
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
@@ -51,6 +51,7 @@ struct FeatureTrackerApp: App {
                 })
                 .disabled(checkingForUpdates)
             })
+            CommandGroup(replacing: CommandGroupPlacement.newItem) { }
         }
     }
 }
