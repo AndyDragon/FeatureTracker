@@ -71,7 +71,7 @@ extension DBMonitor {
     // Process filtered transactions
     private func changeHandler(_ change: NSPersistentHistoryChange) {
         // Convert NSManagedObjectID to PersistentIdentifier via SwiftDataKit
-        if let id = change.changedObjectID.persistentIdentifier {
+        //if let id = change.changedObjectID.persistentIdentifier {
             //let author = change.transaction?.author ?? "unknown"
             let changeType = change.changeType
             var changeTypeString = ""
@@ -91,8 +91,8 @@ extension DBMonitor {
             }
             //print("author:\(author)")
             print("changeType:\(changeType) [\(changeTypeString)]")
-            print(id)
-        }
+            //print(id)
+        //}
     }
 }
 
@@ -100,10 +100,13 @@ public final class DataProvider: @unchecked Sendable {
     public var container: ModelContainer
     private var monitor: DBMonitor?
     
-    public static let share = DataProvider(inMemory: false, enableMonitor: CloudKitConfiguration.AutoSync)
-    public static let preview = DataProvider(inMemory: true, enableMonitor: false)
+    public static let share = DataProvider(
+        inMemory: false,
+        enableCloudKit: CloudKitConfiguration.Enabled,
+        enableMonitor: CloudKitConfiguration.AutoSync)
+    public static let preview = DataProvider(inMemory: true)
     
-    init(inMemory: Bool = false, enableMonitor: Bool = false) {
+    init(inMemory: Bool = false, enableCloudKit: Bool = false, enableMonitor: Bool = false) {
         let schema = Schema([
             Page.self,
             Feature.self,
@@ -112,7 +115,7 @@ public final class DataProvider: @unchecked Sendable {
         modelConfiguration = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: inMemory,
-            cloudKitDatabase: CloudKitConfiguration.Enabled ? .automatic : .none)
+            cloudKitDatabase: enableCloudKit ? .automatic : .none)
         do {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
             self.container = container
@@ -124,7 +127,7 @@ public final class DataProvider: @unchecked Sendable {
             if enableMonitor {
                 Task.detached {
                     self.monitor = DBMonitor(modelContainer: container)
-                    await self.monitor?.register(excludeAuthors: [])//["mainApp"])
+                    await self.monitor?.register(excludeAuthors: [])
                 }
             }
         } catch {

@@ -41,11 +41,126 @@
                     "Internal release",
                     "Added themes to the application"
                 ]
-            },
+            }
+        ]
+    },
+    {
+        "version": "1.0.5",
+        "notes": [
             {
-                "date": "Feb 21, 2024",
+                "date": "n/a",
                 "notes": [
-                    "test entry"
+                    "todo"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.6",
+        "notes": [
+            {
+                "date": "n/a",
+                "notes": [
+                    "todo"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.7",
+        "notes": [
+            {
+                "date": "n/a",
+                "notes": [
+                    "todo"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.8",
+        "notes": [
+            {
+                "date": "n/a",
+                "notes": [
+                    "todo"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.9",
+        "notes": [
+            {
+                "date": "n/a",
+                "notes": [
+                    "todo"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.10",
+        "notes": [
+            {
+                "date": "n/a",
+                "notes": [
+                    "todo"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.11",
+        "notes": [
+            {
+                "date": "n/a",
+                "notes": [
+                    "todo"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.12",
+        "notes": [
+            {
+                "date": "n/a",
+                "notes": [
+                    "todo"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.13",
+        "notes": [
+            {
+                "date": "n/a",
+                "notes": [
+                    "todo"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.14",
+        "notes": [
+            {
+                "date": "n/a",
+                "notes": [
+                    "todo"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.15",
+        "notes": [
+            {
+                "date": "Mar 9, 2024",
+                "notes": [
+                    "Removed new window and added iCloud backup/restore indicator"
                 ]
             }
         ]

@@ -47,10 +47,16 @@ export const links: Record<Platform, Links | undefined> = {
                 suffix: "",
             },
             {
+                name: "storage w/ iCloud",
+                action: "download",
+                target: "",
+                suffix: "with%20iCloud%20"
+            },
+            {
                 name: "cloud sync w/ iCloud",
                 action: "download",
                 target: "",
-                suffix: "with%20CloudSync%20"
+                suffix: "with%20iCloud%20Sync%20"
             }
         ]
     },

@@ -1,0 +1,11 @@
+//
+//  AutoCloudSync.xcconfig
+//  Feature Tracker
+//
+//  Created by Andrew Forget on 2024-03-09.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+OTHER_SWIFT_FLAGS = -DCLOUDAUTOSYNC

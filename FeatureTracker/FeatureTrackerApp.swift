@@ -36,6 +36,7 @@ struct FeatureTrackerApp: App {
                 })
                 .disabled(checkingForUpdates)
             })
+            CommandGroup(replacing: CommandGroupPlacement.newItem) { }
         }
     }
 }
