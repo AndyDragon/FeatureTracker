@@ -8,6 +8,8 @@ export const applicationDetails = (
 );
 export const macScreenshotWidth = 1024;
 export const macScreenshotHeight = 630;
+export const windowsScreenshotWidth = 940;
+export const windowsScreenshotHeight = 580;
 
 export const deploymentWebLocation = "/app/featuretracker";
 
