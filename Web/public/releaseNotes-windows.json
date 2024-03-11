@@ -43,5 +43,16 @@
                 ]
             }
         ]
+    },
+    {
+        "version": "1.0.5",
+        "notes": [
+            {
+                "date": "Mar 11, 2024",
+                "notes": [
+                    "Fixed themes in status bar"
+                ]
+            }
+        ]
     }
 ]
