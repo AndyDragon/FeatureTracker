@@ -1,1 +1,47 @@
-[]
+[
+    {
+        "version": "1.0.0",
+        "notes": [
+            {
+                "date": "Feb 2024",
+                "notes": [
+                    "Initial release"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.1",
+        "notes": [
+            {
+                "date": "Feb 2024",
+                "notes": [
+                    "Second release"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.2",
+        "notes": [
+            {
+                "date": "Feb 2024",
+                "notes": [
+                    "Third release"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.0.4",
+        "notes": [
+            {
+                "date": "Mar 5, 2024",
+                "notes": [
+                    "Updated on hub handling",
+                    "Added themes to the application"
+                ]
+            }
+        ]
+    }
+]

@@ -39,7 +39,7 @@
       shouldAutocreateTestPlan = "YES">
    </TestAction>
    <LaunchAction
-      buildConfiguration = "CloudSync"
+      buildConfiguration = "AutoCloudSync"
       selectedDebuggerIdentifier = ""
       selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"
       launchStyle = "0"
@@ -60,7 +60,7 @@
       </BuildableProductRunnable>
    </LaunchAction>
    <ProfileAction
-      buildConfiguration = "CloudSync"
+      buildConfiguration = "AutoCloudSync"
       shouldUseLaunchSchemeArgsEnv = "YES"
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
@@ -80,7 +80,7 @@
       buildConfiguration = "Debug">
    </AnalyzeAction>
    <ArchiveAction
-      buildConfiguration = "CloudSync"
+      buildConfiguration = "AutoCloudSync"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>

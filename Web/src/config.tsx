@@ -8,6 +8,8 @@ export const applicationDetails = (
 );
 export const macScreenshotWidth = 1024;
 export const macScreenshotHeight = 630;
+export const windowsScreenshotWidth = 940;
+export const windowsScreenshotHeight = 580;
 
 export const deploymentWebLocation = "/app/featuretracker";
 
@@ -47,10 +49,16 @@ export const links: Record<Platform, Links | undefined> = {
                 suffix: "",
             },
             {
+                name: "storage w/ iCloud",
+                action: "download",
+                target: "",
+                suffix: "with%20iCloud%20"
+            },
+            {
                 name: "cloud sync w/ iCloud",
                 action: "download",
                 target: "",
-                suffix: "with%20CloudSync%20"
+                suffix: "with%20iCloud%20Sync%20"
             }
         ]
     },

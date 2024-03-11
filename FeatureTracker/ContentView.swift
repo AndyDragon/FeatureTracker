@@ -33,16 +33,23 @@ struct ContentView: View {
     @State private var showConfirmationAlert = false
     @State private var isShowingDuplicatePages = false;
     @State private var selectedDuplicatePage = UUID();
+    @State private var iCloudActive = false;
+    @State private var iCloudError = ""
     private var duplicatePages = DuplicatePages();
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
     @ObservedObject private var syncMonitor = SyncMonitor.shared
-    var appState: VersionCheckAppState
+    private var appState: VersionCheckAppState
     private var isAnyToastShowing: Bool {
         isShowingToast || appState.isShowingVersionAvailableToast.wrappedValue || appState.isShowingVersionRequiredToast.wrappedValue
     }
 
     init(_ appState: VersionCheckAppState) {
         self.appState = appState
+    }
+    
+    @MainActor
+    private func setAuthor(container: ModelContainer, authorName: String) {
+        container.mainContext.managedObjectContext?.transactionAuthor = authorName
     }
 
     var body: some View {
@@ -86,11 +93,16 @@ struct ContentView: View {
                         }
                     if CloudKitConfiguration.Enabled {
                         HStack {
-                            Image(systemName: syncMonitor.syncStateSummary.symbolName)
-                                .foregroundColor(syncMonitor.syncStateSummary.symbolColor)
+                            Image(systemName: iCloudActive ? "arrow.triangle.2.circlepath.icloud" : syncMonitor.syncStateSummary.symbolName)
+                                .foregroundColor(iCloudActive ? .gray : syncMonitor.syncStateSummary.symbolColor)
+                                .symbolEffect(
+                                    .pulse,
+                                    options: iCloudActive || syncMonitor.syncStateSummary.inProgress ? .repeating.speed(3) : .default,
+                                    value: iCloudActive || syncMonitor.syncStateSummary.inProgress)
+                                .symbolRenderingMode(iCloudActive || syncMonitor.syncStateSummary.inProgress ? .hierarchical : .monochrome)
                                 .help(syncMonitor.syncError
                                       ? (syncMonitor.syncStateSummary.description + " " + (syncMonitor.lastError?.localizedDescription ?? "unknown"))
-                                      : syncMonitor.syncStateSummary.description)
+                                      : iCloudError.isEmpty ? syncMonitor.syncStateSummary.description : iCloudError)
                             if showSyncAccountStatus {
                                 if case .accountNotAvailable = syncMonitor.syncStateSummary {
                                     Text("Not logged into iCloud account, changes will not be synced to iCloud storage")
@@ -107,6 +119,23 @@ struct ContentView: View {
                                 showSyncAccountStatus = true
                             } catch {}
                         }
+                    } else {
+                        HStack {
+                            Image(systemName: iCloudActive ? "arrow.triangle.2.circlepath.icloud" : "icloud")
+                                .foregroundColor(iCloudActive ? .gray : .green)
+                                .symbolEffect(.pulse, options: iCloudActive ? .repeating.speed(3) : .default, value: iCloudActive)
+                                .symbolRenderingMode(iCloudActive ? .hierarchical : .monochrome)
+                                .help(iCloudActive ?
+                                      "Busy with cloud sync" :
+                                        iCloudError.isEmpty ? "Cloud sync ready" : iCloudError)
+                            if iCloudActive {
+                                Text("iCloud storage active...")
+                            }
+                            Spacer()
+                        }
+                        .padding([.top], 4)
+                        .padding([.bottom], 16)
+                        .padding([.leading], 20)
                     }
                 }
                 ToastDismissShield(
@@ -740,30 +769,53 @@ struct ContentView: View {
     }
 
     func backupToCloud() -> Void {
-        do {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
-            encoder.dateEncodingStrategy = .iso8601
-            var codablePages = [CodablePage]()
-            codablePages.append(contentsOf: pages.sorted(by: { $0.name < $1.name }).map({ page in
-                return CodablePage(page)
-            }))
-            let json = try encoder.encode(codablePages)
-            if let containerUrl = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
-                if !FileManager.default.fileExists(atPath: containerUrl.path, isDirectory: nil) {
-                    try FileManager.default.createDirectory(at: containerUrl, withIntermediateDirectories: true, attributes: nil)
-                }
-                
-                let fileUrl = containerUrl.appendingPathComponent("features.json")
-                try String(decoding: json, as: UTF8.self).write(to: fileUrl, atomically: true, encoding: .utf8)
-                
-                showToast("Backed up to iCloud!", "Stored a backup of the pages and features to your iCloud documents")
-            }
-        } catch {
-            exceptionError = error.localizedDescription
-            backupOperation = .backup
-            showingBackupRestoreErrorAlert.toggle()
+        withAnimation {
+            iCloudActive = true
         }
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
+            do {
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+                encoder.dateEncodingStrategy = .iso8601
+                var codablePages = [CodablePage]()
+                codablePages.append(contentsOf: pages.sorted(by: { $0.name < $1.name }).map({ page in
+                    return CodablePage(page)
+                }))
+                let json = try encoder.encode(codablePages)
+                if let containerUrl = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
+                    if !FileManager.default.fileExists(atPath: containerUrl.path, isDirectory: nil) {
+                        try FileManager.default.createDirectory(at: containerUrl, withIntermediateDirectories: true, attributes: nil)
+                    }
+                    
+                    let fileUrl = containerUrl.appendingPathComponent("features.json")
+                    try String(decoding: json, as: UTF8.self).write(to: fileUrl, atomically: true, encoding: .utf8)
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: {
+                        showToast("Backed up to iCloud!", "Stored a backup of the pages and features to your iCloud documents")
+                    })
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
+                        if (iCloudActive) {
+                            withAnimation {
+                                iCloudActive.toggle()
+                            }
+                        }
+                    })
+                } else {
+                    showCloudBackupErrorToast("No access to your iCloud documents")
+                }
+            } catch {
+                showCloudBackupErrorToast(error.localizedDescription)
+            }
+        })
+    }
+
+    func showCloudBackupErrorToast(_ message: String) {
+        debugPrint("iCloud backup failed: \(message)")
+        exceptionError = message
+        iCloudError = exceptionError
+        iCloudActive = false
+        backupOperation = .cloudBackup
+        showingBackupRestoreErrorAlert.toggle()
     }
 
     func restore() -> Void {
@@ -806,58 +858,74 @@ struct ContentView: View {
     }
     
     func restoreFromCloud() -> Void {
-        do {
-            if let containerUrl = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
-                if FileManager.default.fileExists(atPath: containerUrl.path, isDirectory: nil) {
-                    let fileUrl = containerUrl.appendingPathComponent("features.json")
-                    if FileManager.default.fileExists(atPath: fileUrl.path) {
-                        let fileContents = FileManager.default.contents(atPath: fileUrl.path)
-                        if let json = fileContents {
-                            let decoder = JSONDecoder()
-                            decoder.dateDecodingStrategy = .iso8601
-                            let codablePages = try decoder.decode([CodablePage].self, from: json)
-                            if codablePages.count != 0 {
-                                do {
-                                    try modelContext.delete(model: Page.self)
-                                } catch {
-                                    // do nothing
-                                    debugPrint(error.localizedDescription)
+        withAnimation {
+            iCloudActive = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
+            do {
+                if let containerUrl = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
+                    if FileManager.default.fileExists(atPath: containerUrl.path, isDirectory: nil) {
+                        let fileUrl = containerUrl.appendingPathComponent("features.json")
+                        if FileManager.default.fileExists(atPath: fileUrl.path) {
+                            let fileContents = FileManager.default.contents(atPath: fileUrl.path)
+                            if let json = fileContents {
+                                let decoder = JSONDecoder()
+                                decoder.dateDecodingStrategy = .iso8601
+                                let codablePages = try decoder.decode([CodablePage].self, from: json)
+                                if codablePages.count != 0 {
+                                    do {
+                                        try modelContext.delete(model: Page.self)
+                                    } catch {
+                                        // do nothing
+                                        debugPrint(error.localizedDescription)
+                                    }
+                                    for codablePage in codablePages {
+                                        modelContext.insert(codablePage.toPage())
+                                    }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: {
+                                        showToast("Restored from iCloud!", "Restored the items from your iCloud", duration: 6)
+                                    })
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
+                                        if (iCloudActive) {
+                                            withAnimation {
+                                                iCloudActive.toggle()
+                                            }
+                                        }
+                                    })
+                                } else {
+                                    showCloudRestoreErrorToast("No pages found in the backup")
                                 }
-                                for codablePage in codablePages {
-                                    modelContext.insert(codablePage.toPage())
-                                }
-                                showToast("Restored from iCloud!", "Restored the items from your iCloud", duration: 6)
                             } else {
-                                showCloudRestoreErrorToast("No pages found in the backup")
+                                showCloudRestoreErrorToast("No pages loaded from the backup")
                             }
                         } else {
-                            showCloudRestoreErrorToast("No pages loaded from the backup")
+                            showCloudRestoreErrorToast("No backup was found in your iCloud documents")
                         }
                     } else {
                         showCloudRestoreErrorToast("No backup was found in your iCloud documents")
                     }
                 } else {
-                    showCloudRestoreErrorToast("No backup was found in your iCloud documents")
+                    showCloudRestoreErrorToast("No access to your iCloud documents")
                 }
-            } else {
-                showCloudRestoreErrorToast("No access to your iCloud documents")
+            } catch let DecodingError.dataCorrupted(context) {
+                showCloudRestoreErrorToast(context.debugDescription)
+            } catch let DecodingError.keyNotFound(key, context) {
+                showCloudRestoreErrorToast("Key '\(key)' not found:" + context.debugDescription)
+            } catch let DecodingError.valueNotFound(value, context) {
+                showCloudRestoreErrorToast("Value '\(value)' not found:" + context.debugDescription)
+            } catch let DecodingError.typeMismatch(type, context) {
+                showCloudRestoreErrorToast("Type '\(type)' mismatch:" + context.debugDescription)
+            } catch {
+                showCloudRestoreErrorToast(error.localizedDescription)
             }
-        } catch let DecodingError.dataCorrupted(context) {
-            showCloudRestoreErrorToast(context.debugDescription)
-        } catch let DecodingError.keyNotFound(key, context) {
-            showCloudRestoreErrorToast("Key '\(key)' not found:" + context.debugDescription)
-        } catch let DecodingError.valueNotFound(value, context) {
-            showCloudRestoreErrorToast("Value '\(value)' not found:" + context.debugDescription)
-        } catch let DecodingError.typeMismatch(type, context) {
-            showCloudRestoreErrorToast("Type '\(type)' mismatch:" + context.debugDescription)
-        } catch {
-            showCloudRestoreErrorToast(error.localizedDescription)
-        }
+        })
     }
                                 
     func showCloudRestoreErrorToast(_ message: String) {
         debugPrint("iCloud restore failed: \(message)")
         exceptionError = message
+        iCloudError = exceptionError
+        iCloudActive = false
         backupOperation = .cloudRestore
         showingBackupRestoreErrorAlert.toggle()
     }

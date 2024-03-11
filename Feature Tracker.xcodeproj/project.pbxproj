@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		491434422B7FED6E0031FC0D /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 491434412B7FED6E0031FC0D /* Types.swift */; };
 		4918AC222B7C25770078BC00 /* CloudKitSyncMonitor in Frameworks */ = {isa = PBXBuildFile; productRef = 4918AC212B7C25770078BC00 /* CloudKitSyncMonitor */; };
+		493E4E842B97D59400C30717 /* SwiftDataKit in Frameworks */ = {isa = PBXBuildFile; productRef = 493E4E832B97D59400C30717 /* SwiftDataKit */; };
+		493E4E862B97DE3100C30717 /* DataProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 493E4E852B97DE3100C30717 /* DataProvider.swift */; };
 		494202B32B745BEC00227660 /* FeatureTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202B22B745BEC00227660 /* FeatureTrackerApp.swift */; };
 		494202B52B745BEC00227660 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202B42B745BEC00227660 /* ContentView.swift */; };
 		494202B72B745BED00227660 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 494202B62B745BED00227660 /* Assets.xcassets */; };
@@ -27,6 +29,7 @@
 
 /* Begin PBXFileReference section */
 		491434412B7FED6E0031FC0D /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
+		493E4E852B97DE3100C30717 /* DataProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataProvider.swift; sourceTree = "<group>"; };
 		494202AF2B745BEC00227660 /* Feature Tracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Feature Tracker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		494202B22B745BEC00227660 /* FeatureTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTrackerApp.swift; sourceTree = "<group>"; };
 		494202B42B745BEC00227660 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -43,6 +46,7 @@
 		49AD862B2B74AB3B006722B3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		49B4C4A82B7C4E6D0068B8C9 /* FeatureEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureEditor.swift; sourceTree = "<group>"; };
 		49B4C4AA2B7C53330068B8C9 /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
+		49E216EF2B9CDA8800D5D0CD /* AutoCloudSync.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AutoCloudSync.xcconfig; sourceTree = "<group>"; };
 		49FAC3872B7D56350054D2D3 /* CloudSync.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = CloudSync.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -53,6 +57,7 @@
 			files = (
 				4918AC222B7C25770078BC00 /* CloudKitSyncMonitor in Frameworks */,
 				4950CE3B2B7CF9F400C401B3 /* AlertToast in Frameworks */,
+				493E4E842B97D59400C30717 /* SwiftDataKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -86,6 +91,7 @@
 				494202CB2B747FC300227660 /* FeatureListing.swift */,
 				494202C72B74798100227660 /* Feature.swift */,
 				49B4C4A82B7C4E6D0068B8C9 /* FeatureEditor.swift */,
+				493E4E852B97DE3100C30717 /* DataProvider.swift */,
 				49B4C4AA2B7C53330068B8C9 /* Helpers.swift */,
 				491434412B7FED6E0031FC0D /* Types.swift */,
 				49A6DA7B2B8295680008A319 /* ToastDismissShield.swift */,
@@ -94,6 +100,7 @@
 				49AD862B2B74AB3B006722B3 /* Info.plist */,
 				494202BB2B745BED00227660 /* FeatureTracker.entitlements */,
 				49FAC3872B7D56350054D2D3 /* CloudSync.xcconfig */,
+				49E216EF2B9CDA8800D5D0CD /* AutoCloudSync.xcconfig */,
 				494202B82B745BED00227660 /* Preview Content */,
 			);
 			path = FeatureTracker;
@@ -126,6 +133,7 @@
 			packageProductDependencies = (
 				4918AC212B7C25770078BC00 /* CloudKitSyncMonitor */,
 				4950CE3A2B7CF9F400C401B3 /* AlertToast */,
+				493E4E832B97D59400C30717 /* SwiftDataKit */,
 			);
 			productName = FeatureTracker;
 			productReference = 494202AF2B745BEC00227660 /* Feature Tracker.app */;
@@ -158,6 +166,7 @@
 			packageReferences = (
 				4918AC202B7C25770078BC00 /* XCRemoteSwiftPackageReference "CloudKitSyncMonitor" */,
 				4950CE392B7CF9F400C401B3 /* XCRemoteSwiftPackageReference "AlertToast" */,
+				493E4E822B97D59400C30717 /* XCRemoteSwiftPackageReference "SwiftDataKit" */,
 			);
 			productRefGroup = 494202B02B745BEC00227660 /* Products */;
 			projectDirPath = "";
@@ -197,6 +206,7 @@
 				494202C22B745C4200227660 /* Page.swift in Sources */,
 				494202C42B7464DC00227660 /* PageEditor.swift in Sources */,
 				49A6DA7D2B8295680008A319 /* ToastDismissShield.swift in Sources */,
+				493E4E862B97DE3100C30717 /* DataProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -333,7 +343,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -368,7 +378,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -392,6 +402,99 @@
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
+		};
+		49E216F02B9CDAD700D5D0CD /* AutoCloudSync */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 49E216EF2B9CDA8800D5D0CD /* AutoCloudSync.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = AutoCloudSync;
+		};
+		49E216F12B9CDAD700D5D0CD /* AutoCloudSync */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 49E216EF2B9CDA8800D5D0CD /* AutoCloudSync.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = FeatureTracker/FeatureTracker.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 15;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
+				DEVELOPMENT_TEAM = 7U6K972H9Q;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FeatureTracker/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Feature Tracker with iCloud sync";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright (c) AndyDragon Software";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.andydragon.FeatureTracker;
+				PRODUCT_NAME = "$(TARGET_NAME) with iCloud sync";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = AutoCloudSync;
 		};
 		49FAC3852B7D55C40054D2D3 /* CloudSync */ = {
 			isa = XCBuildConfiguration;
@@ -461,7 +564,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -495,6 +598,7 @@
 				494202BC2B745BED00227660 /* Debug */,
 				494202BD2B745BED00227660 /* Release */,
 				49FAC3852B7D55C40054D2D3 /* CloudSync */,
+				49E216F02B9CDAD700D5D0CD /* AutoCloudSync */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -505,6 +609,7 @@
 				494202BF2B745BED00227660 /* Debug */,
 				494202C02B745BED00227660 /* Release */,
 				49FAC3862B7D55C40054D2D3 /* CloudSync */,
+				49E216F12B9CDAD700D5D0CD /* AutoCloudSync */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -518,6 +623,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.2.1;
+			};
+		};
+		493E4E822B97D59400C30717 /* XCRemoteSwiftPackageReference "SwiftDataKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/fatbobman/SwiftDataKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.3;
 			};
 		};
 		4950CE392B7CF9F400C401B3 /* XCRemoteSwiftPackageReference "AlertToast" */ = {
@@ -535,6 +648,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4918AC202B7C25770078BC00 /* XCRemoteSwiftPackageReference "CloudKitSyncMonitor" */;
 			productName = CloudKitSyncMonitor;
+		};
+		493E4E832B97D59400C30717 /* SwiftDataKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 493E4E822B97D59400C30717 /* XCRemoteSwiftPackageReference "SwiftDataKit" */;
+			productName = SwiftDataKit;
 		};
 		4950CE3A2B7CF9F400C401B3 /* AlertToast */ = {
 			isa = XCSwiftPackageProductDependency;

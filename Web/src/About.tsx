@@ -1,7 +1,7 @@
 import React from "react";
 import { Version, readVersion } from "./version";
 import { Body2, Spinner, Image, Subtitle2, Title1, makeStyles, shorthands } from "@fluentui/react-components";
-import { Platform, applicationDescription, applicationDetails, macScreenshotHeight, macScreenshotWidth, platformString } from "./config";
+import { Platform, applicationDescription, applicationDetails, macScreenshotHeight, macScreenshotWidth, platformString, windowsScreenshotHeight, windowsScreenshotWidth } from "./config";
 import { Link } from "react-router-dom";
 
 export interface GeneralProps {
@@ -59,6 +59,8 @@ export default function About(props: GeneralProps) {
             <br /><br />
             <div style={{ textAlign: "center"}}>
                 <Image alt="macOS Screenshot" src={process.env.PUBLIC_URL + "/MacOS.png"} width={macScreenshotWidth} height={macScreenshotHeight} />
+                <br />
+                <Image alt="Windows Screenshot" src={process.env.PUBLIC_URL + "/Windows.png"} width={windowsScreenshotWidth} height={windowsScreenshotHeight} />
             </div>
             <br /><br />
             <Subtitle2>{applicationName} is currently available for:</Subtitle2>

@@ -14,22 +14,6 @@ struct FeatureTrackerApp: App {
     @State var isShowingVersionAvailableToast: Bool = false
     @State var isShowingVersionRequiredToast: Bool = false
     @State var versionCheckToast = VersionCheckToast()
-    private var modelContainer: ModelContainer = {
-        let schema = Schema([
-            Page.self,
-            Feature.self,
-        ])
-        let modelConfiguration = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: false,
-            cloudKitDatabase: CloudKitConfiguration.Enabled ? .automatic : .none)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
 
     var body: some Scene {
         let appState = VersionCheckAppState(
@@ -38,10 +22,11 @@ struct FeatureTrackerApp: App {
             isShowingVersionRequiredToast: $isShowingVersionRequiredToast,
             versionCheckToast: $versionCheckToast,
             versionLocation: "https://vero.andydragon.com/static/data/featuretracker/version.json")
+        let dataProvider = DataProvider.share
         WindowGroup {
             ContentView(appState)
         }
-        .modelContainer(modelContainer)
+        .modelContainer(dataProvider.container)
         .commands {
             CommandGroup(replacing: .appSettings, addition: {
                 Button(action: {
