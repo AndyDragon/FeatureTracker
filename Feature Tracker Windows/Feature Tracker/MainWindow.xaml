@@ -15,7 +15,7 @@
     MinWidth="800"
     MinHeight="600"
     GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
-    ResizeMode="CanResizeWithGrip">
+    ResizeMode="CanResizeWithGrip" Activated="OnActivatedChanged" Deactivated="OnActivatedChanged">
 
     <Window.DataContext>
         <local:MainViewModel />
@@ -215,17 +215,14 @@
 
         </mah:SplitView>
 
-        <Grid Margin="0" Grid.Row="2">
-            <Grid.Background>
-                <SolidColorBrush Color="{DynamicResource MahApps.Colors.Accent2}"/>
-            </Grid.Background>
+        <Grid Margin="0" Grid.Row="2" Background="{Binding StatusBarBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,5">
                 <TextBlock Text="Theme: " VerticalAlignment="Center" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}" Opacity="0.5" />
                 <mah:DropDownButton
                     BorderThickness="0"

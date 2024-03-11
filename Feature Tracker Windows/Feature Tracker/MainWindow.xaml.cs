@@ -20,6 +20,14 @@
             EditorFrame.Navigate(new BlankPage(blankViewModel));
         }
 
+        private void OnActivatedChanged(object sender, EventArgs e)
+        {
+            if (this.DataContext is MainViewModel viewModel)
+            {
+                viewModel.WindowActive = IsActive;
+            }
+        }
+
         private void ConnectViewModel(MainViewModel viewModel)
         {
             viewModel.PropertyChanged += (sender, e) =>

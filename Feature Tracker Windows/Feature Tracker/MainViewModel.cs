@@ -13,6 +13,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace FeatureTracker
@@ -352,6 +353,8 @@ namespace FeatureTracker
                     {
                         ThemeManager.Current.ChangeTheme(Application.Current, Theme);
                         UserSettings.StoreString("theme", Theme.Name);
+                        OnPropertyChanged(nameof(StatusBarBrush));
+                        OnPropertyChanged(nameof(Themes));
                     }
                 }
             }
@@ -360,6 +363,23 @@ namespace FeatureTracker
         public ThemeOption[] Themes => [.. ThemeManager.Current.Themes.OrderBy(theme => theme.Name).Select(theme => new ThemeOption(theme, theme == Theme))];
 
         public static string Version => Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "---";
+
+        private bool windowActive = false;
+        public bool WindowActive
+        {
+            get => windowActive;
+            set
+            {
+                if (Set(ref windowActive, value))
+                {
+                    OnPropertyChanged(nameof(StatusBarBrush));
+                }
+            }
+        }
+
+        public Brush? StatusBarBrush => WindowActive
+            ? Theme?.Resources["MahApps.Brushes.Accent2"] as Brush
+            : Theme?.Resources["MahApps.Brushes.WindowTitle.NonActive"] as Brush;
 
         private async void PopulateDefaultPages()
         {
