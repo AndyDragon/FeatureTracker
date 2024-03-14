@@ -67,7 +67,7 @@
 		494202A62B745BEC00227660 = {
 			isa = PBXGroup;
 			children = (
-				494202B12B745BEC00227660 /* FeatureTracker */,
+				494202B12B745BEC00227660 /* Feature Tracker */,
 				494202B02B745BEC00227660 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -80,7 +80,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		494202B12B745BEC00227660 /* FeatureTracker */ = {
+		494202B12B745BEC00227660 /* Feature Tracker */ = {
 			isa = PBXGroup;
 			children = (
 				494202B22B745BEC00227660 /* FeatureTrackerApp.swift */,
@@ -103,7 +103,7 @@
 				49E216EF2B9CDA8800D5D0CD /* AutoCloudSync.xcconfig */,
 				494202B82B745BED00227660 /* Preview Content */,
 			);
-			path = FeatureTracker;
+			path = "Feature Tracker";
 			sourceTree = "<group>";
 		};
 		494202B82B745BED00227660 /* Preview Content */ = {
@@ -339,18 +339,18 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = FeatureTracker/FeatureTracker.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Feature Tracker/FeatureTracker.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 15;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = FeatureTracker/Info.plist;
+				INFOPLIST_FILE = "Feature Tracker/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Feature Tracker";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright (c) AndyDragon Software";
@@ -374,18 +374,18 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = FeatureTracker/FeatureTracker.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Feature Tracker/FeatureTracker.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 15;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = FeatureTracker/Info.plist;
+				INFOPLIST_FILE = "Feature Tracker/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Feature Tracker";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright (c) AndyDragon Software";
@@ -467,18 +467,18 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = FeatureTracker/FeatureTracker.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Feature Tracker/FeatureTracker.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 15;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = FeatureTracker/Info.plist;
+				INFOPLIST_FILE = "Feature Tracker/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Feature Tracker with iCloud sync";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright (c) AndyDragon Software";
@@ -560,18 +560,18 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = FeatureTracker/FeatureTracker.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "Feature Tracker/FeatureTracker.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 15;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_ASSET_PATHS = "\"FeatureTracker/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = FeatureTracker/Info.plist;
+				INFOPLIST_FILE = "Feature Tracker/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Feature Tracker with iCloud";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright (c) AndyDragon Software";
