@@ -7,6 +7,28 @@
 
 import SwiftUI
 
+struct VersionManifest: Codable {
+    let macOS: VersionEntry
+}
+
+struct VersionEntry: Codable {
+    let current: String
+    let link: String
+    let vital: Bool
+}
+
+struct VersionCheckToast {
+    var appVersion: String
+    var currentVersion: String
+    var linkToCurrentVersion: String
+    
+    init(appVersion: String = "unknown", currentVersion: String = "unknown", linkToCurrentVersion: String = "") {
+        self.appVersion = appVersion
+        self.currentVersion = currentVersion
+        self.linkToCurrentVersion = linkToCurrentVersion
+    }
+}
+
 struct VersionCheckAppState {
     private var isCheckingForUpdates: Binding<Bool>
     var isShowingVersionAvailableToast: Binding<Bool>
@@ -63,6 +85,7 @@ struct VersionCheckAppState {
         } catch {
             // do nothing, the version check is not critical
             debugPrint(error.localizedDescription)
+            resetCheckingForUpdates()
         }
     }
 }

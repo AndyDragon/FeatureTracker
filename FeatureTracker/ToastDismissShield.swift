@@ -1,5 +1,5 @@
 //
-//  ToastDismissShielf.swift
+//  ToastDismissShield.swift
 //  FeatureTracker
 //
 //  Created by Andrew Forget on 2024-02-18.
