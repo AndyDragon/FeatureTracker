@@ -50,6 +50,7 @@ export default function About(props: GeneralProps) {
 
     const platforms: { platform: Platform; installLocation: string }[] = [];
     version?.["macOS"]?.current && platforms.push({ platform: "macOS", installLocation: "./macInstall" });
+    version?.["macOS_v2"]?.current && platforms.push({ platform: "macOS_v2", installLocation: "./macInstall_v2" });
     version?.["windows"]?.current && platforms.push({ platform: "windows", installLocation: "./windowsInstall" });
     return (
         <div style={{ margin: "50px" }}>

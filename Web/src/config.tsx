@@ -15,16 +15,25 @@ export const deploymentWebLocation = "/app/featuretracker";
 
 export const versionLocation = "featuretracker/version.json";
 
+export const showMacInfo = true;
 export const macDmgLocation = "featuretracker/macos/Feature%20Tracker%20";
 export const macReleaseNotesLocation = "releaseNotes-mac.json";
 
+export const showMacV2Info = false;
+export const macV2DmgLocation = "featuretracker/macos/Feature%20Tracker%20";
+export const macV2ReleaseNotesLocation = "releaseNotes-mac_v2.json";
+
+export const showWindowsInfo = true;
 export const windowsInstallerLocation = "featuretracker/windows";
 export const windowsReleaseNotesLocation = "releaseNotes-windows.json";
 
-export type Platform = "macOS" | "windows";
+export const hasTutorial = false;
+
+export type Platform = "macOS" | "macOS_v2" | "windows";
 
 export const platformString: Record<Platform, string> = {
     macOS: "macOS",
+    macOS_v2: "macOS v2",
     windows: "Windows"
 }
 
@@ -62,6 +71,17 @@ export const links: Record<Platform, Links | undefined> = {
             }
         ]
     },
+    macOS_v2: {
+        location: (version, suffix) => `${macDmgLocation}${suffix}v${version}.dmg`,
+        actions: [
+            {
+                name: "default",
+                action: "download",
+                target: "",
+                suffix: "",
+            }
+        ]
+    },
     windows: {
         location: (_version, suffix) => `${windowsInstallerLocation}${suffix}`,
         actions: [
@@ -79,4 +99,32 @@ export const links: Record<Platform, Links | undefined> = {
             }
         ]
     },
+};
+
+export interface NextStep {
+    readonly label: string;
+    readonly page: string;
+}
+
+export interface Screenshot {
+    readonly name: string;
+    readonly width?: string;
+}
+
+export interface Bullet {
+    readonly text: string;
+    readonly image?: Screenshot;
+    readonly screenshot?: Screenshot;
+    readonly link?: string;
+}
+
+export interface PageStep {
+    readonly screenshot: Screenshot;
+    readonly title: string;
+    readonly bullets: Bullet[];
+    readonly previousStep?: string;
+    readonly nextSteps: NextStep[];
+}
+
+export const tutorialPages: Record<string, PageStep> = {
 };

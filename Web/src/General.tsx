@@ -2,6 +2,7 @@ import React from "react";
 import { Version, readVersion } from "./version";
 import { Link, Spinner, Subtitle1, Subtitle2, makeStyles, shorthands } from "@fluentui/react-components";
 import { Platform, links, platformString } from "./config";
+import { Link as RouterLink } from "react-router-dom";
 
 export interface GeneralProps {
     readonly applicationName: string;
@@ -12,7 +13,15 @@ export interface GeneralProps {
 const useStyles = makeStyles({
     container: {
         "> div": { ...shorthands.padding("50px") }
-    }
+    },
+    cleanLink: {
+        ...shorthands.textDecoration("none"),
+        color: "CornflowerBlue",
+        "&:hover": {
+            ...shorthands.textDecoration("underline"),
+            color: "LightBlue",
+        },
+    },
 });
 
 export default function General(props: GeneralProps) {
@@ -61,6 +70,9 @@ export default function General(props: GeneralProps) {
                     </>
                 );
             })}
+            {(platform === "macOS" && version?.["macOS_v2"]?.current) &&
+                <Subtitle1 style={{ display: "block", marginTop: "60px" }}><span style={{ color: "red" }}>NEW!</span> There is a new V2 version available for {platformString[platform]}. You can download it <RouterLink className={styles.cleanLink} to="/macInstall_v2">from here</RouterLink></Subtitle1>
+            }
         </div>
     );
 }

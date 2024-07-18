@@ -6,6 +6,7 @@ export interface VersionEntry {
 
 export interface Version {
     readonly macOS?: VersionEntry;
+    readonly macOS_v2?: VersionEntry;
     readonly windows?: VersionEntry;
   }
 
@@ -18,7 +19,8 @@ export async function readVersion(versionLocation: string): Promise<Version> {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
-        }
+        },
+        cache: "no-cache",
       });
     version = await versionRequest.json();
   } catch (error) {

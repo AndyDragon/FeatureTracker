@@ -14,11 +14,23 @@ import {
     teamsDarkTheme,
 } from "@fluentui/react-components";
 import { Dismiss24Regular, PanelLeftExpand24Regular } from "@fluentui/react-icons";
-import { applicationName, deploymentWebLocation, macReleaseNotesLocation, versionLocation, windowsReleaseNotesLocation } from "./config";
+import {
+    applicationName,
+    deploymentWebLocation,
+    hasTutorial,
+    showMacInfo,
+    macReleaseNotesLocation,
+    showMacV2Info,
+    macV2ReleaseNotesLocation,
+    versionLocation,
+    showWindowsInfo,
+    windowsReleaseNotesLocation,
+} from "./config";
 import About from "./About";
 import General from "./General";
 import ReleaseNotes from "./ReleaseNotes";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
+import Tutorial from "./Tutorial";
 
 const useStyles = makeStyles({
     cleanLink: {
@@ -65,6 +77,7 @@ function App() {
                             <Link className={styles.cleanLink} style={{ fontSize: "20pt", marginTop: "40px" }} to="/">
                                 About
                             </Link>
+                            {showMacInfo && (
                             <div style={{ display: "flex", flexDirection: "column", marginTop: "32px" }}>
                                 <Title3>macOS</Title3>
                                 <div style={{ marginLeft: "20px", display: "flex", flexDirection: "column" }}>
@@ -76,7 +89,22 @@ function App() {
                                     </Link>
                                 </div>
                             </div>
-                            <div style={{ display: "flex", flexDirection: "column", marginTop: "40px" }}>
+                            )}
+                            {showMacV2Info && (
+                            <div style={{ display: "flex", flexDirection: "column", marginTop: "32px" }}>
+                                <Title3>macOS v2</Title3>
+                                <div style={{ marginLeft: "20px", display: "flex", flexDirection: "column" }}>
+                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/macInstall_v2">
+                                        Install
+                                    </Link>
+                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 0 0" }} to="/macReleaseNotes_v2">
+                                        Release notes
+                                    </Link>
+                                </div>
+                            </div>
+                            )}
+                            {showWindowsInfo && (
+                            <div style={{ display: "flex", flexDirection: "column", marginTop: "32px" }}>
                                 <Title3>Windows</Title3>
                                 <div style={{ marginLeft: "20px", display: "flex", flexDirection: "column" }}>
                                     <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/windowsInstall">
@@ -87,6 +115,14 @@ function App() {
                                     </Link>
                                 </div>
                             </div>
+                            )}
+                            {hasTutorial && (
+                                <div style={{ display: "flex", flexDirection: "column", marginTop: "40px" }}>
+                                    <Link className={styles.cleanLink} style={{ fontSize: "20pt" }} to="/tutorial">
+                                        Tutorial
+                                    </Link>
+                                </div>
+                            )}
                         </nav>
                     </DrawerBody>
                 </InlineDrawer>
@@ -143,6 +179,20 @@ function App() {
                                     versionLocation={versionLocation}
                                 />
                             )} />
+                            <Route path="/macInstall_v2" element={(
+                                <General
+                                    applicationName={applicationName}
+                                    platform="macOS_v2"
+                                    versionLocation={versionLocation} />
+                            )} />
+                            <Route path="/macReleaseNotes_v2" element={(
+                                <ReleaseNotes
+                                    applicationName={applicationName}
+                                    platform="macOS_v2"
+                                    location={macV2ReleaseNotesLocation}
+                                    versionLocation={versionLocation}
+                                />
+                            )} />
                             <Route path="/windowsInstall" element={(
                                 <General
                                     applicationName={applicationName}
@@ -154,6 +204,18 @@ function App() {
                                     applicationName={applicationName}
                                     platform="windows"
                                     location={windowsReleaseNotesLocation}
+                                    versionLocation={versionLocation}
+                                />
+                            )} />
+                            <Route path="/tutorial" element={(
+                                <Tutorial
+                                    applicationName={applicationName}
+                                    versionLocation={versionLocation}
+                                />
+                            )} />
+                            <Route path="/tutorial/:page" element={(
+                                <Tutorial
+                                    applicationName={applicationName}
                                     versionLocation={versionLocation}
                                 />
                             )} />

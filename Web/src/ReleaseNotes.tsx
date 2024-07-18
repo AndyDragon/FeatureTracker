@@ -37,7 +37,8 @@ export default function ReleaseNotes(props: ReleaseNotesProps) {
                         headers: {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json'
-                        }
+                        },
+                        cache: "no-cache",
                     });
                 setReleaseNotes(await releaseNotesRequest.json());
             } catch (error) {
@@ -76,7 +77,24 @@ export default function ReleaseNotes(props: ReleaseNotesProps) {
 
     const sortVersionEntries = (a: VersionEntry, b: VersionEntry) => {
         const versionA = a?.version?.toUpperCase() || "";
+        const versionAParts = versionA.split(".");
         const versionB = b?.version?.toUpperCase() || "";
+        const versionBParts = versionB.split(".");
+        try {
+            if (versionAParts.length === versionBParts.length) {
+                for (let index = 0; index < versionAParts.length; index++) {
+                    const partA = parseInt(versionAParts[index]);
+                    const partB = parseInt(versionBParts[index]);
+                    if (partA > partB) {
+                        return -1;
+                    }
+                    if (partA < partB) {
+                        return 1;
+                    }
+                }
+                return 0;
+            }
+        } catch { /* do nothing */ }
         if (versionA > versionB) {
             return -1;
         }
