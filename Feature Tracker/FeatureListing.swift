@@ -9,7 +9,7 @@ import SwiftData
 import SwiftUI
 
 struct FeatureListing: View {
-    @Bindable var page: Page
+    var page: Page
     @Binding var selectedFeature: Feature?
     
     var body: some View {
@@ -38,6 +38,7 @@ struct FeatureListing: View {
                         selectedFeature = feature
                     }
                 }
+                .testBackground()
             }
         }
     }

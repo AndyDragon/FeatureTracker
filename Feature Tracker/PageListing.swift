@@ -69,6 +69,7 @@ struct PageListing: View {
                         selectedPage = page
                     }
                 }
+                .testBackground()
             }
         }
     }

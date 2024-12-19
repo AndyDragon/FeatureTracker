@@ -27,13 +27,3 @@ struct ToastDismissShield: View {
         }
     }
 }
-
-#Preview {
-    let isAnyToastShowing: Bool = false
-    @State var isShowingToast: Bool = false
-    @State var isShowingVersionAvailableToast: Bool = false
-    return ToastDismissShield(
-        isAnyToastShowing: isAnyToastShowing,
-        isShowingToast: $isShowingToast,
-        isShowingVersionAvailableToast: $isShowingVersionAvailableToast)
-}

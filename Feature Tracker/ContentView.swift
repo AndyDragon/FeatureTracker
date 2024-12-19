@@ -772,7 +772,7 @@ struct ContentView: View {
         withAnimation {
             iCloudActive = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: { @MainActor in
             do {
                 let encoder = JSONEncoder()
                 encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
@@ -790,10 +790,10 @@ struct ContentView: View {
                     let fileUrl = containerUrl.appendingPathComponent("features.json")
                     try String(decoding: json, as: UTF8.self).write(to: fileUrl, atomically: true, encoding: .utf8)
                     
-                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: { @MainActor in
                         showToast("Backed up to iCloud!", "Stored a backup of the pages and features to your iCloud documents")
                     })
-                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: { @MainActor in
                         if (iCloudActive) {
                             withAnimation {
                                 iCloudActive.toggle()
@@ -861,7 +861,7 @@ struct ContentView: View {
         withAnimation {
             iCloudActive = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: { @MainActor in
             do {
                 if let containerUrl = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
                     if FileManager.default.fileExists(atPath: containerUrl.path, isDirectory: nil) {
@@ -874,18 +874,28 @@ struct ContentView: View {
                                 let codablePages = try decoder.decode([CodablePage].self, from: json)
                                 if codablePages.count != 0 {
                                     do {
+                                        try modelContext.delete(model: Feature.self)
                                         try modelContext.delete(model: Page.self)
+                                        try modelContext.save()
                                     } catch {
                                         // do nothing
+                                        debugPrint("Failed to reset store:")
                                         debugPrint(error.localizedDescription)
                                     }
                                     for codablePage in codablePages {
                                         modelContext.insert(codablePage.toPage())
                                     }
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: {
+                                    do {
+                                        try modelContext.save()
+                                    } catch {
+                                        // do nothing
+                                        debugPrint("Failed to save store after restore:")
+                                        debugPrint(error.localizedDescription)
+                                    }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: { @MainActor in
                                         showToast("Restored from iCloud!", "Restored the items from your iCloud", duration: 6)
                                     })
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: { @MainActor in
                                         if (iCloudActive) {
                                             withAnimation {
                                                 iCloudActive.toggle()

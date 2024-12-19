@@ -10,7 +10,7 @@ import SwiftData
 
 @Model
 class Page {
-    var id: UUID = UUID()
+    @Attribute(.unique) var id: UUID = UUID()
     var name: String = ""
     var notes: String = ""
     var count: Int = 1

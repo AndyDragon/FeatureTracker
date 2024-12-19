@@ -23,6 +23,8 @@ struct PageEditor: View {
     @State private var count = 1
     @State private var isChallenge = false
 
+    private let debounce: TimeInterval = 0.2
+
     var body: some View {
         VStack {
             HStack {
@@ -41,18 +43,24 @@ struct PageEditor: View {
             }.padding([.bottom], 8)
             Form {
                 TextField("Name: ", text: $name)
-                    .onChange(of: name, debounceTime: 1) { newValue in
-                        page.name = newValue
+                    .onChange(of: name, debounceTime: debounce) { newValue in
+                        if page.name != newValue {
+                            page.name = newValue
+                        }
                     }
                 
                 TextField("Notes: ", text: $notes, axis: .vertical)
-                    .onChange(of: notes, debounceTime: 1) { newValue in
-                        page.notes = newValue
+                    .onChange(of: notes, debounceTime: debounce) { newValue in
+                        if page.notes != newValue {
+                            page.notes = newValue
+                        }
                     }
                 
                 Toggle(" Was challenge", isOn: $isChallenge)
-                    .onChange(of: isChallenge, debounceTime: 1) { newValue in
-                        page.isChallenge = newValue
+                    .onChange(of: isChallenge, debounceTime: debounce) { newValue in
+                        if page.isChallenge != newValue {
+                            page.isChallenge = newValue
+                        }
                     }
 
                 Picker("Counts as: ", selection: $count) {
@@ -62,8 +70,10 @@ struct PageEditor: View {
                 }
                 .pickerStyle(.segmented)
                 .padding([.top], 1)
-                .onChange(of: count, debounceTime: 1) { newValue in
-                    page.count = newValue
+                .onChange(of: count, debounceTime: debounce) { newValue in
+                    if page.count != newValue {
+                        page.count = newValue
+                    }
                 }
             }
             Spacer()
@@ -106,14 +116,23 @@ struct PageEditor: View {
             loadDataIntoEditor()
             currentPage = page
         }
+        .testBackground()
     }
     
     private func storeInFlightData() {
         if let oldPage = currentPage {
-            oldPage.name = name
-            oldPage.notes = notes
-            oldPage.count = count
-            oldPage.isChallenge = isChallenge
+            if oldPage.name != name {
+                oldPage.name = name
+            }
+            if oldPage.notes != notes {
+                oldPage.notes = notes
+            }
+            if oldPage.count != count {
+                oldPage.count = count
+            }
+            if oldPage.isChallenge != isChallenge {
+                oldPage.isChallenge = isChallenge
+            }
         }
     }
     

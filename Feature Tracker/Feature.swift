@@ -10,7 +10,7 @@ import SwiftData
 
 @Model
 class Feature {
-    var id: UUID = UUID()
+    @Attribute(.unique) var id: UUID = UUID()
     var date: Date = Date.now
     var raw: Bool = false
     var notes: String = ""
