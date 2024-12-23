@@ -8,23 +8,7 @@
 import Foundation
 import SwiftData
 
-@Model
-class Page {
-    @Attribute(.unique) var id: UUID = UUID()
-    var name: String = ""
-    var notes: String = ""
-    var count: Int = 1
-    var isChallenge: Bool = false
-    @Relationship(deleteRule: .cascade) var features: [Feature]? = [Feature]()
-
-    init(id: UUID, name: String = "", notes: String = "", count: Int = 1, isChallenge: Bool = false) {
-        self.id = id
-        self.name = name
-        self.notes = notes
-        self.count = count
-        self.isChallenge = isChallenge
-    }
-}
+typealias Page = SchemaV2.Page
 
 class CodablePage: Codable {
     var id: UUID = UUID()

@@ -8,21 +8,7 @@
 import Foundation
 import SwiftData
 
-@Model
-class Feature {
-    @Attribute(.unique) var id: UUID = UUID()
-    var date: Date = Date.now
-    var raw: Bool = false
-    var notes: String = ""
-    var page: Page?
-    
-    init(id: UUID = UUID(), date: Date = .now, raw: Bool = false, notes: String = "") {
-        self.id = id
-        self.date = date
-        self.raw = raw
-        self.notes = notes
-    }
-}
+typealias Feature = SchemaV2.Feature
 
 class CodableFeature: Codable {
     var id: UUID = UUID()

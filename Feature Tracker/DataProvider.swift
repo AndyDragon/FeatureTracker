@@ -117,7 +117,10 @@ public final class DataProvider: @unchecked Sendable {
             isStoredInMemoryOnly: inMemory,
             cloudKitDatabase: enableCloudKit ? .automatic : .none)
         do {
-            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            let container = try ModelContainer(
+                for: schema,
+                migrationPlan: FeatureTrackerSchemaMigrationPlan.self,
+                configurations: [modelConfiguration])
             self.container = container
             // Set transactionAuthor of mainContext to mainApp
             Task {

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -50,6 +50,10 @@
 		49FAC3872B7D56350054D2D3 /* CloudSync.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = CloudSync.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		498DA2DA2D19EEC600CB3CC3 /* Models */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Models; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		494202AC2B745BEC00227660 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -83,6 +87,7 @@
 		494202B12B745BEC00227660 /* Feature Tracker */ = {
 			isa = PBXGroup;
 			children = (
+				498DA2DA2D19EEC600CB3CC3 /* Models */,
 				494202B22B745BEC00227660 /* FeatureTrackerApp.swift */,
 				494202B42B745BEC00227660 /* ContentView.swift */,
 				494202C52B74703600227660 /* PageListing.swift */,
@@ -128,6 +133,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				498DA2DA2D19EEC600CB3CC3 /* Models */,
 			);
 			name = "Feature Tracker";
 			packageProductDependencies = (
@@ -343,7 +351,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 17;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -378,7 +386,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 17;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -471,7 +479,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 17;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -564,7 +572,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 17;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
