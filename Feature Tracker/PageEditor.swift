@@ -31,15 +31,20 @@ struct PageEditor: View {
                 Text("Page / challenge:")
                     .frame(alignment: .center)
                     .fontWeight(.bold)
+                
                 Spacer()
+                
                 Button(action: onDelete) {
                     Image(systemName: "trash")
                 }
                 .frame(alignment: .center)
+                .help("Delete this page")
+
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                 }
                 .frame(alignment: .center)
+                .help("Close this page")
             }.padding([.bottom], 8)
             Form {
                 TextField("Name: ", text: $name)
@@ -92,6 +97,7 @@ struct PageEditor: View {
                         Image(systemName: "plus")
                     }
                     .frame(alignment: .center)
+                    .help("Add a feature to this page")
                 }
                 FeatureListing(page: page, selectedFeature: $selectedFeature)
             }

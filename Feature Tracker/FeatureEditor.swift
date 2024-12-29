@@ -26,15 +26,20 @@ struct FeatureEditor: View {
                 Text("Feature:")
                     .frame(alignment: .center)
                     .fontWeight(.bold)
+                
                 Spacer()
+
                 Button(action: onDelete) {
                     Image(systemName: "trash")
                 }
                 .frame(alignment: .center)
+                .help("Delete this feature")
+
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                 }
                 .frame(alignment: .center)
+                .help("Close this feature")
             }.padding([.bottom], 8)
             Form {
                 HStack(alignment: .center) {

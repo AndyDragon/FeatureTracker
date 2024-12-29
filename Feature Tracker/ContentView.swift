@@ -81,6 +81,7 @@ struct ContentView: View {
                         .toolbar {
                             Button("Add page", systemImage: "plus", action: addPage)
                                 .disabled(isAnyToastShowing)
+                                .help("Add a new page to the list")
                             Menu("Sort", systemImage: "arrow.up.arrow.down") {
                                 Picker("Sort pages by", selection: $pageSorting) {
                                     Text("Name").tag(PageSorting.name)
@@ -90,6 +91,7 @@ struct ContentView: View {
                                 .pickerStyle(.inline)
                             }
                             .disabled(isAnyToastShowing)
+                            .help("Change the sorting for the list of pages")
                         }
                     if CloudKitConfiguration.Enabled {
                         HStack {
@@ -287,10 +289,16 @@ struct ContentView: View {
                     showConfirmationAlert.toggle()
                 })
                 .disabled(isAnyToastShowing)
+                .help("Populate the default list of pages")
+
                 Button("Generate report", systemImage: "menucard", action: generateReport)
                     .disabled(isAnyToastShowing)
-                Button("Validate data", systemImage: "checkmark.rectangle.stack", action: validateData)
-                    .disabled(isAnyToastShowing)
+                    .help("Generate a report of features for Snap Management")
+
+//                Button("Validate data", systemImage: "checkmark.rectangle.stack", action: validateData)
+//                    .disabled(isAnyToastShowing)
+//                    .help("Validates the current data")
+
                 Menu("JSON", systemImage: "tray") {
                     Section(header: Text("Backup to:")) {
                         Button(action: backup) {
@@ -330,6 +338,7 @@ struct ContentView: View {
                     }
                 }
                 .disabled(isAnyToastShowing)
+                .help("Backup or restore the current features")
             }
         }
         .alert(
@@ -978,6 +987,7 @@ struct ContentView: View {
             "colorsplash",
             "colours",
             "community_member",
+            "communityarts",
             "country",
             "cuteness",
             "depthoffield",
@@ -985,6 +995,7 @@ struct ContentView: View {
             "drops",
             "edit",
             "europe",
+            "filmphoto",
             "fishing",
             "flatlays",
             "flowers",
@@ -1004,6 +1015,7 @@ struct ContentView: View {
             "lighthouses",
             "longexposure",
             "macro",
+            "middleeast",
             "minimal",
             "mobile",
             "moody",
@@ -1023,6 +1035,7 @@ struct ContentView: View {
             "surreal",
             "symmetry",
             "tattoos",
+            "textures",
             "thailand",
             "toys",
             "transports",

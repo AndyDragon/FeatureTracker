@@ -21,25 +21,38 @@ struct PageListing: View {
     var sorting = PageSorting.name
     @Binding var selectedPage: Page?
     @Binding var selectedFeature: Feature?
+    @State var searchTerm: String = ""
+    
+    private var filteredPages: [Page] {
+        if searchTerm.isEmpty {
+            return pages
+        } else {
+            return pages.filter( { $0.name.localizedStandardContains(searchTerm) })
+        }
+    }
+    
+    private var sortedPages: [Page] {
+        filteredPages.sorted(by: { left, right in
+            if sorting == .name {
+                return left.name < right.name
+            } else if sorting == .count {
+                if left.count == right.count {
+                    return left.name < right.name
+                }
+                return left.count > right.count
+            } else if sorting == .features {
+                if left.features?.count == right.features?.count {
+                    return left.name < right.name
+                }
+                return (left.features?.count ?? 0) > (right.features?.count ?? 0);
+            }
+            return left.name < right.name
+        })
+    }
 
     var body: some View {
         List(selection: $selectedPage) {
-            ForEach(pages.sorted(by: { left, right in
-                if sorting == .name {
-                    return left.name < right.name
-                } else if sorting == .count {
-                    if left.count == right.count {
-                        return left.name < right.name
-                    }
-                    return left.count > right.count
-                } else if sorting == .features {
-                    if left.features?.count == right.features?.count {
-                        return left.name < right.name
-                    }
-                    return (left.features?.count ?? 0) > (right.features?.count ?? 0);
-                }
-                return left.name < right.name
-            }), id: \.self) { page in
+            ForEach(sortedPages, id: \.self) { page in
                 HStack {
                     HStack (alignment: .center, spacing: 0) {
                         Image(systemName: page.isChallenge ? "calendar.badge.checkmark" : "book.pages.fill")
@@ -72,6 +85,7 @@ struct PageListing: View {
                 .testBackground()
             }
         }
+        .searchable(text: $searchTerm, placement: .sidebar, prompt: "Search for page")
     }
 
     private func getStringForCount(_ count: Int, _ countLabel: String) -> String {

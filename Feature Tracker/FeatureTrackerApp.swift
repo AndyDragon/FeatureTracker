@@ -25,6 +25,9 @@ struct FeatureTrackerApp: App {
         let dataProvider = DataProvider.share
         WindowGroup {
             ContentView(appState)
+                .onAppear {
+                    NSWindow.allowsAutomaticWindowTabbing = false
+                }
         }
         .modelContainer(dataProvider.container)
         .commands {
