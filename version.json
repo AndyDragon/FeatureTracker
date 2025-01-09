@@ -1,7 +1,12 @@
 {
     "macOS": {
-        "current": "1.1.19",
+        "current": "1.1.20",
         "link": "https://vero.andydragon.com/app/featuretracker/macInstall",
+        "vital": false
+    },
+    "macOS_v2": {
+        "current": "2.0.0",
+        "link": "https://vero.andydragon.com/app/featurelogging/macInstall_v2",
         "vital": false
     },
     "windows": {

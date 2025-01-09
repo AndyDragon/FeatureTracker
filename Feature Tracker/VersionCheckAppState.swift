@@ -9,7 +9,6 @@ import SwiftUI
 
 struct VersionManifest: Codable {
     let macOS: VersionEntry
-    let macOS_v2: VersionEntry
 }
 
 struct VersionEntry: Codable {
