@@ -20,8 +20,6 @@ import {
     hasTutorial,
     showMacInfo,
     macReleaseNotesLocation,
-    showMacV2Info,
-    macV2ReleaseNotesLocation,
     versionLocation,
     showWindowsInfo,
     windowsReleaseNotesLocation,
@@ -85,19 +83,6 @@ function App() {
                                         Install
                                     </Link>
                                     <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 0 0" }} to="/macReleaseNotes">
-                                        Release notes
-                                    </Link>
-                                </div>
-                            </div>
-                            )}
-                            {showMacV2Info && (
-                            <div style={{ display: "flex", flexDirection: "column", marginTop: "32px" }}>
-                                <Title3>macOS v2</Title3>
-                                <div style={{ marginLeft: "20px", display: "flex", flexDirection: "column" }}>
-                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/macInstall_v2">
-                                        Install
-                                    </Link>
-                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 0 0" }} to="/macReleaseNotes_v2">
                                         Release notes
                                     </Link>
                                 </div>
@@ -176,20 +161,6 @@ function App() {
                                     applicationName={applicationName}
                                     platform="macOS"
                                     location={macReleaseNotesLocation}
-                                    versionLocation={versionLocation}
-                                />
-                            )} />
-                            <Route path="/macInstall_v2" element={(
-                                <General
-                                    applicationName={applicationName}
-                                    platform="macOS_v2"
-                                    versionLocation={versionLocation} />
-                            )} />
-                            <Route path="/macReleaseNotes_v2" element={(
-                                <ReleaseNotes
-                                    applicationName={applicationName}
-                                    platform="macOS_v2"
-                                    location={macV2ReleaseNotesLocation}
                                     versionLocation={versionLocation}
                                 />
                             )} />

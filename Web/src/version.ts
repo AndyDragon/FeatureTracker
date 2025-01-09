@@ -6,7 +6,6 @@ export interface VersionEntry {
 
 export interface Version {
     readonly macOS?: VersionEntry;
-    readonly macOS_v2?: VersionEntry;
     readonly windows?: VersionEntry;
   }
 

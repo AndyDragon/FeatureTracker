@@ -19,21 +19,16 @@ export const showMacInfo = true;
 export const macDmgLocation = "featuretracker/macos/Feature%20Tracker%20";
 export const macReleaseNotesLocation = "releaseNotes-mac.json";
 
-export const showMacV2Info = false;
-export const macV2DmgLocation = "featuretracker/macos/Feature%20Tracker%20";
-export const macV2ReleaseNotesLocation = "releaseNotes-mac_v2.json";
-
 export const showWindowsInfo = true;
 export const windowsInstallerLocation = "featuretracker/windows";
 export const windowsReleaseNotesLocation = "releaseNotes-windows.json";
 
 export const hasTutorial = false;
 
-export type Platform = "macOS" | "macOS_v2" | "windows";
+export type Platform = "macOS" | "windows";
 
 export const platformString: Record<Platform, string> = {
     macOS: "macOS",
-    macOS_v2: "macOS v2",
     windows: "Windows"
 }
 
@@ -68,17 +63,6 @@ export const links: Record<Platform, Links | undefined> = {
                 action: "download",
                 target: "",
                 suffix: "with%20iCloud%20Sync%20"
-            }
-        ]
-    },
-    macOS_v2: {
-        location: (version, suffix) => `${macDmgLocation}${suffix}v${version}.dmg`,
-        actions: [
-            {
-                name: "default",
-                action: "download",
-                target: "",
-                suffix: "",
             }
         ]
     },

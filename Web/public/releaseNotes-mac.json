@@ -164,5 +164,27 @@
                 ]
             }
         ]
+    },
+    {
+        "version": "1.1.17",
+        "notes": [
+            {
+                "date": "Dec 8, 2024",
+                "notes": [
+                    "Changed the schema of the database to V2 and made the ID's unique"
+                ]
+            }
+        ]
+    },
+    {
+        "version": "1.1.19",
+        "notes": [
+            {
+                "date": "Jan 9, 2025",
+                "notes": [
+                    "Fixed some issues in the migration plan to fix the crash where IDs across page/feature where not unique"
+                ]
+            }
+        ]
     }
 ]
