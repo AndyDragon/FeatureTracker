@@ -5,7 +5,6 @@
 //  Created by Andrew Forget on 2024-02-07.
 //
 
-import AlertToast
 import CloudKitSyncMonitor
 import SwiftData
 import SwiftUI
@@ -14,6 +13,9 @@ struct ContentView: View {
     @Environment(\.openURL) var openURL
     @Environment(\.modelContext) var modelContext
     @Query var pages: [Page]
+
+    @State private var viewModel = ViewModel()
+
     @State private var path = [Page]()
     @State private var selectedPage: Page?
     @State private var selectedFeature: Feature?
@@ -21,27 +23,15 @@ struct ContentView: View {
     @State private var backupOperation = BackupOperation.none
     @State private var showingBackupRestoreErrorAlert = false
     @State private var showSyncAccountStatus = false
-    @State private var toastDuration = 3.0
-    @State private var toastType: AlertToast.AlertType = .regular
-    @State private var toastText = ""
-    @State private var toastSubTitle = ""
-    @State private var toastCompleteAction: () -> Void = {}
-    @State private var isShowingToast = false
     @State private var confirmationAlertTitle = ""
     @State private var confirmationAlertText = ""
     @State private var confirmationAlertAction: (() -> Void)? = nil
     @State private var showConfirmationAlert = false
-    @State private var isShowingDuplicatePages = false;
-    @State private var selectedDuplicatePage = UUID();
     @State private var iCloudActive = false;
     @State private var iCloudError = ""
-    private var duplicatePages = DuplicatePages();
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
     @ObservedObject private var syncMonitor = SyncMonitor.shared
     private var appState: VersionCheckAppState
-    private var isAnyToastShowing: Bool {
-        isShowingToast || appState.isShowingVersionAvailableToast.wrappedValue || appState.isShowingVersionRequiredToast.wrappedValue
-    }
 
     init(_ appState: VersionCheckAppState) {
         self.appState = appState
@@ -69,10 +59,7 @@ struct ContentView: View {
                                     selectedFeature = nil
                                     selectedPage = nil
                                     modelContext.delete(page)
-                                    showToast(
-                                        "Deleted page / challenge!",
-                                        "Removed the page / challenge and all the features",
-                                        duration: 15.0)
+                                    viewModel.showSuccessToast("Deleted page/challenge!", "Removed the page or challenge and all the features")
                                 }
                                 showConfirmationAlert.toggle()
                             }
@@ -80,7 +67,7 @@ struct ContentView: View {
                         .navigationSplitViewColumnWidth(min: 280, ideal: 320)
                         .toolbar {
                             Button("Add page", systemImage: "plus", action: addPage)
-                                .disabled(isAnyToastShowing)
+                                .disabled(viewModel.hasModalToasts)
                                 .help("Add a new page to the list")
                             Menu("Sort", systemImage: "arrow.up.arrow.down") {
                                 Picker("Sort pages by", selection: $pageSorting) {
@@ -90,7 +77,7 @@ struct ContentView: View {
                                 }
                                 .pickerStyle(.inline)
                             }
-                            .disabled(isAnyToastShowing)
+                            .disabled(viewModel.hasModalToasts)
                             .help("Change the sorting for the list of pages")
                         }
                     if CloudKitConfiguration.Enabled {
@@ -140,12 +127,7 @@ struct ContentView: View {
                         .padding([.leading], 20)
                     }
                 }
-                ToastDismissShield(
-                    isAnyToastShowing: isAnyToastShowing,
-                    isShowingToast: $isShowingToast,
-                    isShowingVersionAvailableToast: appState.isShowingVersionAvailableToast)
             }
-            .blur(radius: isAnyToastShowing ? 4 : 0)
         } detail: {
             ZStack {
                 VStack {
@@ -215,10 +197,7 @@ struct ContentView: View {
                                 selectedFeature = nil
                                 selectedPage = nil
                                 modelContext.delete(page)
-                                showToast(
-                                    "Deleted page / challenge!",
-                                    "Removed the page / challenge and all the features",
-                                    duration: 15.0)
+                                viewModel.showSuccessToast("Deleted page/challenge!", "Removed the page or challenge and all the features")
                             }
                             showConfirmationAlert.toggle()
                         }, onDeleteFeature: { feature in
@@ -230,10 +209,7 @@ struct ContentView: View {
                             confirmationAlertAction = {
                                 selectedFeature = nil
                                 page.features!.remove(element: feature)
-                                showToast(
-                                    "Deleted feature!",
-                                    "Removed the feature",
-                                    duration: 15.0)
+                                viewModel.showSuccessToast("Deleted feature!", "Removed the feature")
                             }
                             showConfirmationAlert.toggle()
                         }, onClose: {
@@ -273,12 +249,7 @@ struct ContentView: View {
                         }
                     }
                 }
-                ToastDismissShield(
-                    isAnyToastShowing: isAnyToastShowing,
-                    isShowingToast: $isShowingToast,
-                    isShowingVersionAvailableToast: appState.isShowingVersionAvailableToast)
             }
-            .blur(radius: isAnyToastShowing ? 4 : 0)
             .toolbar {
                 Button("Populate defaults", action: {
                     confirmationAlertTitle = "Confirm reset to defaults"
@@ -288,16 +259,12 @@ struct ContentView: View {
                     }
                     showConfirmationAlert.toggle()
                 })
-                .disabled(isAnyToastShowing)
+                .disabled(viewModel.hasModalToasts)
                 .help("Populate the default list of pages")
 
                 Button("Generate report", systemImage: "menucard", action: generateReport)
-                    .disabled(isAnyToastShowing)
+                    .disabled(viewModel.hasModalToasts)
                     .help("Generate a report of features for Snap Management")
-
-//                Button("Validate data", systemImage: "checkmark.rectangle.stack", action: validateData)
-//                    .disabled(isAnyToastShowing)
-//                    .help("Validates the current data")
 
                 Menu("JSON", systemImage: "tray") {
                     Section(header: Text("Backup to:")) {
@@ -337,9 +304,13 @@ struct ContentView: View {
                         }
                     }
                 }
-                .disabled(isAnyToastShowing)
+                .disabled(viewModel.hasModalToasts)
                 .help("Backup or restore the current features")
             }
+        }
+        .advancedToastView(toasts: $viewModel.toastViews)
+        .attachVersionCheckState(viewModel, appState) { url in
+            openURL(url)
         }
         .alert(
             confirmationAlertTitle,
@@ -368,110 +339,6 @@ struct ContentView: View {
                 .accentColor(.red)
             }
         )
-        .sheet(
-            isPresented: $isShowingDuplicatePages) {
-                VStack {
-                    Text("Duplicate page(s) found '\(duplicatePages.firstPageName)', which one should be kept:")
-                    List {
-                        ForEach(duplicatePages.duplicateList(pageName: duplicatePages.firstPageName)) { page in
-                            ZStack {
-                                Rectangle()
-                                    .background(Color.gray)
-                                    .opacity(0.2)
-                                    .cornerRadius(4)
-                                VStack(alignment: .leading) {
-                                    HStack(alignment: .bottom) {
-                                        Text("Name: '\(page.name)'")
-                                        Spacer()
-                                        Button("Keep", action: {
-                                            deDuplicatePages(page: page)
-                                        })
-                                    }
-                                    Text("ID: \(page.id)   |   Count: \(page.count)   |   Features: \(page.features!.count)")
-                                }
-                                .padding(8)
-                                .frame(width: 600, alignment: .leading)
-                                .tag(page.id)
-                            }
-                        }
-                        .listStyle(.bordered)
-                    }
-                    .frame(width: 640, height: 320)
-                    HStack(spacing: 12) {
-                        Button(action: {
-                            deDuplicateAllPages()
-                        }, label: {
-                            Text("Remove all duplicates")
-                                .padding([.top, .bottom], 10)
-                                .padding([.leading, .trailing], 20)
-                        })
-                        Button(action: {
-                            skipDuplicationPages(pageName: duplicatePages.firstPageName)
-                        }, label: {
-                            Text("Keep all")
-                                .padding([.top, .bottom], 10)
-                                .padding([.leading, .trailing], 20)
-                        })
-                    }
-                    .frame(alignment: .center)
-                }
-                .padding(40)
-                .presentationDetents([.medium, .large])
-            }
-        .toast(
-            isPresenting: $isShowingToast,
-            duration: toastDuration,
-            tapToDismiss: true,
-            offsetY: 32,
-            alert: {
-                AlertToast(
-                    displayMode: .hud,
-                    type: toastType,
-                    title: toastText,
-                    subTitle: toastSubTitle)
-            },
-            completion: toastCompleteAction)
-        .toast(
-            isPresenting: appState.isShowingVersionAvailableToast,
-            duration: 10,
-            tapToDismiss: true,
-            offsetY: 32,
-            alert: {
-                AlertToast(
-                    displayMode: .hud,
-                    type: .systemImage("exclamationmark.triangle.fill", .yellow),
-                    title: "New version available",
-                    subTitle: getVersionSubTitle())
-            },
-            onTap: {
-                if let url = URL(string: appState.versionCheckToast.wrappedValue.linkToCurrentVersion) {
-                    openURL(url)
-                }
-            },
-            completion: {
-                appState.resetCheckingForUpdates()
-            })
-        .toast(
-            isPresenting: appState.isShowingVersionRequiredToast,
-            duration: 0,
-            tapToDismiss: true,
-            offsetY: 32,
-            alert: {
-                AlertToast(
-                    displayMode: .hud,
-                    type: .systemImage("xmark.octagon.fill", .red),
-                    title: "New version required",
-                    subTitle: getVersionSubTitle())
-            },
-            onTap: {
-                if let url = URL(string: appState.versionCheckToast.wrappedValue.linkToCurrentVersion) {
-                    openURL(url)
-                    NSApplication.shared.terminate(nil)
-                }
-            },
-            completion: {
-                appState.resetCheckingForUpdates()
-            })
         .task {
             appState.checkForUpdates()
         }
@@ -509,32 +376,6 @@ struct ContentView: View {
         return message
     }
     
-    func getVersionSubTitle() -> String {
-        if appState.isShowingVersionAvailableToast.wrappedValue {
-            return "You are using v\(appState.versionCheckToast.wrappedValue.appVersion) " +
-            "and v\(appState.versionCheckToast.wrappedValue.currentVersion) is available" +
-            "\(appState.versionCheckToast.wrappedValue.linkToCurrentVersion.isEmpty ? "" : ", click here to open your browser") " +
-            "(this will go away in 10 seconds)"
-        } else if appState.isShowingVersionRequiredToast.wrappedValue {
-            return "You are using v\(appState.versionCheckToast.wrappedValue.appVersion) " +
-            "and v\(appState.versionCheckToast.wrappedValue.currentVersion) is required" +
-            "\(appState.versionCheckToast.wrappedValue.linkToCurrentVersion.isEmpty ? "" : ", click here to open your browser") " +
-            "or ⌘ + Q to Quit"
-        }
-        return ""
-    }
-    
-    func showToast(_ text: String, _ subTitle: String, duration: Double = 2, toastComplete: @escaping () -> Void = {}) {
-        withAnimation {
-            toastType = .complete(.blue)
-            toastText = text
-            toastSubTitle = subTitle
-            toastDuration = duration
-            toastCompleteAction = toastComplete
-            isShowingToast.toggle()
-        }
-    }
-
     func addPage() -> Void {
         withAnimation {
             let newPage = Page(id: UUID(), name: "new page")
@@ -680,84 +521,9 @@ struct ContentView: View {
         var text = ""
         for line in lines { text = text + line + "\n" }
         copyToClipboard(text)
-        showToast("Report generated!", "Copied the report of features to the clipboard")
+        viewModel.showSuccessToast("Report generated!", "Copied the report of features to the clipboard")
     }
     
-    func validateData() -> Void {
-        duplicatePages.clear()
-        var pagesChecked = [String : Page]()
-        pages.forEach { page in
-            if let firstPage = pagesChecked[page.name] {
-                var duplicateList = [Page]();
-                if !duplicatePages.hasPage(pageName: page.name) {
-                    duplicateList.append(firstPage)
-                }
-                duplicateList.append(page)
-                duplicatePages.setDuplicateList(pageName: page.name, duplicateList: duplicateList)
-            }
-            pagesChecked[page.name] = page
-        }
-        if !duplicatePages.isEmpty {
-            print(duplicatePages)
-            print(duplicatePages.firstPageName)
-            isShowingDuplicatePages = true
-        } else {
-            showToast("Validation complete", "No duplicate pages")
-        }
-    }
-
-    func deDuplicatePages(page: Page) -> Void {
-        selectedFeature = nil
-        selectedPage = nil
-        var pagesDeleted = 0
-        duplicatePages.duplicateList(pageName: page.name).forEach { duplicatePage in
-            if duplicatePage.id != page.id {
-                modelContext.delete(duplicatePage)
-                pagesDeleted += 1
-            }
-        }
-        isShowingDuplicatePages = false
-        let deletedPageCount = getStringForCount(pagesDeleted, "page");
-        duplicatePages.removeDuplicateList(pageName: page.name)
-        showToast("Deleted duplicate pages!", "Removed \(deletedPageCount) and all the features", duration: 15.0) {
-            if !duplicatePages.isEmpty {
-                isShowingDuplicatePages = true
-            }
-        }
-    }
-    
-    func deDuplicateAllPages() -> Void {
-        selectedFeature = nil
-        selectedPage = nil
-        var pagesDeleted = 0
-        while !duplicatePages.isEmpty {
-            let duplicateList = duplicatePages.duplicateList(pageName: duplicatePages.firstPageName)
-            let page = duplicateList[0]
-            duplicateList.forEach { duplicatePage in
-                if duplicatePage.id != page.id {
-                    modelContext.delete(duplicatePage)
-                    pagesDeleted += 1
-                }
-            }
-            duplicatePages.removeDuplicateList(pageName: page.name)
-        }
-        isShowingDuplicatePages = false
-        let deletedPageCount = getStringForCount(pagesDeleted, "page");
-        showToast("Deleted all duplicate pages!", "Removed \(deletedPageCount) and all the features", duration: 15.0) {
-            if !duplicatePages.isEmpty {
-                isShowingDuplicatePages = true
-            }
-        }
-    }
-    
-    func skipDuplicationPages(pageName: String) -> Void {
-        isShowingDuplicatePages = false
-        duplicatePages.removeDuplicateList(pageName: pageName)
-        if !duplicatePages.isEmpty {
-            isShowingDuplicatePages = true
-        }
-    }
-
     func backup() -> Void {
         do {
             let encoder = JSONEncoder()
@@ -769,7 +535,7 @@ struct ContentView: View {
             }))
             let json = try encoder.encode(codablePages)
             copyToClipboard(String(decoding: json, as: UTF8.self))
-            showToast("Backed up!", "Copied a backup of the pages and features to the clipboard")
+            viewModel.showSuccessToast("Backed up!", "Copied a backup of the pages and features to the clipboard")
         } catch {
             exceptionError = error.localizedDescription
             backupOperation = .backup
@@ -800,7 +566,7 @@ struct ContentView: View {
                     try String(decoding: json, as: UTF8.self).write(to: fileUrl, atomically: true, encoding: .utf8)
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: { @MainActor in
-                        showToast("Backed up to iCloud!", "Stored a backup of the pages and features to your iCloud documents")
+                        viewModel.showSuccessToast("Backed up to iCloud!", "Stored a backup of the pages and features to your iCloud documents")
                     })
                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: { @MainActor in
                         if (iCloudActive) {
@@ -844,7 +610,7 @@ struct ContentView: View {
                 for codablePage in codablePages {
                     modelContext.insert(codablePage.toPage())
                 }
-                showToast("Restored!", "Restored the items from the clipboard", duration: 6)
+                viewModel.showSuccessToast("Restored!", "Restored the items from the clipboard")
             }
         } catch let DecodingError.dataCorrupted(context) {
             showRestoreErrorToast(context.debugDescription)
@@ -902,7 +668,7 @@ struct ContentView: View {
                                         debugPrint(error.localizedDescription)
                                     }
                                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: { @MainActor in
-                                        showToast("Restored from iCloud!", "Restored the items from your iCloud", duration: 6)
+                                        viewModel.showSuccessToast("Restored from iCloud!", "Restored the items from your iCloud")
                                     })
                                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: { @MainActor in
                                         if (iCloudActive) {

@@ -22,45 +22,61 @@ struct VersionCheckToast {
     var currentVersion: String
     var linkToCurrentVersion: String
     
-    init(appVersion: String = "unknown", currentVersion: String = "unknown", linkToCurrentVersion: String = "") {
+    init(
+        appVersion: String = "unknown",
+        currentVersion: String = "unknown",
+        linkToCurrentVersion: String = ""
+    ) {
         self.appVersion = appVersion
         self.currentVersion = currentVersion
         self.linkToCurrentVersion = linkToCurrentVersion
     }
 }
 
+enum VersionCheckResult {
+    case checking
+    case complete
+    case newAvailable
+    case newRequired
+    case manualCheckComplete
+    case checkFailed
+}
+
 struct VersionCheckAppState {
     private var isCheckingForUpdates: Binding<Bool>
-    var isShowingVersionAvailableToast: Binding<Bool>
-    var isShowingVersionRequiredToast: Binding<Bool>
+    var versionCheckResult: Binding<VersionCheckResult>
     var versionCheckToast: Binding<VersionCheckToast>
     private var versionLocation: String
-    
+    var isPreviewMode: Bool = false
+
     init(
         isCheckingForUpdates: Binding<Bool>,
-        isShowingVersionAvailableToast: Binding<Bool>,
-        isShowingVersionRequiredToast: Binding<Bool>,
+        versionCheckResult: Binding<VersionCheckResult>,
         versionCheckToast: Binding<VersionCheckToast>,
-        versionLocation: String) {
-            self.isCheckingForUpdates = isCheckingForUpdates
-            self.isShowingVersionAvailableToast = isShowingVersionAvailableToast
-            self.isShowingVersionRequiredToast = isShowingVersionRequiredToast
-            self.versionCheckToast = versionCheckToast
-            self.versionLocation = versionLocation
+        versionLocation: String
+    ) {
+        self.isCheckingForUpdates = isCheckingForUpdates
+        self.versionCheckResult = versionCheckResult
+        self.versionCheckToast = versionCheckToast
+        self.versionLocation = versionLocation
+    }
+
+    func checkForUpdates(_ manualCheck: Bool = false) {
+        if isPreviewMode {
+            return
         }
-    
-    func checkForUpdates() {
+        versionCheckResult.wrappedValue = .checking
         isCheckingForUpdates.wrappedValue = true
         Task {
-            try? await checkForUpdatesAsync()
+            try? await checkForUpdatesAsync(manualCheck)
         }
     }
-    
+
     func resetCheckingForUpdates() {
-        isCheckingForUpdates.wrappedValue = false
+        versionCheckResult.wrappedValue = .complete
     }
-    
-    private func checkForUpdatesAsync() async throws -> Void {
+
+    private func checkForUpdatesAsync(_ manualCheck: Bool = false) async throws -> Void {
         do {
             // Check version from server manifest
             let versionManifestUrl = URL(string: versionLocation)!
@@ -73,19 +89,26 @@ struct VersionCheckAppState {
                             currentVersion: versionManifest.macOS.current,
                             linkToCurrentVersion: versionManifest.macOS.link)
                         if versionManifest.macOS.vital {
-                            isShowingVersionRequiredToast.wrappedValue.toggle()
+                            versionCheckResult.wrappedValue = .newRequired
                         } else {
-                            isShowingVersionAvailableToast.wrappedValue.toggle()
+                            versionCheckResult.wrappedValue = .newAvailable
                         }
                     }
                 }
+                isCheckingForUpdates.wrappedValue = false
             } else {
-                resetCheckingForUpdates()
+                versionCheckToast.wrappedValue = VersionCheckToast(
+                    appVersion: Bundle.main.releaseVersionNumberPretty)
+                versionCheckResult.wrappedValue = manualCheck ? .manualCheckComplete : .complete
+                isCheckingForUpdates.wrappedValue = false
             }
         } catch {
             // do nothing, the version check is not critical
-            debugPrint(error.localizedDescription)
-            resetCheckingForUpdates()
+            debugPrint(error)
+            versionCheckToast.wrappedValue = VersionCheckToast(
+                appVersion: Bundle.main.releaseVersionNumberPretty)
+            versionCheckResult.wrappedValue = .checkFailed
+            isCheckingForUpdates.wrappedValue = false
         }
     }
 }
