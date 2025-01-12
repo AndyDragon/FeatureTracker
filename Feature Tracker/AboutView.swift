@@ -10,24 +10,14 @@ import SwiftUI
 struct AboutView: View {
     @Environment(\.dismissWindow) var dismissWindow
 
-    let packages =
-        [
-            "CloudKitSyncMonitor": [
-                "Grant Grueninger (https://github.com/ggruen)"
-            ],
-            "SwiftDataKit": [
-                "东坡肘子 (https://github.com/fatbobman)"
-            ],
-            "ToastView-SwiftUI": [
-                "Gaurav Tak (https://github.com/gauravtakroro)",
-                "modified by Andrew Forget (https://github.com/AndyDragon)"
-            ]
-        ]
+    @State private var showCredits = false
 
-    let year = Calendar(identifier: .gregorian).dateComponents([.year], from: Date()).year ?? 2024
+    let packages: [String:[String]]
+
+    private let year = Calendar(identifier: .gregorian).dateComponents([.year], from: Date()).year ?? 2024
 
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             HStack(alignment: .top) {
                 Image(nsImage: NSImage(named: "AppIcon") ?? NSImage())
                     .resizable()
@@ -55,16 +45,35 @@ struct AboutView: View {
                 .frame(maxWidth: .infinity)
             }
             .padding(20)
-            .padding(.vertical, 10)
+            .padding(.vertical, showCredits ? 10 : 64)
             .frame(maxWidth: .infinity)
-            .background().opacity(0.9)
+            .background(.white.opacity(0.08))
+            .background()
 
             VStack {
-                Text("This app uses the following packages / code:")
-                    .font(.body)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color(red: 0.5, green: 0.1, blue: 0.6 ))
-                    .padding(.bottom, 10)
+                HStack(alignment: .center) {
+                    Spacer()
+                    Text(showCredits ? "This app uses the following packages / code:" : "")
+                        .font(.body)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color(red: 0.5, green: 0.1, blue: 0.6 ))
+                        .animation(.easeIn(duration: showCredits ? 1.6 : 0).delay(showCredits ? 0.1 : 0), value: showCredits)
+                    Spacer()
+                    Button {
+                        withAnimation {
+                            showCredits.toggle()
+                        }
+                    } label: {
+                        Triangle()
+                            .fill(showCredits ? .black : .white)
+                            .frame(width: 12, height: 12)
+                            .rotationEffect(.degrees(showCredits ? -180.0 : -90.0), anchor: .center)
+                    }
+                    .buttonStyle(.borderless)
+                    .help(showCredits ? "Hide the credits" : "Show the credits")
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 10)
                 Grid(alignment: .leadingFirstTextBaseline) {
                     ForEach(packages.sorted(by: { $0.key.lowercased() < $1.key.lowercased() }), id: \.key) { key, value in
                         GridRow {
@@ -75,7 +84,7 @@ struct AboutView: View {
                                 .gridColumnAlignment(.trailing)
                             VStack(alignment: .leading) {
                                 ForEach(value, id: \.self) { author in
-                                    Text(author)
+                                    Text(.init(author))
                                         .font(.caption2)
                                         .fontWeight(.bold)
                                         .foregroundStyle(.black)
@@ -85,10 +94,13 @@ struct AboutView: View {
                         }
                     }
                 }
+                .opacity(showCredits ? 1 : 0)
+                .animation(.easeIn(duration: showCredits ? 1 : 0).delay(showCredits ? 0.4 : 0), value: showCredits)
                 Spacer()
             }
-            .frame(maxWidth: .infinity, maxHeight: 200)
-            .padding(.top, 10)
+            .frame(maxWidth: .infinity, maxHeight: showCredits ? 200 : 20)
+            .background(.white.opacity(showCredits ? 0.9 : 0.08))
+            .background()
 
             HStack {
                 Spacer()
@@ -105,6 +117,7 @@ struct AboutView: View {
                 .padding([.bottom, .trailing], 20)
             }
             .frame(maxWidth: .infinity)
+            .padding(.top)
         }
         .background(.white.opacity(0.9))
         .background()
@@ -114,5 +127,18 @@ struct AboutView: View {
 }
 
 #Preview {
-    AboutView()
+    AboutView(packages: ["Application": ["AndyDragon ([Github profile](https://github.com/AndyDragon))"]])
+}
+
+struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.minY))
+
+        return path
+    }
 }

@@ -52,7 +52,18 @@ struct FeatureTrackerApp: App {
 
         // About view window with id "about"
         Window("About \(Bundle.main.displayName ?? "Feature Tracker")", id: "about") {
-            AboutView()
+            AboutView(packages: [
+                "CloudKitSyncMonitor": [
+                    "Grant Grueninger ([Github profile](https://github.com/ggruen))"
+                ],
+                "SwiftDataKit": [
+                    "东坡肘子 ([Github profile](https://github.com/fatbobman))"
+                ],
+                "ToastView-SwiftUI": [
+                    "Gaurav Tak ([Github profile](https://github.com/gauravtakroro))",
+                    "modified by AndyDragon ([Github profile](https://github.com/AndyDragon))"
+                ]
+            ])
         }
         .defaultPosition(.center)
         .windowResizability(.contentSize)
