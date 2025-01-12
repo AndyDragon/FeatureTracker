@@ -20,7 +20,7 @@
 		494202C62B74703600227660 /* PageListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202C52B74703600227660 /* PageListing.swift */; };
 		494202C82B74798100227660 /* Feature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202C72B74798100227660 /* Feature.swift */; };
 		494202CC2B747FC300227660 /* FeatureListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202CB2B747FC300227660 /* FeatureListing.swift */; };
-		49A6DA7D2B8295680008A319 /* ToastDismissShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49A6DA7B2B8295680008A319 /* ToastDismissShield.swift */; };
+		496E91582D33881A006BCEB4 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 496E91572D33881A006BCEB4 /* AboutView.swift */; };
 		49A6DA7E2B8295680008A319 /* VersionCheckAppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49A6DA7C2B8295680008A319 /* VersionCheckAppState.swift */; };
 		49B4C4A92B7C4E6D0068B8C9 /* FeatureEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4C4A82B7C4E6D0068B8C9 /* FeatureEditor.swift */; };
 		49B4C4AB2B7C53330068B8C9 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4C4AA2B7C53330068B8C9 /* Helpers.swift */; };
@@ -46,7 +46,7 @@
 		494202C52B74703600227660 /* PageListing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageListing.swift; sourceTree = "<group>"; };
 		494202C72B74798100227660 /* Feature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Feature.swift; sourceTree = "<group>"; };
 		494202CB2B747FC300227660 /* FeatureListing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureListing.swift; sourceTree = "<group>"; };
-		49A6DA7B2B8295680008A319 /* ToastDismissShield.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ToastDismissShield.swift; sourceTree = "<group>"; };
+		496E91572D33881A006BCEB4 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		49A6DA7C2B8295680008A319 /* VersionCheckAppState.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VersionCheckAppState.swift; sourceTree = "<group>"; };
 		49AD862B2B74AB3B006722B3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		49B4C4A82B7C4E6D0068B8C9 /* FeatureEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureEditor.swift; sourceTree = "<group>"; };
@@ -99,6 +99,7 @@
 			children = (
 				49FE12342D330DEE0018C3DE /* Advanced Toast */,
 				498DA2DA2D19EEC600CB3CC3 /* Models */,
+				496E91572D33881A006BCEB4 /* AboutView.swift */,
 				494202B22B745BEC00227660 /* FeatureTrackerApp.swift */,
 				494202B42B745BEC00227660 /* ContentView.swift */,
 				49FE12352D330DEE0018C3DE /* ContentView+ViewModel.swift */,
@@ -111,7 +112,6 @@
 				493E4E852B97DE3100C30717 /* DataProvider.swift */,
 				49B4C4AA2B7C53330068B8C9 /* Helpers.swift */,
 				491434412B7FED6E0031FC0D /* Types.swift */,
-				49A6DA7B2B8295680008A319 /* ToastDismissShield.swift */,
 				49A6DA7C2B8295680008A319 /* VersionCheckAppState.swift */,
 				494202B62B745BED00227660 /* Assets.xcassets */,
 				49AD862B2B74AB3B006722B3 /* Info.plist */,
@@ -242,6 +242,7 @@
 				49B4C4A92B7C4E6D0068B8C9 /* FeatureEditor.swift in Sources */,
 				494202B52B745BEC00227660 /* ContentView.swift in Sources */,
 				491434422B7FED6E0031FC0D /* Types.swift in Sources */,
+				496E91582D33881A006BCEB4 /* AboutView.swift in Sources */,
 				494202C62B74703600227660 /* PageListing.swift in Sources */,
 				49B4C4AB2B7C53330068B8C9 /* Helpers.swift in Sources */,
 				494202B32B745BEC00227660 /* FeatureTrackerApp.swift in Sources */,
@@ -249,7 +250,6 @@
 				494202CC2B747FC300227660 /* FeatureListing.swift in Sources */,
 				494202C22B745C4200227660 /* Page.swift in Sources */,
 				494202C42B7464DC00227660 /* PageEditor.swift in Sources */,
-				49A6DA7D2B8295680008A319 /* ToastDismissShield.swift in Sources */,
 				493E4E862B97DE3100C30717 /* DataProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

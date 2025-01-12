@@ -51,6 +51,9 @@ extension Bundle {
     func releaseVersionOlder(than: String) -> Bool {
         return releaseVersionNumberPretty.compare(than, options: .numeric) == .orderedAscending
     }
+    var displayName: String? {
+        return infoDictionary?["CFBundleDisplayName"] as? String ?? infoDictionary?["CFBundleName"] as? String
+    }
 }
 
 extension View {

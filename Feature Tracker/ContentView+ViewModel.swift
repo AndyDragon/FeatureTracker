@@ -1,6 +1,6 @@
 //
 //  ContentView+ViewModel.swift
-//  FeatureTracker
+//  Feature Tracker
 //
 //  Created by Andrew Forget on 2025-01-11.
 //
