@@ -218,7 +218,7 @@ public extension Color {
 extension View {
 
     func testListRowBackground() -> some View {
-#if DEBUG
+#if DEBUG_BACKGROUNDS
         self.listRowBackground(Color.random())
 #else
         self
@@ -226,7 +226,7 @@ extension View {
     }
 
     func testBackground() -> some View {
-#if DEBUG
+#if DEBUG_BACKGROUNDS
         self.background(Color.random())
 #else
         self
@@ -234,7 +234,7 @@ extension View {
     }
 
     func testAnimatedBackground() -> some View {
-#if DEBUG
+#if DEBUG_BACKGROUNDS
         self.modifier(AnimatedBackground())
 #else
         self

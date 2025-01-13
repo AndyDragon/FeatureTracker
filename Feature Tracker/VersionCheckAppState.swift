@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftyBeaver
 
 struct VersionManifest: Codable {
     let macOS: VersionEntry
@@ -48,6 +49,7 @@ struct VersionCheckAppState {
     var versionCheckToast: Binding<VersionCheckToast>
     private var versionLocation: String
     var isPreviewMode: Bool = false
+    private let logger = SwiftyBeaver.self
 
     init(
         isCheckingForUpdates: Binding<Bool>,
@@ -89,21 +91,24 @@ struct VersionCheckAppState {
                             currentVersion: versionManifest.macOS.current,
                             linkToCurrentVersion: versionManifest.macOS.link)
                         if versionManifest.macOS.vital {
+                            self.logger.verbose("New required version", context: "Version")
                             versionCheckResult.wrappedValue = .newRequired
                         } else {
+                            self.logger.verbose("New available version", context: "Version")
                             versionCheckResult.wrappedValue = .newAvailable
                         }
                     }
                 }
                 isCheckingForUpdates.wrappedValue = false
             } else {
+                self.logger.verbose("Using latest version", context: "Version")
                 versionCheckToast.wrappedValue = VersionCheckToast(
                     appVersion: Bundle.main.releaseVersionNumberPretty)
                 versionCheckResult.wrappedValue = manualCheck ? .manualCheckComplete : .complete
                 isCheckingForUpdates.wrappedValue = false
             }
         } catch {
-            // do nothing, the version check is not critical
+            self.logger.error("Version check failed: \(error.localizedDescription)", context: "Version")
             debugPrint(error)
             versionCheckToast.wrappedValue = VersionCheckToast(
                 appVersion: Bundle.main.releaseVersionNumberPretty)
@@ -112,4 +117,3 @@ struct VersionCheckAppState {
         }
     }
 }
-

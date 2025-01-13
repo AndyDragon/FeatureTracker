@@ -6,15 +6,18 @@
 //
 
 import SwiftUI
+import SwiftyBeaver
 
 struct AboutView: View {
     @Environment(\.dismissWindow) var dismissWindow
 
     @State private var showCredits = false
+    @State private var loggedDisclosure = false
 
     let packages: [String:[String]]
 
     private let year = Calendar(identifier: .gregorian).dateComponents([.year], from: Date()).year ?? 2024
+    private let logger = SwiftyBeaver.self
 
     var body: some View {
         VStack(spacing: 0) {
@@ -62,6 +65,10 @@ struct AboutView: View {
                     Button {
                         withAnimation {
                             showCredits.toggle()
+                        }
+                        if !loggedDisclosure && showCredits {
+                            loggedDisclosure.toggle()
+                            logger.verbose("Disclosed the credit in about view", context: "User")
                         }
                     } label: {
                         Triangle()

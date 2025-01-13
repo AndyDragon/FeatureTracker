@@ -10,6 +10,7 @@ import CoreData
 import SwiftData
 import SwiftDataKit
 import SwiftUI
+import SwiftyBeaver
 
 @ModelActor
 public actor DBMonitor {
@@ -99,13 +100,14 @@ extension DBMonitor {
 public final class DataProvider: @unchecked Sendable {
     public var container: ModelContainer
     private var monitor: DBMonitor?
-    
-    public static let share = DataProvider(
+    private let logger = SwiftyBeaver.self
+
+    public static let shared = DataProvider(
         inMemory: false,
         enableCloudKit: CloudKitConfiguration.Enabled,
         enableMonitor: CloudKitConfiguration.AutoSync)
     public static let preview = DataProvider(inMemory: true)
-    
+
     init(inMemory: Bool = false, enableCloudKit: Bool = false, enableMonitor: Bool = false) {
         let schema = Schema([
             Page.self,
@@ -116,6 +118,7 @@ public final class DataProvider: @unchecked Sendable {
             schema: schema,
             isStoredInMemoryOnly: inMemory,
             cloudKitDatabase: enableCloudKit ? .automatic : .none)
+        logger.verbose("Trying to create the model container", context: "Data")
         do {
             let container = try ModelContainer(
                 for: schema,
@@ -133,13 +136,21 @@ public final class DataProvider: @unchecked Sendable {
                     await self.monitor?.register(excludeAuthors: [])
                 }
             }
+            logger.verbose("Created the model container", context: "Data")
         } catch {
+            logger.error("Failed to create the model container: \(error.localizedDescription)", context: "Data")
             fatalError("Could not create ModelContainer: \(error)")
         }
     }
-    
+
     @MainActor
     private func setAuthor(container: ModelContainer, authorName: String) {
         container.mainContext.managedObjectContext?.transactionAuthor = authorName
+    }
+
+    private func getDocumentsDirectory() -> URL {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        let documentsDirectory = paths[0]
+        return documentsDirectory
     }
 }

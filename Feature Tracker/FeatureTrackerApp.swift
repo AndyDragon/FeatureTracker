@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import SwiftyBeaver
 
 @main
 struct FeatureTrackerApp: App {
@@ -15,24 +16,44 @@ struct FeatureTrackerApp: App {
     @State var checkingForUpdates = false
     @State var versionCheckResult: VersionCheckResult = .complete
     @State var versionCheckToast = VersionCheckToast()
-    
+
+    let logger = SwiftyBeaver.self
+    let loggerConsole = ConsoleDestination()
+    let loggerFile = FileDestination()
+
+    init() {
+        loggerConsole.logPrintWay = .logger(subsystem: "Main", category: "UI")
+        loggerFile.logFileURL = getDocumentsDirectory().appendingPathComponent("\(Bundle.main.displayName ?? "Feature Tracker").log", conformingTo: .log)
+        print(loggerFile.logFileURL!)
+        logger.addDestination(loggerConsole)
+        logger.addDestination(loggerFile)
+        logger.info("==============================================================================")
+        logger.info("Start of session")
+    }
+
     var body: some Scene {
         let appState = VersionCheckAppState(
             isCheckingForUpdates: $checkingForUpdates,
             versionCheckResult: $versionCheckResult,
             versionCheckToast: $versionCheckToast,
             versionLocation: "https://vero.andydragon.com/static/data/featuretracker/version.json")
-        let dataProvider = DataProvider.share
+        let dataProvider = DataProvider.shared
         WindowGroup {
             ContentView(appState)
                 .onAppear {
                     NSWindow.allowsAutomaticWindowTabbing = false
+                }
+                .onDisappear {
+                    logger.info("End of session")
+                    logger.info("==============================================================================")
                 }
         }
         .modelContainer(dataProvider.container)
         .commands {
             CommandGroup(replacing: CommandGroupPlacement.appInfo) {
                 Button(action: {
+                    logger.verbose("Open about view", context: "User")
+
                     // Open the "about" window using the id "about"
                     openWindow(id: "about")
                 }, label: {
@@ -41,6 +62,9 @@ struct FeatureTrackerApp: App {
             }
             CommandGroup(replacing: .appSettings, addition: {
                 Button(action: {
+                    logger.verbose("Manual check for updates", context: "User")
+
+                    // Manually check for updates
                     appState.checkForUpdates(true)
                 }, label: {
                     Text("Check for updates...")
@@ -59,6 +83,9 @@ struct FeatureTrackerApp: App {
                 "SwiftDataKit": [
                     "东坡肘子 ([Github profile](https://github.com/fatbobman))"
                 ],
+                "SwiftyBeaver": [
+                    "SwiftyBeaver ([Github profile](https://github.com/SwiftyBeaver))"
+                ],
                 "ToastView-SwiftUI": [
                     "Gaurav Tak ([Github profile](https://github.com/gauravtakroro))",
                     "modified by AndyDragon ([Github profile](https://github.com/AndyDragon))"
@@ -67,5 +94,11 @@ struct FeatureTrackerApp: App {
         }
         .defaultPosition(.center)
         .windowResizability(.contentSize)
+    }
+
+    private func getDocumentsDirectory() -> URL {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        let documentsDirectory = paths[0]
+        return documentsDirectory
     }
 }

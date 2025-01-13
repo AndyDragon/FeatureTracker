@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import SwiftyBeaver
 
 struct PageEditor: View {
     @Bindable var page: Page
@@ -24,6 +25,7 @@ struct PageEditor: View {
     @State private var isChallenge = false
 
     private let debounce: TimeInterval = 0.2
+    private let logger = SwiftyBeaver.self
 
     var body: some View {
         VStack {
@@ -90,9 +92,11 @@ struct PageEditor: View {
                         .fontWeight(.bold)
                     Spacer()
                     Button(action: {
+                        logger.verbose("Tapped to add feature", context: "User")
                         let feature = Feature()
                         page.features!.append(feature)
                         selectedFeature = feature
+                        logger.verbose("Added feature", context: "System")
                     }) {
                         Image(systemName: "plus")
                     }

@@ -8,6 +8,7 @@
 import CloudKitSyncMonitor
 import SwiftData
 import SwiftUI
+import SwiftyBeaver
 
 struct ContentView: View {
     @Environment(\.openURL) var openURL
@@ -31,7 +32,9 @@ struct ContentView: View {
     @State private var iCloudError = ""
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
     @ObservedObject private var syncMonitor = SyncMonitor.shared
-    private var appState: VersionCheckAppState
+
+    private let appState: VersionCheckAppState
+    private let logger = SwiftyBeaver.self
 
     init(_ appState: VersionCheckAppState) {
         self.appState = appState
@@ -49,6 +52,7 @@ struct ContentView: View {
                     PageListing(sorting: pageSorting, selectedPage: $selectedPage, selectedFeature: $selectedFeature)
                         .listStyle(.sidebar)
                         .onDeleteCommand {
+                            logger.verbose("Swiped to delete page", context: "User")
                             if let page = selectedPage {
                                 confirmationAlertTitle = "Confirm delete"
                                 confirmationAlertText = String {
@@ -59,6 +63,7 @@ struct ContentView: View {
                                     selectedFeature = nil
                                     selectedPage = nil
                                     modelContext.delete(page)
+                                    logger.verbose("Deleted page", context: "User")
                                     viewModel.showSuccessToast("Deleted page/challenge!", "Removed the page or challenge and all the features")
                                 }
                                 showConfirmationAlert.toggle()
@@ -188,6 +193,7 @@ struct ContentView: View {
                         .fontWeight(.bold)
                         Spacer()
                         PageEditor(page: page, selectedFeature: $selectedFeature, onDelete: {
+                            logger.verbose("Tapped delete page", context: "User")
                             confirmationAlertTitle = "Confirm delete"
                             confirmationAlertText = String {
                                 "Are you sure you want to delete this page / challenge?"
@@ -198,9 +204,11 @@ struct ContentView: View {
                                 selectedPage = nil
                                 modelContext.delete(page)
                                 viewModel.showSuccessToast("Deleted page/challenge!", "Removed the page or challenge and all the features")
+                                logger.verbose("Deleted the page", context: "System")
                             }
                             showConfirmationAlert.toggle()
                         }, onDeleteFeature: { feature in
+                            logger.verbose("Tapped delete feature", context: "User")
                             confirmationAlertTitle = "Confirm delete"
                             confirmationAlertText = String {
                                 "Are you sure you want to delete this feature?"
@@ -210,6 +218,7 @@ struct ContentView: View {
                                 selectedFeature = nil
                                 page.features!.remove(element: feature)
                                 viewModel.showSuccessToast("Deleted feature!", "Removed the feature")
+                                logger.verbose("Deleted the feature", context: "System")
                             }
                             showConfirmationAlert.toggle()
                         }, onClose: {
@@ -252,6 +261,7 @@ struct ContentView: View {
             }
             .toolbar {
                 Button("Populate defaults", action: {
+                    logger.verbose("Tapped populate defaults", context: "User")
                     confirmationAlertTitle = "Confirm reset to defaults"
                     confirmationAlertText = String {
                         "Are you sure you want to restore everything to the defaults?"
@@ -377,10 +387,12 @@ struct ContentView: View {
     }
     
     func addPage() -> Void {
+        logger.verbose("Tapped to add page", context: "User")
         withAnimation {
             let newPage = Page(id: UUID(), name: "new page")
             modelContext.insert(newPage)
             selectedPage = newPage
+            logger.verbose("Added new page", context: "System")
         }
     }
 
@@ -480,6 +492,7 @@ struct ContentView: View {
     }
 
     func generateReport() -> Void {
+        logger.verbose("Tapped generate report", context: "User")
         var lines = [String]()
         lines.append("Report of features")
         lines.append("------------------")
@@ -522,9 +535,11 @@ struct ContentView: View {
         for line in lines { text = text + line + "\n" }
         copyToClipboard(text)
         viewModel.showSuccessToast("Report generated!", "Copied the report of features to the clipboard")
+        logger.verbose("Generated report", context: "System")
     }
     
     func backup() -> Void {
+        logger.verbose("Tapped backup to clipboard", context: "User")
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
@@ -536,7 +551,9 @@ struct ContentView: View {
             let json = try encoder.encode(codablePages)
             copyToClipboard(String(decoding: json, as: UTF8.self))
             viewModel.showSuccessToast("Backed up!", "Copied a backup of the pages and features to the clipboard")
+            logger.verbose("Backed up to clipboard", context: "System")
         } catch {
+            logger.error("Failed to backup to clipboard: \(error.localizedDescription)", context: "System")
             exceptionError = error.localizedDescription
             backupOperation = .backup
             showingBackupRestoreErrorAlert.toggle()
@@ -548,6 +565,7 @@ struct ContentView: View {
             iCloudActive = true
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: { @MainActor in
+            logger.verbose("Tapped backup to iCloud", context: "User")
             do {
                 let encoder = JSONEncoder()
                 encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
@@ -567,6 +585,7 @@ struct ContentView: View {
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: { @MainActor in
                         viewModel.showSuccessToast("Backed up to iCloud!", "Stored a backup of the pages and features to your iCloud documents")
+                        logger.verbose("Backed up to iCloud", context: "System")
                     })
                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: { @MainActor in
                         if (iCloudActive) {
@@ -577,6 +596,7 @@ struct ContentView: View {
                     })
                 } else {
                     showCloudBackupErrorToast("No access to your iCloud documents")
+                    logger.warning("No access to your iCloud", context: "System")
                 }
             } catch {
                 showCloudBackupErrorToast(error.localizedDescription)
@@ -585,6 +605,7 @@ struct ContentView: View {
     }
 
     func showCloudBackupErrorToast(_ message: String) {
+        logger.error("Failed to backup to iCloud: \(message)", context: "System")
         debugPrint("iCloud backup failed: \(message)")
         exceptionError = message
         iCloudError = exceptionError
@@ -594,6 +615,7 @@ struct ContentView: View {
     }
 
     func restore() -> Void {
+        logger.verbose("Tapped restore from clipboard", context: "User")
         do {
             let pasteBoard = NSPasteboard.general
             let json = pasteBoard.string(forType: .string) ?? ""
@@ -605,11 +627,13 @@ struct ContentView: View {
                     try modelContext.delete(model: Page.self)
                 } catch {
                     // do nothing
+                    logger.error("Failed to delete a page during restore", context: "System")
                     debugPrint(error.localizedDescription)
                 }
                 for codablePage in codablePages {
                     modelContext.insert(codablePage.toPage())
                 }
+                logger.verbose("Restored from clipboard", context: "System")
                 viewModel.showSuccessToast("Restored!", "Restored the items from the clipboard")
             }
         } catch let DecodingError.dataCorrupted(context) {
@@ -626,6 +650,7 @@ struct ContentView: View {
     }
     
     func showRestoreErrorToast(_ message: String) {
+        logger.error("Failed to restore from clipboard: \(message)", context: "System")
         debugPrint("iCloud restore failed: \(message)")
         exceptionError = message
         backupOperation = .restore
@@ -637,6 +662,7 @@ struct ContentView: View {
             iCloudActive = true
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: { @MainActor in
+            logger.verbose("Tapped restore from iCloud", context: "User")
             do {
                 if let containerUrl = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
                     if FileManager.default.fileExists(atPath: containerUrl.path, isDirectory: nil) {
@@ -653,9 +679,10 @@ struct ContentView: View {
                                         try modelContext.delete(model: Page.self)
                                         try modelContext.save()
                                     } catch {
-                                        // do nothing
+                                        logger.error("Failed to reset store during restore: \(error.localizedDescription)", context: "System")
                                         debugPrint("Failed to reset store:")
                                         debugPrint(error.localizedDescription)
+                                        // TODO andydragon : should be show an alert and stop the restore?
                                     }
                                     for codablePage in codablePages {
                                         modelContext.insert(codablePage.toPage())
@@ -664,11 +691,13 @@ struct ContentView: View {
                                         try modelContext.save()
                                     } catch {
                                         // do nothing
+                                        logger.error("Failed to save store after restore: \(error.localizedDescription)", context: "System")
                                         debugPrint("Failed to save store after restore:")
                                         debugPrint(error.localizedDescription)
                                     }
                                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: { @MainActor in
                                         viewModel.showSuccessToast("Restored from iCloud!", "Restored the items from your iCloud")
+                                        logger.verbose("Restored from clipboard", context: "System")
                                     })
                                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: { @MainActor in
                                         if (iCloudActive) {
@@ -707,6 +736,7 @@ struct ContentView: View {
     }
                                 
     func showCloudRestoreErrorToast(_ message: String) {
+        logger.error("Failed to restore from clipboard: \(message)", context: "System")
         debugPrint("iCloud restore failed: \(message)")
         exceptionError = message
         iCloudError = exceptionError
@@ -719,7 +749,8 @@ struct ContentView: View {
         do {
             try modelContext.delete(model: Page.self)
         } catch {
-            // do nothing
+            logger.error("Failed to reset the store: \(error.localizedDescription)", context: "System")
+            // TODO andydragon : should we show an alert and stop this reset?
         }
         // Add regular pages.
         let singleFeaturePages = [
@@ -819,5 +850,6 @@ struct ContentView: View {
         }
         // Add the multi-count features.
         modelContext.insert(Page(id: UUID(), name: "papanoel", count: 3))
+        logger.verbose("Populated the defaults", context: "System")
     }
 }

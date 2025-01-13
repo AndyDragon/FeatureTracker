@@ -24,6 +24,7 @@
 		49A6DA7E2B8295680008A319 /* VersionCheckAppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49A6DA7C2B8295680008A319 /* VersionCheckAppState.swift */; };
 		49B4C4A92B7C4E6D0068B8C9 /* FeatureEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4C4A82B7C4E6D0068B8C9 /* FeatureEditor.swift */; };
 		49B4C4AB2B7C53330068B8C9 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4C4AA2B7C53330068B8C9 /* Helpers.swift */; };
+		49CD18032D3475BE00F08A56 /* SwiftyBeaver in Frameworks */ = {isa = PBXBuildFile; productRef = 49CD18022D3475BE00F08A56 /* SwiftyBeaver */; };
 		49FE12362D330DEE0018C3DE /* AdvancedToastStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49FE12322D330DEE0018C3DE /* AdvancedToastStyle.swift */; };
 		49FE12372D330DEE0018C3DE /* AdvancedToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49FE12302D330DEE0018C3DE /* AdvancedToast.swift */; };
 		49FE12382D330DEE0018C3DE /* AdvancedToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49FE12332D330DEE0018C3DE /* AdvancedToastView.swift */; };
@@ -72,6 +73,7 @@
 			files = (
 				4918AC222B7C25770078BC00 /* CloudKitSyncMonitor in Frameworks */,
 				493E4E842B97D59400C30717 /* SwiftDataKit in Frameworks */,
+				49CD18032D3475BE00F08A56 /* SwiftyBeaver in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -173,6 +175,7 @@
 			packageProductDependencies = (
 				4918AC212B7C25770078BC00 /* CloudKitSyncMonitor */,
 				493E4E832B97D59400C30717 /* SwiftDataKit */,
+				49CD18022D3475BE00F08A56 /* SwiftyBeaver */,
 			);
 			productName = FeatureTracker;
 			productReference = 494202AF2B745BEC00227660 /* Feature Tracker.app */;
@@ -205,6 +208,7 @@
 			packageReferences = (
 				4918AC202B7C25770078BC00 /* XCRemoteSwiftPackageReference "CloudKitSyncMonitor" */,
 				493E4E822B97D59400C30717 /* XCRemoteSwiftPackageReference "SwiftDataKit" */,
+				49CD18012D3475BE00F08A56 /* XCRemoteSwiftPackageReference "SwiftyBeaver" */,
 			);
 			productRefGroup = 494202B02B745BEC00227660 /* Products */;
 			projectDirPath = "";
@@ -387,7 +391,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -422,7 +426,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -515,7 +519,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -608,7 +612,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -677,6 +681,14 @@
 				minimumVersion = 0.1.3;
 			};
 		};
+		49CD18012D3475BE00F08A56 /* XCRemoteSwiftPackageReference "SwiftyBeaver" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SwiftyBeaver/SwiftyBeaver.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -689,6 +701,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 493E4E822B97D59400C30717 /* XCRemoteSwiftPackageReference "SwiftDataKit" */;
 			productName = SwiftDataKit;
+		};
+		49CD18022D3475BE00F08A56 /* SwiftyBeaver */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49CD18012D3475BE00F08A56 /* XCRemoteSwiftPackageReference "SwiftyBeaver" */;
+			productName = SwiftyBeaver;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import SwiftyBeaver
 
 enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
@@ -42,7 +43,7 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
         fromVersion: SchemaV1.self,
         toVersion: SchemaV2.self,
         willMigrate: { context in
-            print("******** Running migratation stage V1 to V2...")
+            SwiftyBeaver.self.info("Running migration state V1 to V2...", context: "Data")
             var pages = try? context.fetch(FetchDescriptor<SchemaV1.Page>())
             var idUsed = Set<UUID>()
 
@@ -57,22 +58,22 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
                 let pagesWithId = pages?.filter { $0.id == page.id } ?? []
                 if pagesWithId.count > 1 {
                     // There were duplicate IDs, now the fun begins...
-                    print("Found page \(page.name) with \(pagesWithId.count - 1) duplicates")
+                    SwiftyBeaver.self.info("Found page \(page.name) with \(pagesWithId.count - 1) duplicates", context: "Data")
                     pagesWithId.forEach { otherPage in
                         if page == otherPage {
                             // same page, ignore this one
-                            print("Skipping 'same page'")
+                            SwiftyBeaver.self.info("Skipping 'same page'")
                             return
                         }
                         if page.name != otherPage.name || page.isChallenge != otherPage.isChallenge {
                             // this is a different page, just set new ID
                             if !pagesForNewId.contains(otherPage) {
-                                print("Found different page \(otherPage.name), changing ID")
+                                SwiftyBeaver.self.info("Found different page \(otherPage.name), changing ID", context: "Data")
                                 pagesForNewId.append(otherPage)
                             }
                         } else {
                             // this is a duplicate of the same page, we need to merge the features and remove the duplicate
-                            print("Found duplicate page \(otherPage.name), merging and deleting the duplicates")
+                            SwiftyBeaver.self.info("Found duplicate page \(otherPage.name), merging and deleting the duplicates", context: "Data")
                             if !pagesToDelete.contains(otherPage) {
                                 pagesToDelete.append(otherPage)
                                 otherPage.features?.forEach { otherFeature in
@@ -89,7 +90,7 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
                 // Check for page id already used
                 if idUsed.contains(page.id) {
                     if !pagesForNewId.contains(page) {
-                        print("Found page with used id \(page.name), changing ID")
+                        SwiftyBeaver.self.info("Found page with used id \(page.name), changing ID", context: "Data")
                         pagesForNewId.append(page)
                     }
                 } else {
@@ -107,20 +108,20 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
                     let featuresWithId = page.features?.filter { $0.id == feature.id } ?? []
                     if featuresWithId.count > 1 {
                         // There were duplicate IDs, now the fun begins again...
-                        print("Found page \(page.name) with feature \(feature.notes) with \(featuresWithId.count - 1) duplicates")
+                        SwiftyBeaver.self.info("Found page \(page.name) with feature \(feature.notes) with \(featuresWithId.count - 1) duplicates", context: "Data")
                         featuresWithId.forEach { otherFeature in
                             if feature == otherFeature {
                                 // same feature, ignore this one
-                                print("Skipping 'same feature'")
+                                SwiftyBeaver.self.info("Skipping 'same feature'")
                                 return
                             }
                             if feature.notes != otherFeature.notes || feature.date != otherFeature.date {
                                 // this is a different feature, just set new ID
-                                print("Found different feature \(otherFeature.notes), changing ID")
+                                SwiftyBeaver.self.info("Found different feature \(otherFeature.notes), changing ID", context: "Data")
                                 featuresForNewId.append(otherFeature)
                             } else {
                                 // this is a duplicate of the same feature, we will remove the duplicate
-                                print("Found duplicate feature \(otherFeature.notes), deleting duplicate")
+                                SwiftyBeaver.self.info("Found duplicate feature \(otherFeature.notes), deleting duplicate", context: "Data")
                                 featuresToDelete.append(otherFeature)
                             }
                         }
@@ -129,7 +130,7 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
                     // Check for feature id already used
                     if idUsed.contains(feature.id) {
                         if !featuresForNewId.contains(feature) {
-                            print("Found feature with used id \(feature.notes), changing ID")
+                            SwiftyBeaver.self.info("Found feature with used id \(feature.notes), changing ID", context: "Data")
                             featuresForNewId.append(feature)
                         }
                     } else {
@@ -159,6 +160,7 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
             
             // Save the updated DB
             try context.save()
+            SwiftyBeaver.self.info("Completed migration state V1 to V2...", context: "Data")
         },
         didMigrate: nil)
 }
