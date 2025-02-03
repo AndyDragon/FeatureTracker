@@ -13,9 +13,11 @@ import SwiftyBeaver
 struct FeatureTrackerApp: App {
     @Environment(\.openWindow) private var openWindow
 
+#if STANDALONE
     @State var checkingForUpdates = false
     @State var versionCheckResult: VersionCheckResult = .complete
     @State var versionCheckToast = VersionCheckToast()
+#endif
 
     let logger = SwiftyBeaver.self
     let loggerConsole = ConsoleDestination()
@@ -32,13 +34,16 @@ struct FeatureTrackerApp: App {
     }
 
     var body: some Scene {
+#if STANDALONE
         let appState = VersionCheckAppState(
             isCheckingForUpdates: $checkingForUpdates,
             versionCheckResult: $versionCheckResult,
             versionCheckToast: $versionCheckToast,
             versionLocation: "https://vero.andydragon.com/static/data/featuretracker/version.json")
+#endif
         let dataProvider = DataProvider.shared
         WindowGroup {
+#if STANDALONE
             ContentView(appState)
                 .onAppear {
                     NSWindow.allowsAutomaticWindowTabbing = false
@@ -47,6 +52,16 @@ struct FeatureTrackerApp: App {
                     logger.info("End of session")
                     logger.info("==============================================================================")
                 }
+#else
+            ContentView()
+                .onAppear {
+                    NSWindow.allowsAutomaticWindowTabbing = false
+                }
+                .onDisappear {
+                    logger.info("End of session")
+                    logger.info("==============================================================================")
+                }
+#endif
         }
         .modelContainer(dataProvider.container)
         .commands {
@@ -60,6 +75,7 @@ struct FeatureTrackerApp: App {
                     Text("About \(Bundle.main.displayName ?? "Feature Tracker")")
                 })
             }
+#if STANDALONE
             CommandGroup(replacing: .appSettings, addition: {
                 Button(action: {
                     logger.verbose("Manual check for updates", context: "User")
@@ -71,6 +87,7 @@ struct FeatureTrackerApp: App {
                 })
                 .disabled(checkingForUpdates)
             })
+#endif
             CommandGroup(replacing: CommandGroupPlacement.newItem) { }
         }
 

@@ -33,13 +33,16 @@ struct ContentView: View {
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
     @ObservedObject private var syncMonitor = SyncMonitor.shared
 
-    private let appState: VersionCheckAppState
     private let logger = SwiftyBeaver.self
+
+#if STANDALONE
+    private let appState: VersionCheckAppState
 
     init(_ appState: VersionCheckAppState) {
         self.appState = appState
     }
-    
+#endif
+
     @MainActor
     private func setAuthor(container: ModelContainer, authorName: String) {
         container.mainContext.managedObjectContext?.transactionAuthor = authorName
@@ -319,9 +322,14 @@ struct ContentView: View {
             }
         }
         .advancedToastView(toasts: $viewModel.toastViews)
+#if STANDALONE
+        .navigationTitle("Feature Tracker - Standalone Version")
         .attachVersionCheckState(viewModel, appState) { url in
             openURL(url)
         }
+#else
+        .navigationTitle("Feature Tracker")
+#endif
         .alert(
             confirmationAlertTitle,
             isPresented: $showConfirmationAlert,
@@ -350,7 +358,9 @@ struct ContentView: View {
             }
         )
         .task {
+#if STANDALONE
             appState.checkForUpdates()
+#endif
         }
     }
     
