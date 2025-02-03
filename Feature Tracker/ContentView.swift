@@ -624,14 +624,31 @@ struct ContentView: View {
             let codablePages = try decoder.decode([CodablePage].self, from: json.data(using: .utf8)!)
             if codablePages.count != 0 {
                 do {
-                    try modelContext.delete(model: Page.self)
+                    try modelContext.transaction {
+                        try modelContext.delete(model: Page.self)
+                    }
+                    let count = try modelContext.fetchCount(FetchDescriptor<Page>())
+                    if count > 0 {
+                        logger.error("Failed to delete all the existing records during restore, there were some records left", context: "System")
+                        viewModel.showToast(
+                            .error,
+                            "Restore failed!",
+                            "Could not remove all the existing records before doing the restore, the database is likely in invalid state")
+                        return
+                    }
                 } catch {
-                    // do nothing
-                    logger.error("Failed to delete a page during restore", context: "System")
+                    logger.error("Failed to delete all the existing records during restore", context: "System")
                     debugPrint(error.localizedDescription)
+                    viewModel.showToast(
+                        .error,
+                        "Restore failed!",
+                        "Could not remove all the existing records before doing the restore (\(error.localizedDescription)), the database is likely in invalid state")
+                    return
                 }
-                for codablePage in codablePages {
-                    modelContext.insert(codablePage.toPage())
+                let pages = SchemaV2.collatePages(codablePages.map({ $0.toPage() }))
+                for page in pages {
+
+                    modelContext.insert(page)
                 }
                 logger.verbose("Restored from clipboard", context: "System")
                 viewModel.showSuccessToast("Restored!", "Restored the items from the clipboard")
@@ -675,29 +692,35 @@ struct ContentView: View {
                                 let codablePages = try decoder.decode([CodablePage].self, from: json)
                                 if codablePages.count != 0 {
                                     do {
-                                        try modelContext.delete(model: Feature.self)
-                                        try modelContext.delete(model: Page.self)
-                                        try modelContext.save()
+                                        try modelContext.transaction {
+                                            try modelContext.delete(model: Page.self)
+                                        }
+                                        let count = try modelContext.fetchCount(FetchDescriptor<Page>())
+                                        if count > 0 {
+                                            logger.error("Failed to delete all the existing records during restore, there were some records left", context: "System")
+                                            viewModel.showToast(
+                                                .error,
+                                                "Restore failed!",
+                                                "Could not remove all the existing records before doing the restore (remaining items), the database is likely in invalid state")
+                                            return
+                                        }
                                     } catch {
-                                        logger.error("Failed to reset store during restore: \(error.localizedDescription)", context: "System")
-                                        debugPrint("Failed to reset store:")
+                                        logger.error("Failed to delete all the existing records during restore", context: "System")
                                         debugPrint(error.localizedDescription)
-                                        // TODO andydragon : should be show an alert and stop the restore?
+                                        viewModel.showToast(
+                                            .error,
+                                            "Restore failed!",
+                                            "Could not remove all the existing records before doing the restore (\(error.localizedDescription)), the database is likely in invalid state")
+                                        return
                                     }
-                                    for codablePage in codablePages {
-                                        modelContext.insert(codablePage.toPage())
-                                    }
-                                    do {
-                                        try modelContext.save()
-                                    } catch {
-                                        // do nothing
-                                        logger.error("Failed to save store after restore: \(error.localizedDescription)", context: "System")
-                                        debugPrint("Failed to save store after restore:")
-                                        debugPrint(error.localizedDescription)
+                                    let pages = SchemaV2.collatePages(codablePages.map({ $0.toPage() }))
+                                    for page in pages {
+
+                                        modelContext.insert(page)
                                     }
                                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: { @MainActor in
                                         viewModel.showSuccessToast("Restored from iCloud!", "Restored the items from your iCloud")
-                                        logger.verbose("Restored from clipboard", context: "System")
+                                        logger.verbose("Restored from iCloud", context: "System")
                                     })
                                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: { @MainActor in
                                         if (iCloudActive) {
