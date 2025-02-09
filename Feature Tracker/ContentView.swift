@@ -270,6 +270,10 @@ struct ContentView: View {
                         "Are you sure you want to restore everything to the defaults?"
                         "This cannot be undone!"
                     }
+                    confirmationAlertAction = {
+                        populateDefaultPages()
+                        viewModel.showSuccessToast("Populated defaults!", "Restored the default list of pages")
+                    }
                     showConfirmationAlert.toggle()
                 })
                 .disabled(viewModel.hasModalToasts)
@@ -363,7 +367,7 @@ struct ContentView: View {
 #endif
         }
     }
-    
+
     func getBackupOperationError(_ operation: BackupOperation) -> String {
         switch operation {
         case .backup:
@@ -379,7 +383,7 @@ struct ContentView: View {
         }
         return "ERROR"
     }
-    
+
     func getBackupOperationErrorMessage(_ operation: BackupOperation, _ message: String) -> String {
         switch operation {
         case .backup:
@@ -395,7 +399,7 @@ struct ContentView: View {
         }
         return message
     }
-    
+
     func addPage() -> Void {
         logger.verbose("Tapped to add page", context: "User")
         withAnimation {
@@ -478,7 +482,7 @@ struct ContentView: View {
         }
         return "\(count) \(countLabel)s"
     }
-    
+
     func getFeaturesSummary() -> String {
         let featuresCount = getFeatures()
         let totalFeaturesCount = getTotalFeatures()
@@ -487,7 +491,7 @@ struct ContentView: View {
         }
         return "Total features: \(featuresCount)"
     }
-    
+
     func getPagesSummary() -> String {
         let pagesCount = getPages()
         let totalPagesCount = getTotalPages()
@@ -496,7 +500,7 @@ struct ContentView: View {
         }
         return "Total pages with features: \(pagesCount)"
     }
-    
+
     func getMembershipSummary() -> String {
         return "Membership level: \(getMembership())"
     }
@@ -547,7 +551,7 @@ struct ContentView: View {
         viewModel.showSuccessToast("Report generated!", "Copied the report of features to the clipboard")
         logger.verbose("Generated report", context: "System")
     }
-    
+
     func backup() -> Void {
         logger.verbose("Tapped backup to clipboard", context: "User")
         do {
@@ -589,10 +593,10 @@ struct ContentView: View {
                     if !FileManager.default.fileExists(atPath: containerUrl.path, isDirectory: nil) {
                         try FileManager.default.createDirectory(at: containerUrl, withIntermediateDirectories: true, attributes: nil)
                     }
-                    
+
                     let fileUrl = containerUrl.appendingPathComponent("features.json")
                     try String(decoding: json, as: UTF8.self).write(to: fileUrl, atomically: true, encoding: .utf8)
-                    
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: { @MainActor in
                         viewModel.showSuccessToast("Backed up to iCloud!", "Stored a backup of the pages and features to your iCloud documents")
                         logger.verbose("Backed up to iCloud", context: "System")
@@ -657,9 +661,9 @@ struct ContentView: View {
                 }
                 let pages = SchemaV2.collatePages(codablePages.map({ $0.toPage() }))
                 for page in pages {
-
                     modelContext.insert(page)
                 }
+                try? modelContext.save()
                 logger.verbose("Restored from clipboard", context: "System")
                 viewModel.showSuccessToast("Restored!", "Restored the items from the clipboard")
             }
@@ -675,7 +679,7 @@ struct ContentView: View {
             showRestoreErrorToast(error.localizedDescription)
         }
     }
-    
+
     func showRestoreErrorToast(_ message: String) {
         logger.error("Failed to restore from clipboard: \(message)", context: "System")
         debugPrint("iCloud restore failed: \(message)")
@@ -683,7 +687,7 @@ struct ContentView: View {
         backupOperation = .restore
         showingBackupRestoreErrorAlert.toggle()
     }
-    
+
     func restoreFromCloud() -> Void {
         withAnimation {
             iCloudActive = true
@@ -725,9 +729,9 @@ struct ContentView: View {
                                     }
                                     let pages = SchemaV2.collatePages(codablePages.map({ $0.toPage() }))
                                     for page in pages {
-
                                         modelContext.insert(page)
                                     }
+                                    try? modelContext.save()
                                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: { @MainActor in
                                         viewModel.showSuccessToast("Restored from iCloud!", "Restored the items from your iCloud")
                                         logger.verbose("Restored from iCloud", context: "System")
@@ -767,7 +771,7 @@ struct ContentView: View {
             }
         })
     }
-                                
+
     func showCloudRestoreErrorToast(_ message: String) {
         logger.error("Failed to restore from clipboard: \(message)", context: "System")
         debugPrint("iCloud restore failed: \(message)")
@@ -781,6 +785,15 @@ struct ContentView: View {
     func populateDefaultPages() -> Void {
         do {
             try modelContext.delete(model: Page.self)
+            let count = try modelContext.fetchCount(FetchDescriptor<Page>())
+            if count > 0 {
+                logger.error("Failed to delete all the existing records during populate, there were some records left", context: "System")
+                viewModel.showToast(
+                    .error,
+                    "Failed to reset the store!",
+                    "Could not remove all the existing records before doing the populate (remaining items), the database is likely in invalid state")
+                return
+            }
         } catch {
             logger.error("Failed to reset the store: \(error.localizedDescription)", context: "System")
             // TODO andydragon : should we show an alert and stop this reset?
@@ -883,6 +896,7 @@ struct ContentView: View {
         }
         // Add the multi-count features.
         modelContext.insert(Page(id: UUID(), name: "papanoel", count: 3))
+        try? modelContext.save()
         logger.verbose("Populated the defaults", context: "System")
     }
 }
