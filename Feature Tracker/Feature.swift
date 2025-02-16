@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 
-typealias Feature = SchemaV2.Feature
+typealias Feature = SchemaV3.Feature
 
 class CodableFeature: Codable {
     var id: UUID = UUID()

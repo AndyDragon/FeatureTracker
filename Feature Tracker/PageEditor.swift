@@ -20,6 +20,7 @@ struct PageEditor: View {
     // Editor state
     @State private var currentPage: Page? = nil
     @State private var name = ""
+    @State private var hub = ""
     @State private var notes = ""
     @State private var count = 1
     @State private var isChallenge = false
@@ -55,7 +56,14 @@ struct PageEditor: View {
                             page.name = newValue
                         }
                     }
-                
+
+                TextField("Hub: ", text: $hub)
+                    .onChange(of: hub, debounceTime: debounce) { newValue in
+                        if page.hub != newValue {
+                            page.hub = newValue
+                        }
+                    }
+
                 TextField("Notes: ", text: $notes, axis: .vertical)
                     .onChange(of: notes, debounceTime: debounce) { newValue in
                         if page.notes != newValue {
@@ -134,6 +142,9 @@ struct PageEditor: View {
             if oldPage.name != name {
                 oldPage.name = name
             }
+            if oldPage.hub != hub {
+                oldPage.hub = hub
+            }
             if oldPage.notes != notes {
                 oldPage.notes = notes
             }
@@ -148,6 +159,7 @@ struct PageEditor: View {
     
     private func loadDataIntoEditor() {
         name = page.name
+        hub = page.hub
         notes = page.notes
         count  = page.count
         isChallenge = page.isChallenge

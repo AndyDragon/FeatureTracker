@@ -28,12 +28,22 @@ struct ContentView: View {
     @State private var confirmationAlertText = ""
     @State private var confirmationAlertAction: (() -> Void)? = nil
     @State private var showConfirmationAlert = false
-    @State private var iCloudActive = false;
+    @State private var iCloudActive = false
     @State private var iCloudError = ""
+    @State private var showBackupExporter = false
+    @State private var showRestoreImporter = false
+    @State private var backupDocument = BackupDocument()
     @AppStorage("pageSorting", store: .standard) private var pageSorting = PageSorting.name
     @ObservedObject private var syncMonitor = SyncMonitor.shared
 
     private let logger = SwiftyBeaver.self
+
+    private var fileNameDateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }
 
 #if STANDALONE
     private let appState: VersionCheckAppState
@@ -73,197 +83,84 @@ struct ContentView: View {
                             }
                         }
                         .navigationSplitViewColumnWidth(min: 280, ideal: 320)
-                        .toolbar {
-                            Button("Add page", systemImage: "plus", action: addPage)
-                                .disabled(viewModel.hasModalToasts)
-                                .help("Add a new page to the list")
-                            Menu("Sort", systemImage: "arrow.up.arrow.down") {
-                                Picker("Sort pages by", selection: $pageSorting) {
-                                    Text("Name").tag(PageSorting.name)
-                                    Text("Count").tag(PageSorting.count)
-                                    Text("Features").tag(PageSorting.features)
-                                }
-                                .pickerStyle(.inline)
-                            }
-                            .disabled(viewModel.hasModalToasts)
-                            .help("Change the sorting for the list of pages")
-                        }
-                    if CloudKitConfiguration.Enabled {
-                        HStack {
-                            Image(systemName: iCloudActive ? "arrow.triangle.2.circlepath.icloud" : syncMonitor.syncStateSummary.symbolName)
-                                .foregroundColor(iCloudActive ? .gray : syncMonitor.syncStateSummary.symbolColor)
-                                .symbolEffect(
-                                    .pulse,
-                                    options: iCloudActive || syncMonitor.syncStateSummary.inProgress ? .repeating.speed(3) : .default,
-                                    value: iCloudActive || syncMonitor.syncStateSummary.inProgress)
-                                .symbolRenderingMode(iCloudActive || syncMonitor.syncStateSummary.inProgress ? .hierarchical : .monochrome)
-                                .help(syncMonitor.syncError
-                                      ? (syncMonitor.syncStateSummary.description + " " + (syncMonitor.lastError?.localizedDescription ?? "unknown"))
-                                      : iCloudError.isEmpty ? syncMonitor.syncStateSummary.description : iCloudError)
-                            if showSyncAccountStatus {
-                                if case .accountNotAvailable = syncMonitor.syncStateSummary {
-                                    Text("Not logged into iCloud account, changes will not be synced to iCloud storage")
-                                }
-                            }
-                            Spacer()
-                        }
-                        .padding([.top], 4)
-                        .padding([.bottom], 16)
-                        .padding([.leading], 20)
-                        .task {
-                            do {
-                                try await Task.sleep(nanoseconds: 5_000_000_000)
-                                showSyncAccountStatus = true
-                            } catch {}
-                        }
-                    } else {
-                        HStack {
-                            Image(systemName: iCloudActive ? "arrow.triangle.2.circlepath.icloud" : "icloud")
-                                .foregroundColor(iCloudActive ? .gray : .green)
-                                .symbolEffect(.pulse, options: iCloudActive ? .repeating.speed(3) : .default, value: iCloudActive)
-                                .symbolRenderingMode(iCloudActive ? .hierarchical : .monochrome)
-                                .help(iCloudActive ?
-                                      "Busy with cloud sync" :
-                                        iCloudError.isEmpty ? "Cloud sync ready" : iCloudError)
-                            if iCloudActive {
-                                Text("iCloud storage active...")
-                            }
-                            Spacer()
-                        }
-                        .padding([.top], 4)
-                        .padding([.bottom], 16)
-                        .padding([.leading], 20)
-                    }
+
+                    CloudSyncView()
                 }
+            }
+            .toolbar {
+                Button("Add page", systemImage: "plus", action: addPage)
+                    .disabled(viewModel.hasModalToasts)
+                    .help("Add a new page to the list")
+                Menu("Sort", systemImage: "arrow.up.arrow.down") {
+                    Picker("Sort pages by", selection: $pageSorting) {
+                        Text("Name").tag(PageSorting.name)
+                        Text("Count").tag(PageSorting.count)
+                        Text("Features").tag(PageSorting.features)
+                    }
+                    .pickerStyle(.inline)
+                }
+                .disabled(viewModel.hasModalToasts)
+                .help("Change the sorting for the list of pages")
             }
         } detail: {
             ZStack {
                 VStack {
                     if let page = selectedPage {
-                        HStack(alignment: .top) {
-                            Spacer()
-                            VStack(alignment: .center) {
-                                let featuresCount = getFeatures()
-                                let totalFeaturesCount = getTotalFeatures()
-                                if (featuresCount != totalFeaturesCount) {
-                                    Text("Total features: \(featuresCount) (\(totalFeaturesCount))")
-                                        .lineLimit(1)
-                                        .truncationMode(.tail)
-                                        .foregroundColor(.blue)
-                                        .brightness(0.3)
-                                        .help("Total count including features which count more than one is \(totalFeaturesCount)")
-                                } else {
-                                    Text("Total features: \(featuresCount)")
-                                        .lineLimit(1)
-                                        .truncationMode(.tail)
-                                        .foregroundColor(.blue)
-                                        .brightness(0.3)
-                                }
-                            }
-                            Spacer()
-                            VStack(alignment: .center) {
-                                let pagesCount = getPages()
-                                let totalPagesCount = getTotalPages()
-                                if pagesCount != totalPagesCount {
-                                    Text("Total pages: \(pagesCount) (\(totalPagesCount))")
-                                        .lineLimit(1)
-                                        .truncationMode(.tail)
-                                        .foregroundColor(.blue)
-                                        .brightness(0.3)
-                                        .help("Total count including pages which count more than one is \(totalPagesCount)")
-                                } else {
-                                    Text("Total pages: \(pagesCount)")
-                                        .lineLimit(1)
-                                        .truncationMode(.tail)
-                                        .foregroundColor(.blue)
-                                        .brightness(0.3)
-                                }
-                            }
-                            Spacer()
-                            VStack(alignment: .center) {
-                                Text("Membership: \(getMembership())")
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .foregroundColor(.blue)
-                                    .brightness(0.3)
-                            }
-                            Spacer()
-                        }
-                        .padding([.leading, .trailing])
-                        .padding([.top], 6)
-                        .padding([.bottom], 7)
-                        .border(.black, edges: [.bottom], width: 1)
-                        .fontWeight(.bold)
-                        Spacer()
-                        PageEditor(page: page, selectedFeature: $selectedFeature, onDelete: {
-                            logger.verbose("Tapped delete page", context: "User")
-                            confirmationAlertTitle = "Confirm delete"
-                            confirmationAlertText = String {
-                                "Are you sure you want to delete this page / challenge?"
-                                "This cannot be undone."
-                            }
-                            confirmationAlertAction = {
-                                selectedFeature = nil
-                                selectedPage = nil
-                                modelContext.delete(page)
-                                viewModel.showSuccessToast("Deleted page/challenge!", "Removed the page or challenge and all the features")
-                                logger.verbose("Deleted the page", context: "System")
-                            }
-                            showConfirmationAlert.toggle()
-                        }, onDeleteFeature: { feature in
-                            logger.verbose("Tapped delete feature", context: "User")
-                            confirmationAlertTitle = "Confirm delete"
-                            confirmationAlertText = String {
-                                "Are you sure you want to delete this feature?"
-                                "This cannot be undone."
-                            }
-                            confirmationAlertAction = {
-                                selectedFeature = nil
-                                page.features!.remove(element: feature)
-                                viewModel.showSuccessToast("Deleted feature!", "Removed the feature")
-                                logger.verbose("Deleted the feature", context: "System")
-                            }
-                            showConfirmationAlert.toggle()
-                        }, onClose: {
-                            withAnimation {
-                                selectedFeature = nil
-                                selectedPage = nil
-                            }
-                        }, onCloseFeature: {
-                            withAnimation {
-                                selectedFeature = nil
-                            }
-                        })
+                        PageEditorView(page)
                     } else {
-                        VStack {
-                            Spacer()
-                            Text("Summary of features")
-                                .fontWeight(.bold)
-                                .font(.system(size: 36))
-                                .foregroundColor(.blue)
-                                .brightness(0.3)
-                                .padding([.bottom])
-                            Text(getFeaturesSummary())
-                                .fontWeight(.bold)
-                                .font(.system(size: 24))
-                                .padding([.bottom])
-                            Text(getPagesSummary())
-                                .fontWeight(.bold)
-                                .font(.system(size: 24))
-                                .padding([.bottom])
-                            Text(getMembershipSummary())
-                                .fontWeight(.black)
-                                .font(.system(size: 24))
-                            Spacer()
-                            Text("Select page from the list to edit")
-                                .foregroundColor(.gray)
-                            Spacer()
+                        ScrollView {
+                            VStack {
+                                TotalSummaryView()
+                                ForEach(getHubs().sorted(by: { getFeatures($0) > getFeatures($1) }), id: \.self) { hub in
+                                    HubSummaryView(hub)
+                                }
+                                Text("Select page from the list to edit")
+                                    .foregroundColor(.gray)
+                                Spacer()
+                            }
+                            .frame(maxWidth: .infinity)
                         }
                     }
                 }
+
+                // Restore importer
+                HStack { }
+                    .frame(width: 0, height: 0)
+                    .fileImporter(
+                        isPresented: $showRestoreImporter,
+                        allowedContentTypes: [.json]
+                    ) { result in
+                        switch result {
+                        case let .success(file):
+                            restoreFromFile(from: file)
+                        case let .failure(error):
+                            debugPrint(error.localizedDescription)
+                        }
+                    }
+                    .fileDialogConfirmationLabel("Open backup")
+
+                // Backup exporter
+                HStack { }
+                    .frame(width: 0, height: 0)
+                    .fileExporter(
+                        isPresented: $showBackupExporter,
+                        document: backupDocument,
+                        contentType: .json,
+                        defaultFilename: "Feature Tracker backup - \(fileNameDateFormatter.string(from: Date.now)).json"
+                    ) { result in
+                        switch result {
+                        case .success(_):
+                            logger.verbose("Saved the backup to file", context: "System")
+                            viewModel.showSuccessToast("Saved backup to file", "Save the backup of your features to the file")
+                        case let .failure(error):
+                            debugPrint(error.localizedDescription)
+                        }
+                    }
+                    .fileExporterFilenameLabel("Save backup as: ") // filename label
+                    .fileDialogConfirmationLabel("Save backup")
             }
             .toolbar {
-                Button("Populate defaults", action: {
+                MenuButton(action: {
                     logger.verbose("Tapped populate defaults", context: "User")
                     confirmationAlertTitle = "Confirm reset to defaults"
                     confirmationAlertText = String {
@@ -275,25 +172,43 @@ struct ContentView: View {
                         viewModel.showSuccessToast("Populated defaults!", "Restored the default list of pages")
                     }
                     showConfirmationAlert.toggle()
-                })
-                .disabled(viewModel.hasModalToasts)
-                .help("Populate the default list of pages")
-
-                Button("Generate report", systemImage: "menucard", action: generateReport)
+                }, text: "Populate defaults", systemImage: "lock.rotation")
                     .disabled(viewModel.hasModalToasts)
-                    .help("Generate a report of features for Snap Management")
+                    .help("Populate the default list of pages")
+
+                Menu("Report", systemImage: "menucard") {
+                    Section(header: Text("Hubs")) {
+                        ForEach(getHubs().sorted(by: <), id: \.self) { hub in
+                            MenuButton(action: { generateReportForHub(hub) }, text: "Generate report for \(hub.lowercased())", systemImage: "menucard.fill")
+                                .disabled(viewModel.hasModalToasts)
+                                .help("Generate a report of features for the \(hub) hub")
+                        }
+                    }
+                    Section(header: Text("Lone pages")) {
+                        ForEach(getLonePages().sorted(by: <), id: \.self) { page in
+                            MenuButton(action: { generateReportForPage(page) }, text: "Generate report for \(page.lowercased())", systemImage: "menucard")
+                                .disabled(viewModel.hasModalToasts)
+                                .help("Generate a report of features for the \(page) page")
+                        }
+                    }
+                }
+                .disabled(viewModel.hasModalToasts)
+                .help("Generate a report of features for a hub")
 
                 Menu("JSON", systemImage: "tray") {
                     Section(header: Text("Backup to:")) {
-                        Button(action: backup) {
-                            Label("Clipboard", systemImage: "tray.and.arrow.down")
-                        }
-                        Button(action: backupToCloud) {
-                            Label("iCloud Documents", systemImage: "icloud.and.arrow.up")
-                        }
+                        MenuButton(action: backup, text: "Clipboard", systemImage: "tray.and.arrow.down")
+                            .disabled(viewModel.hasModalToasts)
+                        MenuButton(action: {
+                            backupDocument = backupToFile()
+                            showBackupExporter.toggle()
+                        }, text: "File", systemImage: "arrow.up.document")
+                            .disabled(viewModel.hasModalToasts)
+                        MenuButton(action: backupToCloud, text: "iCloud documents", systemImage: "icloud.and.arrow.up")
+                            .disabled(viewModel.hasModalToasts)
                     }
                     Section(header: Text("Restore from:")) {
-                        Button(action: {
+                        MenuButton(action: {
                             confirmationAlertTitle = "Confirm restore"
                             confirmationAlertText = String {
                                 "Are you sure you want to restore from clipboard?"
@@ -303,10 +218,11 @@ struct ContentView: View {
                                 restore()
                             }
                             showConfirmationAlert.toggle()
-                        }) {
-                            Label("Clipboard", systemImage: "tray.and.arrow.up")
-                        }
-                        Button(action: {
+                        }, text: "Clipboard", systemImage: "tray.and.arrow.up")
+                            .disabled(viewModel.hasModalToasts)
+                        MenuButton(action: { showRestoreImporter.toggle() }, text: "File", systemImage: "arrow.down.document")
+                            .disabled(viewModel.hasModalToasts)
+                        MenuButton(action: {
                             confirmationAlertTitle = "Confirm restore"
                             confirmationAlertText = String {
                                 "Are you sure you want to restore from iCloud?"
@@ -316,12 +232,10 @@ struct ContentView: View {
                                 restoreFromCloud()
                             }
                             showConfirmationAlert.toggle()
-                        }) {
-                            Label("iCloud Documents", systemImage: "icloud.and.arrow.down")
-                        }
+                        }, text: "iCloud document", systemImage: "icloud.and.arrow.down")
+                            .disabled(viewModel.hasModalToasts)
                     }
                 }
-                .disabled(viewModel.hasModalToasts)
                 .help("Backup or restore the current features")
             }
         }
@@ -358,7 +272,7 @@ struct ContentView: View {
             },
             message: {
                 Text(getBackupOperationErrorMessage(backupOperation, exceptionError))
-                .accentColor(.red)
+                    .accentColor(.red)
             }
         )
         .task {
@@ -368,14 +282,245 @@ struct ContentView: View {
         }
     }
 
-    func getBackupOperationError(_ operation: BackupOperation) -> String {
+    fileprivate func CloudSyncView() -> some View {
+        VStack {
+            if CloudKitConfiguration.Enabled {
+                HStack {
+                    Image(systemName: iCloudActive ? "arrow.triangle.2.circlepath.icloud" : syncMonitor.syncStateSummary.symbolName)
+                        .foregroundColor(iCloudActive ? .gray : syncMonitor.syncStateSummary.symbolColor)
+                        .symbolEffect(
+                            .pulse,
+                            options: iCloudActive || syncMonitor.syncStateSummary.inProgress ? .repeating.speed(3) : .default,
+                            value: iCloudActive || syncMonitor.syncStateSummary.inProgress)
+                        .symbolRenderingMode(iCloudActive || syncMonitor.syncStateSummary.inProgress ? .hierarchical : .monochrome)
+                        .help(syncMonitor.syncError
+                            ? (syncMonitor.syncStateSummary.description + " " + (syncMonitor.lastError?.localizedDescription ?? "unknown"))
+                            : iCloudError.isEmpty ? syncMonitor.syncStateSummary.description : iCloudError)
+                    if showSyncAccountStatus {
+                        if case .accountNotAvailable = syncMonitor.syncStateSummary {
+                            Text("Not logged into iCloud account, changes will not be synced to iCloud storage")
+                        }
+                    }
+                    Spacer()
+                }
+                .padding([.top], 4)
+                .padding([.bottom], 16)
+                .padding([.leading], 20)
+                .task {
+                    do {
+                        try await Task.sleep(nanoseconds: 5000000000)
+                        showSyncAccountStatus = true
+                    } catch {}
+                }
+            } else {
+                HStack {
+                    Image(systemName: iCloudActive ? "arrow.triangle.2.circlepath.icloud" : "icloud")
+                        .foregroundColor(iCloudActive ? .gray : .green)
+                        .symbolEffect(.pulse, options: iCloudActive ? .repeating.speed(3) : .default, value: iCloudActive)
+                        .symbolRenderingMode(iCloudActive ? .hierarchical : .monochrome)
+                        .help(iCloudActive
+                            ? "Busy with cloud sync"
+                            : iCloudError.isEmpty
+                            ? "Cloud sync ready"
+                            : iCloudError)
+                    if iCloudActive {
+                        Text("iCloud storage active...")
+                    }
+                    Spacer()
+                }
+                .padding([.top], 4)
+                .padding([.bottom], 16)
+                .padding([.leading], 20)
+            }
+        }
+    }
+
+    fileprivate func PageEditorView(_ page: Page) -> some View {
+        VStack {
+            HStack(alignment: .top) {
+                Spacer()
+                VStack(alignment: .center) {
+                    let featuresCount = getFeatures(page.hub)
+                    let totalFeaturesCount = getTotalFeatures(page.hub)
+                    if featuresCount != totalFeaturesCount {
+                        Text("Total features: \(featuresCount) (\(totalFeaturesCount))")
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .foregroundColor(.blue)
+                            .brightness(0.3)
+                            .help("Total count including features which count more than one is \(totalFeaturesCount)")
+                    } else {
+                        Text("Total features: \(featuresCount)")
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .foregroundColor(.blue)
+                            .brightness(0.3)
+                    }
+                }
+                Spacer()
+                VStack(alignment: .center) {
+                    let pagesCount = getPages(page.hub)
+                    let totalPagesCount = getTotalPages(page.hub)
+                    if pagesCount != totalPagesCount {
+                        Text("Total pages: \(pagesCount) (\(totalPagesCount))")
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .foregroundColor(.blue)
+                            .brightness(0.3)
+                            .help("Total count including pages which count more than one is \(totalPagesCount)")
+                    } else {
+                        Text("Total pages: \(pagesCount)")
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .foregroundColor(.blue)
+                            .brightness(0.3)
+                    }
+                }
+                Spacer()
+                VStack(alignment: .center) {
+                    Text("Membership: \(getMembership(page.hub))")
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .foregroundColor(.blue)
+                        .brightness(0.3)
+                }
+                Spacer()
+            }
+            .padding([.leading, .trailing])
+            .padding([.top], 6)
+            .padding([.bottom], 7)
+            .border(.black, edges: [.bottom], width: 1)
+            .fontWeight(.bold)
+            Spacer()
+            PageEditor(page: page, selectedFeature: $selectedFeature, onDelete: {
+                logger.verbose("Tapped delete page", context: "User")
+                confirmationAlertTitle = "Confirm delete"
+                confirmationAlertText = String {
+                    "Are you sure you want to delete this page / challenge?"
+                    "This cannot be undone."
+                }
+                confirmationAlertAction = {
+                    selectedFeature = nil
+                    selectedPage = nil
+                    modelContext.delete(page)
+                    viewModel.showSuccessToast("Deleted page/challenge!", "Removed the page or challenge and all the features")
+                    logger.verbose("Deleted the page", context: "System")
+                }
+                showConfirmationAlert.toggle()
+            }, onDeleteFeature: { feature in
+                logger.verbose("Tapped delete feature", context: "User")
+                confirmationAlertTitle = "Confirm delete"
+                confirmationAlertText = String {
+                    "Are you sure you want to delete this feature?"
+                    "This cannot be undone."
+                }
+                confirmationAlertAction = {
+                    selectedFeature = nil
+                    page.features!.remove(element: feature)
+                    viewModel.showSuccessToast("Deleted feature!", "Removed the feature")
+                    logger.verbose("Deleted the feature", context: "System")
+                }
+                showConfirmationAlert.toggle()
+            }, onClose: {
+                withAnimation {
+                    selectedFeature = nil
+                    selectedPage = nil
+                }
+            }, onCloseFeature: {
+                withAnimation {
+                    selectedFeature = nil
+                }
+            })
+        }
+    }
+
+    fileprivate func HubSummaryView(_ hub: String) -> some View {
+        VStack {
+            Spacer()
+            Text("Summary of features for \(hub.uppercased())")
+                .fontWeight(.bold)
+                .font(.system(size: 20))
+                .foregroundColor(.blue)
+                .brightness(0.3)
+                .padding([.bottom], 8)
+            Text(getFeaturesSummary(hub))
+                .fontWeight(.bold)
+                .font(.system(size: 16))
+                .padding([.bottom], 8)
+            Text(getPagesSummary(hub))
+                .fontWeight(.bold)
+                .font(.system(size: 16))
+                .padding([.bottom], 8)
+            if hasMembershipLevels(hub) {
+                Text(getMembershipSummary(hub))
+                    .fontWeight(.black)
+                    .font(.system(size: 16))
+            }
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(4)
+        .padding()
+    }
+
+    fileprivate func TotalSummaryView() -> some View {
+        VStack {
+            Spacer()
+            Text("Summary of all features")
+                .fontWeight(.bold)
+                .font(.system(size: 20))
+                .foregroundColor(.blue)
+                .brightness(0.3)
+                .padding([.bottom], 8)
+            Text(getFeaturesSummary())
+                .fontWeight(.bold)
+                .font(.system(size: 16))
+                .padding([.bottom], 8)
+            Text(getPagesSummary())
+                .fontWeight(.bold)
+                .font(.system(size: 16))
+                .padding([.bottom], 8)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(4)
+        .padding()
+    }
+
+    private func getHubs() -> Set<String> {
+        var hubs = Set<String>()
+        pages.forEach { page in
+            if !page.hub.isEmpty && !hubs.contains(page.hub) && getFeatures(page.hub) != 0 {
+                hubs.insert(page.hub.lowercased())
+            }
+        }
+        return hubs
+    }
+
+    private func getLonePages() -> Set<String> {
+        var lonePages = Set<String>()
+        pages.forEach { page in
+            if page.hub.isEmpty && page.features!.count != 0 {
+                lonePages.insert(page.name.lowercased())
+            }
+        }
+        return lonePages
+    }
+
+    private func getBackupOperationError(_ operation: BackupOperation) -> String {
         switch operation {
         case .backup:
             return "ERROR: Failed to backup"
+        case .fileBackup:
+            return "ERROR: Failed to backup to file"
         case .cloudBackup:
             return "ERROR: Failed to backup to your iCloud"
         case .restore:
             return "ERROR: Failed to restore"
+        case .fileRestore:
+            return "ERROR: Failed to restore from file"
         case .cloudRestore:
             return "ERROR: Failed to restore from your iCloud"
         case .none:
@@ -384,14 +529,18 @@ struct ContentView: View {
         return "ERROR"
     }
 
-    func getBackupOperationErrorMessage(_ operation: BackupOperation, _ message: String) -> String {
+    private func getBackupOperationErrorMessage(_ operation: BackupOperation, _ message: String) -> String {
         switch operation {
         case .backup:
             return "Could to backup to the clipboard: \(message)"
+        case .fileBackup:
+            return "Could to backup to the file: \(message)"
         case .cloudBackup:
             return "Could to backup to your iCloud documents: \(message)"
         case .restore:
             return "Could to restore from the clipboard: \(message)"
+        case .fileRestore:
+            return "Could to restore from the file: \(message)"
         case .cloudRestore:
             return "Could to restore from your iCloud documents: \(message)"
         case .none:
@@ -400,73 +549,142 @@ struct ContentView: View {
         return message
     }
 
-    func addPage() -> Void {
+    private func addPage() {
         logger.verbose("Tapped to add page", context: "User")
         withAnimation {
-            let newPage = Page(id: UUID(), name: "new page")
+            let newPage = Page(id: UUID(), name: "new page", hub: "")
             modelContext.insert(newPage)
             selectedPage = newPage
             logger.verbose("Added new page", context: "System")
         }
     }
 
-    func getFeatures() -> Int {
+    private func getFeatures(_ hub: String? = nil) -> Int {
         var total = 0
         for page in pages {
-            total += page.features!.count
+            if let hub {
+                if page.hub.lowercased() == hub.lowercased() {
+                    total += page.features!.count
+                }
+            } else {
+                total += page.features!.count
+            }
         }
         return total
     }
 
-    func getTotalFeatures() -> Int {
+    private func getTotalFeatures(_ hub: String? = nil) -> Int {
         var total = 0
         for page in pages {
-            total += page.features!.count * page.count
+            if let hub {
+                if page.hub.lowercased() == hub.lowercased() {
+                    total += page.features!.count * page.count
+                }
+            } else {
+                total += page.features!.count * page.count
+            }
         }
         return total
     }
 
-    func getPages() -> Int {
+    private func getPages(_ hub: String? = nil) -> Int {
         var total = 0
         for page in pages {
-            total += page.features!.isEmpty ? 0 : 1
+            if let hub {
+                if page.hub.lowercased() == hub.lowercased() {
+                    total += page.features!.isEmpty ? 0 : 1
+                }
+            } else {
+                total += page.features!.isEmpty ? 0 : 1
+            }
         }
         return total
     }
 
-    func getTotalPages() -> Int {
+    private func getTotalPages(_ hub: String? = nil) -> Int {
         var total = 0
         for page in pages {
-            total += page.features!.isEmpty ? 0 : page.count
+            if let hub {
+                if page.hub.lowercased() == hub.lowercased() {
+                    total += page.features!.isEmpty ? 0 : page.count
+                }
+            } else {
+                total += page.features!.isEmpty ? 0 : page.count
+            }
         }
         return total
     }
 
-    func getMembership() -> String {
-        let features = getTotalFeatures()
-        let pages = getTotalPages()
-        if (features < 5) {
-            return "Artist"
+    private func getMembership(_ hub: String) -> String {
+        let features = getTotalFeatures(hub)
+        let pages = getTotalPages(hub)
+
+        if hub == "snap" {
+            if features < 5 {
+                return "Artist"
+            }
+            if features < 15 {
+                return "Member"
+            }
+            if pages < 15 {
+                return "VIP Member"
+            }
+            if pages < 35 {
+                return "VIP Gold Member"
+            }
+            if pages < 55 {
+                return "Platinum Member"
+            }
+            if pages < 80 {
+                return "Elite Member"
+            }
+            return "Hall of Fame Member"
         }
-        if (features < 15) {
-            return "Member"
-        }
-        if (pages < 15) {
-            return "VIP Member"
-        }
-        if (pages < 35) {
-            return "VIP Gold Member"
-        }
-        if (pages < 55) {
+
+        if hub == "click" {
+            if features < 5 {
+                return "Artist"
+            }
+            if features < 15 {
+                return "Bronze member"
+            }
+            if features < 30 {
+                return "Silver Member"
+            }
+            if features < 50 {
+                return "Gold Member"
+            }
             return "Platinum Member"
         }
-        if (pages < 80) {
-            return "Elite Member"
-        }
-        return "Hall of Fame Member"
+
+        return "Artist"
     }
 
-    func copyToClipboard(_ text: String) -> Void {
+    private func hasMembershipLevels(_ hub: String) -> Bool {
+        hub == "snap" || hub == "click"
+    }
+
+    private func getFeaturesForPage(_ lonePage: String? = nil) -> Int {
+        var total = 0
+        for page in pages {
+            if page.name.lowercased() == lonePage?.lowercased() {
+                total += page.features!.count
+            }
+        }
+        return total
+    }
+
+    private func getTotalFeaturesForPage(_ lonePage: String? = nil) -> Int {
+        var total = 0
+        for page in pages {
+            if page.name.lowercased() == lonePage?.lowercased() {
+                total += page.features!.count * page.count
+            }
+        }
+        return total
+    }
+
+    private func copyToClipboard(_ text: String) {
 #if os(iOS)
         UIPasteboard.general.string = text
 #else
@@ -476,47 +694,58 @@ struct ContentView: View {
 #endif
     }
 
-    func getStringForCount(_ count: Int, _ countLabel: String) -> String {
+    private func getStringForCount(_ count: Int, _ countLabel: String) -> String {
         if count == 1 {
             return "\(count) \(countLabel)"
         }
         return "\(count) \(countLabel)s"
     }
 
-    func getFeaturesSummary() -> String {
-        let featuresCount = getFeatures()
-        let totalFeaturesCount = getTotalFeatures()
-        if (featuresCount != totalFeaturesCount) {
+    private func getFeaturesSummary(_ hub: String? = nil) -> String {
+        let featuresCount = getFeatures(hub)
+        let totalFeaturesCount = getTotalFeatures(hub)
+        if featuresCount != totalFeaturesCount && hub != nil {
             return "Total features: \(featuresCount) (counts as \(totalFeaturesCount))"
         }
         return "Total features: \(featuresCount)"
     }
 
-    func getPagesSummary() -> String {
-        let pagesCount = getPages()
-        let totalPagesCount = getTotalPages()
-        if (pagesCount != totalPagesCount) {
+    private func getFeaturesSummaryForPage(_ lonePage: String? = nil) -> String {
+        let featuresCount = getFeaturesForPage(lonePage)
+        let totalFeaturesCount = getTotalFeaturesForPage(lonePage)
+        if featuresCount != totalFeaturesCount {
+            return "Total features: \(featuresCount) (counts as \(totalFeaturesCount))"
+        }
+        return "Total features: \(featuresCount)"
+    }
+
+    private func getPagesSummary(_ hub: String? = nil) -> String {
+        let pagesCount = getPages(hub)
+        let totalPagesCount = getTotalPages(hub)
+        if pagesCount != totalPagesCount && hub != nil {
             return "Total pages with features: \(pagesCount) (counts as \(totalPagesCount))"
         }
         return "Total pages with features: \(pagesCount)"
     }
 
-    func getMembershipSummary() -> String {
-        return "Membership level: \(getMembership())"
+    private func getMembershipSummary(_ hub: String) -> String {
+        return "Membership level: \(getMembership(hub))"
     }
 
-    func generateReport() -> Void {
+    private func generateReportForHub(_ hub: String) {
         logger.verbose("Tapped generate report", context: "User")
         var lines = [String]()
-        lines.append("Report of features")
-        lines.append("------------------")
+        lines.append("Report of features for \(hub.capitalized)")
+        lines.append("-" * (23 + hub.count))
         lines.append("")
-        lines.append(getFeaturesSummary())
+        lines.append(getFeaturesSummary(hub))
         lines.append("")
-        lines.append(getPagesSummary())
-        lines.append("")
-        lines.append(getMembershipSummary())
-        for page in pages.sorted(by: { left, right in
+        lines.append(getPagesSummary(hub))
+        if hasMembershipLevels(hub) {
+            lines.append("")
+            lines.append(getMembershipSummary(hub))
+        }
+        for page in pages.filter({ $0.hub.lowercased() == hub.lowercased() }).sorted(by: { left, right in
             if pageSorting == .name {
                 return left.name < right.name
             } else if pageSorting == .count {
@@ -528,20 +757,23 @@ struct ContentView: View {
                 if left.features?.count == right.features?.count {
                     return left.name < right.name
                 }
-                return (left.features?.count ?? 0) > (right.features?.count ?? 0);
+                return (left.features?.count ?? 0) > (right.features?.count ?? 0)
             }
             return left.name < right.name
         }) {
             if page.features!.count > 0 {
                 lines.append("")
                 if page.count != 1 {
-                    lines.append("Page: \(page.name.uppercased()) - \(getStringForCount(page.features!.count, "feature")) (counts as \(page.features!.count * page.count))")
+                    lines.append("Page: \(page.hub.lowercased())_\(page.name.lowercased()) - \(getStringForCount(page.features!.count, "feature")) (counts as \(page.features!.count * page.count))")
                 } else {
-                    lines.append("Page: \(page.name.uppercased()) - \(getStringForCount(page.features!.count, "feature"))")
+                    lines.append("Page: \(page.hub.lowercased())_\(page.name.lowercased()) - \(getStringForCount(page.features!.count, "feature"))")
                 }
                 for feature in page.features!.sorted(by: { $0.date > $1.date }) {
-                    lines.append("\tFeature: \(feature.date.formatted(date: .complete, time: .omitted)) on \(feature.raw ? "RAW" : "Snap"):")
-                    lines.append("\t\t\(feature.notes)")
+                    if hub.lowercased() == "snap" {
+                        lines.append("    Feature: \(feature.date.formatted(date: .complete, time: .omitted))\(feature.raw ? " [RAW]" : "") - \(feature.notes)")
+                    } else {
+                        lines.append("    Feature: \(feature.date.formatted(date: .complete, time: .omitted)) - \(feature.notes)")
+                    }
                 }
             }
         }
@@ -552,15 +784,37 @@ struct ContentView: View {
         logger.verbose("Generated report", context: "System")
     }
 
-    func backup() -> Void {
+    private func generateReportForPage(_ lonePage: String) {
+        logger.verbose("Tapped generate report", context: "User")
+        var lines = [String]()
+        lines.append("Report of features for \(lonePage.lowercased())")
+        lines.append("-" * (23 + lonePage.count))
+        lines.append("")
+        lines.append(getFeaturesSummaryForPage(lonePage))
+        if let page = pages.first(where: { $0.name.lowercased() == lonePage.lowercased() }) {
+            if page.features!.count > 0 {
+                lines.append("")
+                for feature in page.features!.sorted(by: { $0.date > $1.date }) {
+                    lines.append("Feature: \(feature.date.formatted(date: .complete, time: .omitted)) - \(feature.notes)")
+                }
+            }
+        }
+        var text = ""
+        for line in lines { text = text + line + "\n" }
+        copyToClipboard(text)
+        viewModel.showSuccessToast("Report generated!", "Copied the report of features to the clipboard")
+        logger.verbose("Generated report", context: "System")
+    }
+
+    private func backup() {
         logger.verbose("Tapped backup to clipboard", context: "User")
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
             encoder.dateEncodingStrategy = .iso8601
             var codablePages = [CodablePage]()
-            codablePages.append(contentsOf: pages.sorted(by: { $0.name < $1.name }).map({ page in
-                return CodablePage(page)
+            codablePages.append(contentsOf: pages.sorted(by: { "\($0.hub)_\($0.name)".lowercased() < "\($1.hub)_\($1.name)".lowercased() }).map({ page in
+                CodablePage(page)
             }))
             let json = try encoder.encode(codablePages)
             copyToClipboard(String(decoding: json, as: UTF8.self))
@@ -574,7 +828,18 @@ struct ContentView: View {
         }
     }
 
-    func backupToCloud() -> Void {
+    private func backupToFile() -> BackupDocument {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+        encoder.dateEncodingStrategy = .iso8601
+        var codablePages = [CodablePage]()
+        codablePages.append(contentsOf: pages.sorted(by: { "\($0.hub)_\($0.name)".lowercased() < "\($1.hub)_\($1.name)".lowercased() }).map({ page in
+            CodablePage(page)
+        }))
+        return BackupDocument(pages: codablePages)
+    }
+
+    private func backupToCloud() {
         withAnimation {
             iCloudActive = true
         }
@@ -585,8 +850,8 @@ struct ContentView: View {
                 encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
                 encoder.dateEncodingStrategy = .iso8601
                 var codablePages = [CodablePage]()
-                codablePages.append(contentsOf: pages.sorted(by: { $0.name < $1.name }).map({ page in
-                    return CodablePage(page)
+                codablePages.append(contentsOf: pages.sorted(by: { "\($0.hub)_\($0.name)".lowercased() < "\($1.hub)_\($1.name)".lowercased() }).map({ page in
+                    CodablePage(page)
                 }))
                 let json = try encoder.encode(codablePages)
                 if let containerUrl = FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents") {
@@ -602,7 +867,7 @@ struct ContentView: View {
                         logger.verbose("Backed up to iCloud", context: "System")
                     })
                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: { @MainActor in
-                        if (iCloudActive) {
+                        if iCloudActive {
                             withAnimation {
                                 iCloudActive.toggle()
                             }
@@ -618,7 +883,7 @@ struct ContentView: View {
         })
     }
 
-    func showCloudBackupErrorToast(_ message: String) {
+    private func showCloudBackupErrorToast(_ message: String) {
         logger.error("Failed to backup to iCloud: \(message)", context: "System")
         debugPrint("iCloud backup failed: \(message)")
         exceptionError = message
@@ -628,7 +893,7 @@ struct ContentView: View {
         showingBackupRestoreErrorAlert.toggle()
     }
 
-    func restore() -> Void {
+    private func restore() {
         logger.verbose("Tapped restore from clipboard", context: "User")
         do {
             let pasteBoard = NSPasteboard.general
@@ -659,13 +924,15 @@ struct ContentView: View {
                         "Could not remove all the existing records before doing the restore (\(error.localizedDescription)), the database is likely in invalid state")
                     return
                 }
-                let pages = SchemaV2.collatePages(codablePages.map({ $0.toPage() }))
+                let pages = SchemaV3.collatePages(codablePages.map({ $0.toPage() }))
                 for page in pages {
                     modelContext.insert(page)
                 }
                 try? modelContext.save()
                 logger.verbose("Restored from clipboard", context: "System")
-                viewModel.showSuccessToast("Restored!", "Restored the items from the clipboard")
+                let featureCount = getFeatures()
+                let pageCount = getPages()
+                viewModel.showSuccessToast("Restored!", "Restored the items from the clipboard, \(pageCount) pages and \(featureCount) features restored.")
             }
         } catch let DecodingError.dataCorrupted(context) {
             showRestoreErrorToast(context.debugDescription)
@@ -680,7 +947,7 @@ struct ContentView: View {
         }
     }
 
-    func showRestoreErrorToast(_ message: String) {
+    private func showRestoreErrorToast(_ message: String) {
         logger.error("Failed to restore from clipboard: \(message)", context: "System")
         debugPrint("iCloud restore failed: \(message)")
         exceptionError = message
@@ -688,7 +955,88 @@ struct ContentView: View {
         showingBackupRestoreErrorAlert.toggle()
     }
 
-    func restoreFromCloud() -> Void {
+    private func restoreFromFile(from fileUrl: URL) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1), execute: { @MainActor in
+            logger.verbose("Tapped restore from file", context: "User")
+            let gotAccess = fileUrl.startAccessingSecurityScopedResource()
+            if !gotAccess {
+                logger.error("Failed to access the file to restore", context: "System")
+                viewModel.showToast(.error, "Could not access file", "Could not access the file to restore the features")
+                return
+            }
+            do {
+                let fileContents = FileManager.default.contents(atPath: fileUrl.path)
+                if let json = fileContents {
+                    let decoder = JSONDecoder()
+                    decoder.dateDecodingStrategy = .iso8601
+                    let codablePages = try decoder.decode([CodablePage].self, from: json)
+                    if codablePages.count != 0 {
+                        do {
+                            try modelContext.transaction {
+                                try modelContext.delete(model: Page.self)
+                            }
+                            let count = try modelContext.fetchCount(FetchDescriptor<Page>())
+                            if count > 0 {
+                                logger.error("Failed to delete all the existing records during restore, there were some records left", context: "System")
+                                fileUrl.stopAccessingSecurityScopedResource()
+                                viewModel.showToast(
+                                    .error,
+                                    "Restore failed!",
+                                    "Could not remove all the existing records before doing the restore (remaining items), the database is likely in invalid state")
+                                return
+                            }
+                        } catch {
+                            logger.error("Failed to delete all the existing records during restore", context: "System")
+                            debugPrint(error.localizedDescription)
+                            fileUrl.stopAccessingSecurityScopedResource()
+                            viewModel.showToast(
+                                .error,
+                                "Restore failed!",
+                                "Could not remove all the existing records before doing the restore (\(error.localizedDescription)), the database is likely in invalid state")
+                            return
+                        }
+                        let pages = SchemaV3.collatePages(codablePages.map({ $0.toPage() }))
+                        for page in pages {
+                            modelContext.insert(page)
+                        }
+                        try? modelContext.save()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: { @MainActor in
+                            let featureCount = getFeatures()
+                            let pageCount = getPages()
+                            viewModel.showSuccessToast("Restored from file!", "Restored the items from the file, \(pageCount) pages and \(featureCount) features restored.")
+                            logger.verbose("Restored from file", context: "System")
+                        })
+                    } else {
+                        showFileRestoreErrorToast("No pages found in the backup")
+                    }
+                } else {
+                    showFileRestoreErrorToast("No pages loaded from the backup")
+                }
+            } catch let DecodingError.dataCorrupted(context) {
+                showFileRestoreErrorToast(context.debugDescription)
+            } catch let DecodingError.keyNotFound(key, context) {
+                showFileRestoreErrorToast("Key '\(key)' not found:" + context.debugDescription)
+            } catch let DecodingError.valueNotFound(value, context) {
+                showFileRestoreErrorToast("Value '\(value)' not found:" + context.debugDescription)
+            } catch let DecodingError.typeMismatch(type, context) {
+                showFileRestoreErrorToast("Type '\(type)' mismatch:" + context.debugDescription)
+            } catch {
+                showFileRestoreErrorToast(error.localizedDescription)
+            }
+            fileUrl.stopAccessingSecurityScopedResource()
+        })
+    }
+
+    private func showFileRestoreErrorToast(_ message: String) {
+        logger.error("Failed to restore from file: \(message)", context: "System")
+        debugPrint("File restore failed: \(message)")
+        exceptionError = message
+        iCloudError = exceptionError
+        backupOperation = .fileRestore
+        showingBackupRestoreErrorAlert.toggle()
+    }
+
+    private func restoreFromCloud() {
         withAnimation {
             iCloudActive = true
         }
@@ -727,17 +1075,19 @@ struct ContentView: View {
                                             "Could not remove all the existing records before doing the restore (\(error.localizedDescription)), the database is likely in invalid state")
                                         return
                                     }
-                                    let pages = SchemaV2.collatePages(codablePages.map({ $0.toPage() }))
+                                    let pages = SchemaV3.collatePages(codablePages.map({ $0.toPage() }))
                                     for page in pages {
                                         modelContext.insert(page)
                                     }
                                     try? modelContext.save()
                                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: { @MainActor in
-                                        viewModel.showSuccessToast("Restored from iCloud!", "Restored the items from your iCloud")
+                                        let featureCount = getFeatures()
+                                        let pageCount = getPages()
+                                        viewModel.showSuccessToast("Restored from iCloud!", "Restored the items from your iCloud, \(pageCount) pages and \(featureCount) features restored.")
                                         logger.verbose("Restored from iCloud", context: "System")
                                     })
                                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: { @MainActor in
-                                        if (iCloudActive) {
+                                        if iCloudActive {
                                             withAnimation {
                                                 iCloudActive.toggle()
                                             }
@@ -772,8 +1122,8 @@ struct ContentView: View {
         })
     }
 
-    func showCloudRestoreErrorToast(_ message: String) {
-        logger.error("Failed to restore from clipboard: \(message)", context: "System")
+    private func showCloudRestoreErrorToast(_ message: String) {
+        logger.error("Failed to restore from iCloud document: \(message)", context: "System")
         debugPrint("iCloud restore failed: \(message)")
         exceptionError = message
         iCloudError = exceptionError
@@ -782,7 +1132,7 @@ struct ContentView: View {
         showingBackupRestoreErrorAlert.toggle()
     }
 
-    func populateDefaultPages() -> Void {
+    private func populateDefaultPages() {
         do {
             try modelContext.delete(model: Page.self)
             let count = try modelContext.fetchCount(FetchDescriptor<Page>())
@@ -796,10 +1146,15 @@ struct ContentView: View {
             }
         } catch {
             logger.error("Failed to reset the store: \(error.localizedDescription)", context: "System")
-            // TODO andydragon : should we show an alert and stop this reset?
+            viewModel.showToast(
+                .error,
+                "Failed to reset the store!",
+                "Could not remove all the existing records before doing the populate, the database is likely in invalid state")
+            return
         }
-        // Add regular pages.
-        let singleFeaturePages = [
+
+        // Add regular snap pages.
+        let singleFeaturePagesForSnap = [
             "abandoned",
             "abstract",
             "africa",
@@ -891,11 +1246,40 @@ struct ContentView: View {
             "world",
             "writings",
         ]
-        for pageName in singleFeaturePages {
-            modelContext.insert(Page(id: UUID(), name: pageName))
+        for pageName in singleFeaturePagesForSnap {
+            modelContext.insert(Page(id: UUID(), name: pageName, hub: "snap"))
         }
+
         // Add the multi-count features.
-        modelContext.insert(Page(id: UUID(), name: "papanoel", count: 3))
+        modelContext.insert(Page(id: UUID(), name: "papanoel", hub: "snap", count: 3))
+        for pageName in singleFeaturePagesForSnap {
+            modelContext.insert(Page(id: UUID(), name: pageName, hub: "snap"))
+        }
+
+        // Add regular click pages.
+        let singleFeaturePagesForClick = [
+            "astro",
+            "dogs",
+            "machines",
+        ]
+        for pageName in singleFeaturePagesForClick {
+            modelContext.insert(Page(id: UUID(), name: pageName, hub: "click"))
+        }
+
+        // Add regular podium pages.
+        let singleFeaturePagesForPodium = [
+            "podium",
+            "macro",
+            "mono",
+            "night",
+            "portraits",
+            "street",
+            "wildlife",
+        ]
+        for pageName in singleFeaturePagesForPodium {
+            modelContext.insert(Page(id: UUID(), name: pageName, hub: "podium"))
+        }
+
         try? modelContext.save()
         logger.verbose("Populated the defaults", context: "System")
     }

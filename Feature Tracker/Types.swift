@@ -15,8 +15,10 @@ struct CloudKitConfiguration {
 enum BackupOperation: CaseIterable {
     case none,
          backup,
+         fileBackup,
          cloudBackup,
          restore,
+         fileRestore,
          cloudRestore
 }
 

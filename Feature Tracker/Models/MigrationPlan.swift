@@ -13,13 +13,15 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
         [
             SchemaV1.self,
-            SchemaV2.self
+            SchemaV2.self,
+            SchemaV3.self
         ]
     }
 
     static var stages: [MigrationStage] {
         [
-            migrateV1toV2
+            migrateV1toV2,
+            migrateV2toV3
         ]
     }
 
@@ -163,9 +165,30 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
             SwiftyBeaver.self.info("Completed migration state V1 to V2...", context: "Data")
         },
         didMigrate: nil)
+
+    static let migrateV2toV3 = MigrationStage.custom(
+        fromVersion: SchemaV2.self,
+        toVersion: SchemaV3.self,
+        willMigrate: nil,
+        didMigrate: { context in
+            SwiftyBeaver.self.info("Running migration state V2 to V3...", context: "Data")
+            var pages = try? context.fetch(FetchDescriptor<SchemaV3.Page>())
+            var idUsed = Set<UUID>()
+
+            // Check for pages with missing hubs
+            pages?.forEach { page in
+                if page.hub.isEmpty {
+                    page.hub = "snap"
+                }
+            }
+
+            // Save the updated DB
+            try context.save()
+            SwiftyBeaver.self.info("Completed migration state V2 to V3...", context: "Data")
+        })
 }
 
-extension SchemaV2 {
+extension SchemaV3 {
     static func collatePages(_ sourcePages: [Page]?) -> [Page] {
         SwiftyBeaver.self.info("Running page collation process...", context: "Data")
         var idUsed = Set<UUID>()

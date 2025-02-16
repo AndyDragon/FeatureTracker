@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		491434422B7FED6E0031FC0D /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 491434412B7FED6E0031FC0D /* Types.swift */; };
 		4918AC222B7C25770078BC00 /* CloudKitSyncMonitor in Frameworks */ = {isa = PBXBuildFile; productRef = 4918AC212B7C25770078BC00 /* CloudKitSyncMonitor */; };
+		492F95B42D6283E50093C532 /* MenuButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 492F95B32D6283E50093C532 /* MenuButton.swift */; };
+		492F95B62D628B960093C532 /* BackupDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 492F95B52D628B960093C532 /* BackupDocument.swift */; };
 		493E4E842B97D59400C30717 /* SwiftDataKit in Frameworks */ = {isa = PBXBuildFile; productRef = 493E4E832B97D59400C30717 /* SwiftDataKit */; };
 		493E4E862B97DE3100C30717 /* DataProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 493E4E852B97DE3100C30717 /* DataProvider.swift */; };
 		494202B32B745BEC00227660 /* FeatureTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494202B22B745BEC00227660 /* FeatureTrackerApp.swift */; };
@@ -35,6 +37,8 @@
 
 /* Begin PBXFileReference section */
 		491434412B7FED6E0031FC0D /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
+		492F95B32D6283E50093C532 /* MenuButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuButton.swift; sourceTree = "<group>"; };
+		492F95B52D628B960093C532 /* BackupDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupDocument.swift; sourceTree = "<group>"; };
 		493E4E852B97DE3100C30717 /* DataProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataProvider.swift; sourceTree = "<group>"; };
 		494202AF2B745BEC00227660 /* Feature Tracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Feature Tracker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		494202B22B745BEC00227660 /* FeatureTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTrackerApp.swift; sourceTree = "<group>"; };
@@ -112,6 +116,7 @@
 				49B4C4A82B7C4E6D0068B8C9 /* FeatureEditor.swift */,
 				493E4E852B97DE3100C30717 /* DataProvider.swift */,
 				49B4C4AA2B7C53330068B8C9 /* Helpers.swift */,
+				492F95B52D628B960093C532 /* BackupDocument.swift */,
 				491434412B7FED6E0031FC0D /* Types.swift */,
 				49A6DA7C2B8295680008A319 /* VersionCheckAppState.swift */,
 				494202B62B745BED00227660 /* Assets.xcassets */,
@@ -119,6 +124,7 @@
 				494202BB2B745BED00227660 /* FeatureTracker.entitlements */,
 				49F357502D5052A1006F8293 /* Standalone.xcconfig */,
 				494202B82B745BED00227660 /* Preview Content */,
+				492F95B32D6283E50093C532 /* MenuButton.swift */,
 			);
 			path = "Feature Tracker";
 			sourceTree = "<group>";
@@ -240,6 +246,7 @@
 				49FE12392D330DEE0018C3DE /* ContentView+ViewModel.swift in Sources */,
 				49FE123A2D330DEE0018C3DE /* View+Extensions.swift in Sources */,
 				49FE123B2D330DEE0018C3DE /* AdvancedToastModifiers.swift in Sources */,
+				492F95B62D628B960093C532 /* BackupDocument.swift in Sources */,
 				494202C82B74798100227660 /* Feature.swift in Sources */,
 				49B4C4A92B7C4E6D0068B8C9 /* FeatureEditor.swift in Sources */,
 				494202B52B745BEC00227660 /* ContentView.swift in Sources */,
@@ -251,6 +258,7 @@
 				49A6DA7E2B8295680008A319 /* VersionCheckAppState.swift in Sources */,
 				494202CC2B747FC300227660 /* FeatureListing.swift in Sources */,
 				494202C22B745C4200227660 /* Page.swift in Sources */,
+				492F95B42D6283E50093C532 /* MenuButton.swift in Sources */,
 				494202C42B7464DC00227660 /* PageEditor.swift in Sources */,
 				493E4E862B97DE3100C30717 /* DataProvider.swift in Sources */,
 			);
@@ -389,7 +397,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 25;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -405,7 +413,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.andydragon.FeatureTracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -424,7 +432,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 25;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -440,7 +448,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.andydragon.FeatureTracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -517,7 +525,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 25;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -533,7 +541,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.andydragon.FeatureTracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

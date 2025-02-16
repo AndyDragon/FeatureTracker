@@ -202,6 +202,10 @@ public extension String {
     init(@StringBuilder _ builder: () -> String) {
         self.init(builder())
     }
+
+    static func * (str: String, repeatTimes: Int) -> String {
+        return String(repeating: str, count: repeatTimes)
+    }
 }
 
 public extension Color {
