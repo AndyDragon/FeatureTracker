@@ -18,15 +18,22 @@ import {
     applicationName,
     deploymentWebLocation,
     hasTutorial,
+    versionLocation,
     showMacInfo,
     macReleaseNotesLocation,
-    versionLocation,
     showWindowsInfo,
     windowsReleaseNotesLocation,
+    showIosInfo,
+    iosReleaseNotesLocation,
+    PlatformLocation,
+    showAndroidInfo,
+    androidReleaseNotesLocation,
+    platformString,
 } from "./config";
 import About from "./About";
 import General from "./General";
 import ReleaseNotes from "./ReleaseNotes";
+import Support from "./Support";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 import Tutorial from "./Tutorial";
 
@@ -72,12 +79,19 @@ function App() {
                     </DrawerHeader>
                     <DrawerBody style={{ marginTop: "40px"}}>
                         <nav>
-                            <Link className={styles.cleanLink} style={{ fontSize: "20pt", marginTop: "40px" }} to="/">
-                                About
-                            </Link>
-                            {showMacInfo && (
+                            <div style={{ display: "flex", flexDirection: "column", marginTop: "0px" }}>
+                                <Link className={styles.cleanLink} style={{ fontSize: "20pt", marginTop: "40px" }} to="/">
+                                    About
+                                </Link>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", marginTop: "0px" }}>
+                                <Link className={styles.cleanLink} style={{ fontSize: "20pt", marginTop: "40px" }} to="/support">
+                                    Support
+                                </Link>
+                            </div>
+                            {(showMacInfo !== PlatformLocation.DoNotShow) && (
                             <div style={{ display: "flex", flexDirection: "column", marginTop: "32px" }}>
-                                <Title3>macOS</Title3>
+                                <Title3>{platformString["macOS"]}</Title3>
                                 <div style={{ marginLeft: "20px", display: "flex", flexDirection: "column" }}>
                                     <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/macInstall">
                                         Install
@@ -88,14 +102,40 @@ function App() {
                                 </div>
                             </div>
                             )}
-                            {showWindowsInfo && (
+                            {(showIosInfo !== PlatformLocation.DoNotShow) && (
                             <div style={{ display: "flex", flexDirection: "column", marginTop: "32px" }}>
-                                <Title3>Windows</Title3>
+                                <Title3>{platformString["iOS"]}</Title3>
+                                <div style={{ marginLeft: "20px", display: "flex", flexDirection: "column" }}>
+                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/iosInstall">
+                                        Install
+                                    </Link>
+                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 0 0" }} to="/iosReleaseNotes">
+                                        Release notes
+                                    </Link>
+                                </div>
+                            </div>
+                            )}
+                            {(showWindowsInfo !== PlatformLocation.DoNotShow) && (
+                            <div style={{ display: "flex", flexDirection: "column", marginTop: "32px" }}>
+                                <Title3>{platformString["windows"]}</Title3>
                                 <div style={{ marginLeft: "20px", display: "flex", flexDirection: "column" }}>
                                     <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/windowsInstall">
                                         Install
                                     </Link>
                                     <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 0 0" }} to="/windowsReleaseNotes">
+                                        Release notes
+                                    </Link>
+                                </div>
+                            </div>
+                            )}
+                            {(showAndroidInfo !== PlatformLocation.DoNotShow) && (
+                            <div style={{ display: "flex", flexDirection: "column", marginTop: "32px" }}>
+                                <Title3>{platformString["android"]}</Title3>
+                                <div style={{ marginLeft: "20px", display: "flex", flexDirection: "column" }}>
+                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 8px 0" }} to="/androidInstall">
+                                        Install
+                                    </Link>
+                                    <Link className={styles.cleanLink} style={{ fontSize: "15pt", margin: "8px 0 0 0" }} to="/androidReleaseNotes">
                                         Release notes
                                     </Link>
                                 </div>
@@ -150,6 +190,11 @@ function App() {
                                     applicationName={applicationName}
                                     versionLocation={versionLocation} />
                             )} />
+                            <Route path="/support" element={(
+                                <Support
+                                    applicationName={applicationName}
+                                    versionLocation={versionLocation} />
+                            )} />
                             <Route path="/macInstall" element={(
                                 <General
                                     applicationName={applicationName}
@@ -164,6 +209,20 @@ function App() {
                                     versionLocation={versionLocation}
                                 />
                             )} />
+                            <Route path="/iosInstall" element={(
+                                <General
+                                    applicationName={applicationName}
+                                    platform="iOS"
+                                    versionLocation={versionLocation} />
+                            )} />
+                            <Route path="/iosReleaseNotes" element={(
+                                <ReleaseNotes
+                                    applicationName={applicationName}
+                                    platform="iOS"
+                                    location={iosReleaseNotesLocation}
+                                    versionLocation={versionLocation}
+                                />
+                            )} />
                             <Route path="/windowsInstall" element={(
                                 <General
                                     applicationName={applicationName}
@@ -175,6 +234,20 @@ function App() {
                                     applicationName={applicationName}
                                     platform="windows"
                                     location={windowsReleaseNotesLocation}
+                                    versionLocation={versionLocation}
+                                />
+                            )} />
+                            <Route path="/androidInstall" element={(
+                                <General
+                                    applicationName={applicationName}
+                                    platform="android"
+                                    versionLocation={versionLocation} />
+                            )} />
+                            <Route path="/androidReleaseNotes" element={(
+                                <ReleaseNotes
+                                    applicationName={applicationName}
+                                    platform="android"
+                                    location={androidReleaseNotesLocation}
                                     versionLocation={versionLocation}
                                 />
                             )} />

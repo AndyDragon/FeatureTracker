@@ -29,10 +29,9 @@ struct FeatureTrackerApp: App {
         print(loggerFile.logFileURL!)
         logger.addDestination(loggerConsole)
         logger.addDestination(loggerFile)
-        logger.info("==============================================================================")
-        logger.info("Start of session")
     }
 
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     var body: some Scene {
 #if STANDALONE
         let appState = VersionCheckAppState(
@@ -48,18 +47,10 @@ struct FeatureTrackerApp: App {
                 .onAppear {
                     NSWindow.allowsAutomaticWindowTabbing = false
                 }
-                .onDisappear {
-                    logger.info("End of session")
-                    logger.info("==============================================================================")
-                }
 #else
             ContentView()
                 .onAppear {
                     NSWindow.allowsAutomaticWindowTabbing = false
-                }
-                .onDisappear {
-                    logger.info("End of session")
-                    logger.info("==============================================================================")
                 }
 #if SCREENSHOT
                 .frame(width: 1280, height: 748)
@@ -117,6 +108,24 @@ struct FeatureTrackerApp: App {
         }
         .defaultPosition(.center)
         .windowResizability(.contentSize)
+    }
+
+    class AppDelegate: NSObject, NSApplicationDelegate {
+        private let logger = SwiftyBeaver.self
+
+        func applicationWillFinishLaunching(_ notification: Notification) {
+            logger.info("==============================================================================")
+            logger.info("Start of session")
+        }
+
+        func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+            return true
+        }
+
+        func applicationWillTerminate(_ notification: Notification) {
+            logger.info("End of session")
+            logger.info("==============================================================================")
+        }
     }
 
     private func getDocumentsDirectory() -> URL {

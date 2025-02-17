@@ -1,5 +1,5 @@
 import React from "react";
-import { Platform, platformString } from "./config";
+import { links, Platform, platformString } from "./config";
 import { Version, readVersion } from "./version";
 import { Body1, Body2, Spinner, Title3, makeStyles, shorthands } from "@fluentui/react-components";
 
@@ -59,7 +59,7 @@ export default function ReleaseNotes(props: ReleaseNotesProps) {
         );
     }
 
-    if (!version?.[platform]?.current) {
+    if (!version?.[platform]?.current && !links[platform]?.useAppStore) {
         return (
             <div style={{ margin: "10px" }}>
                 There is currently no version available for {platformString[platform]}. Check back at a later date for more information.
@@ -138,11 +138,14 @@ export default function ReleaseNotes(props: ReleaseNotesProps) {
             </div>
         );
 
+    const header = !links[platform]?.useAppStore
+        ? (<>Release notes for { applicationName } v{ version?.[platform]?.current } for { platformString[platform]}</>)
+        : (<>Release notes for { applicationName } for { platformString[platform]}</>)
     return (
         <div style={{ margin: "40px" }}>
             <div style={{ fontFamily: "monospace" }}>
                 <Title3 style={{ textDecoration: "underline", fontFamily: "monospace" }}>
-                    Release notes for {applicationName} v{version?.[platform]?.current} for {platformString[platform]}
+                    {header}
                 </Title3>
                 <div style={{ margin: "8px 20px" }}>{renderedReleaseNotes}</div>
             </div>

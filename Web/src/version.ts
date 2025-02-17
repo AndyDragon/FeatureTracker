@@ -1,13 +1,15 @@
 export interface VersionEntry {
-    readonly current: string;
-    readonly link: string;
-    readonly vital: boolean;
-  }
+  readonly current: string;
+  readonly link: string;
+  readonly vital: boolean;
+}
 
 export interface Version {
-    readonly macOS?: VersionEntry;
-    readonly windows?: VersionEntry;
-  }
+  readonly macOS?: VersionEntry;
+  readonly iOS?: VersionEntry;
+  readonly windows?: VersionEntry;
+  readonly android?: VersionEntry;
+}
 
 export async function readVersion(versionLocation: string): Promise<Version> {
   let version: Version;
@@ -16,8 +18,8 @@ export async function readVersion(versionLocation: string): Promise<Version> {
       "https://vero.andydragon.com/static/data/" + versionLocation,
       {
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         cache: "no-cache",
       });
