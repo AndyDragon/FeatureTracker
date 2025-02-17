@@ -806,6 +806,13 @@ struct ContentView: View {
         logger.verbose("Generated report", context: "System")
     }
 
+    private func getOptionalHubAndName(_ page: Page) -> String {
+        if page.hub.isEmpty || page.hub.lowercased() == page.name.lowercased() {
+            return page.name.lowercased()
+        }
+        return "\(page.hub)_\(page.name)".lowercased()
+    }
+
     private func backup() {
         logger.verbose("Tapped backup to clipboard", context: "User")
         do {
@@ -813,7 +820,7 @@ struct ContentView: View {
             encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
             encoder.dateEncodingStrategy = .iso8601
             var codablePages = [CodablePage]()
-            codablePages.append(contentsOf: pages.sorted(by: { "\($0.hub)_\($0.name)".lowercased() < "\($1.hub)_\($1.name)".lowercased() }).map({ page in
+            codablePages.append(contentsOf: pages.sorted(by: { getOptionalHubAndName($0) < getOptionalHubAndName($1) }).map({ page in
                 CodablePage(page)
             }))
             let json = try encoder.encode(codablePages)
@@ -833,7 +840,7 @@ struct ContentView: View {
         encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
         encoder.dateEncodingStrategy = .iso8601
         var codablePages = [CodablePage]()
-        codablePages.append(contentsOf: pages.sorted(by: { "\($0.hub)_\($0.name)".lowercased() < "\($1.hub)_\($1.name)".lowercased() }).map({ page in
+        codablePages.append(contentsOf: pages.sorted(by: { getOptionalHubAndName($0) < getOptionalHubAndName($1) }).map({ page in
             CodablePage(page)
         }))
         return BackupDocument(pages: codablePages)
@@ -850,7 +857,7 @@ struct ContentView: View {
                 encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
                 encoder.dateEncodingStrategy = .iso8601
                 var codablePages = [CodablePage]()
-                codablePages.append(contentsOf: pages.sorted(by: { "\($0.hub)_\($0.name)".lowercased() < "\($1.hub)_\($1.name)".lowercased() }).map({ page in
+                codablePages.append(contentsOf: pages.sorted(by: { getOptionalHubAndName($0) < getOptionalHubAndName($1) }).map({ page in
                     CodablePage(page)
                 }))
                 let json = try encoder.encode(codablePages)

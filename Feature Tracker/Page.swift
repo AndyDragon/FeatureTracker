@@ -26,7 +26,7 @@ class CodablePage: Codable {
         self.notes = page.notes
         self.count = page.count
         self.isChallenge = page.isChallenge
-        self.features.append(contentsOf: page.features!.map({ feature in
+        self.features.append(contentsOf: page.features!.sorted(by: { $0.date < $1.date }).map({ feature in
             return CodableFeature(feature)
         }))
     }
