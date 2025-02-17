@@ -13,7 +13,7 @@
     Height="600" 
     Width="960"
     MinWidth="800"
-    MinHeight="600"
+    MinHeight="480"
     GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
     ResizeMode="CanResizeWithGrip" Activated="OnActivatedChanged" Deactivated="OnActivatedChanged">
 
@@ -22,10 +22,91 @@
     </Window.DataContext>
 
     <Window.Resources>
-        <ResourceDictionary>
-            <Color x:Key="SystemBaseMediumColor">#99FFFFFF</Color>
-            <SolidColorBrush x:Key="SplitViewBackgroundBrush" Opacity="1" Color="{StaticResource SystemBaseMediumColor}" />
-        </ResourceDictionary>
+        <Color x:Key="SystemBaseMediumColor">#99FFFFFF</Color>
+        <SolidColorBrush x:Key="SplitViewBackgroundBrush" Opacity="1" Color="{StaticResource SystemBaseMediumColor}" />
+        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        
+        <!-- Common templates -->
+        <DataTemplate x:Key="OptionItemTemplate" DataType="local:OptionBaseItem">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <iconPacks:PackIconMaterial
+                    Grid.Column="0"
+                    Width="18"
+                    Height="18"
+                    Kind="{Binding IconKind}"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Left" />
+                <TextBlock
+                    Grid.Column="1"
+                    Text="{Binding Label}" />
+            </Grid>
+        </DataTemplate>
+        
+        <DataTemplate x:Key="SeparatorTemplate">
+            <ContentControl Focusable="False" IsTabStop="False" Foreground="{DynamicResource MahApps.Brushes.Separator}" Height="5" MinHeight="5" MaxHeight="5" Margin="0">
+                <Separator Height="5" MinHeight="5" MaxHeight="5" Margin="5,0" Opacity="0.5">
+                    <Separator.Effect>
+                        <BlurEffect Radius="1" />
+                    </Separator.Effect>
+                </Separator>
+            </ContentControl>
+        </DataTemplate>
+
+        <!-- Entry for report menu templates -->
+        <local:EntryForReportTemplateSelector
+            x:Key="EntryForReportTemplateSelector" 
+            EntryForReportTemplate="{StaticResource OptionItemTemplate}" 
+            SeparatorTemplate="{StaticResource SeparatorTemplate}" />
+        <Style x:Key="EntryForReportItemContainerStyle" BasedOn="{StaticResource {x:Type MenuItem}}" TargetType="{x:Type MenuItem}">
+            <Setter 
+                Property="Command" 
+                Value="{Binding Path=DataContext.GenerateReportCommand, RelativeSource={RelativeSource AncestorType={x:Type mah:DropDownButton}}}" />
+            <Setter Property="CommandParameter" Value="{Binding}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding}" Value="{x:Type local:SeparatorBackupOperationOption}">
+                    <Setter Property="Command" Value="{x:Null}" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type MenuItem}">
+                                <ContentControl Focusable="False" IsTabStop="False" Foreground="{DynamicResource MahApps.Brushes.Separator}" Height="5" Margin="0">
+                                    <Separator Height="5" MinHeight="5" MaxHeight="5" Margin="5,0" />
+                                </ContentControl>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Backup operation menu templates -->
+        <local:BackupOperationOptionTemplateSelector
+            x:Key="BackupOperationOptionTemplateSelector" 
+            BackupOperationOptionTemplate="{StaticResource OptionItemTemplate}" 
+            SeparatorTemplate="{StaticResource SeparatorTemplate}" />
+        <Style x:Key="BackupOperationOptionItemContainerStyle" BasedOn="{StaticResource {x:Type MenuItem}}" TargetType="{x:Type MenuItem}">
+            <Setter 
+                Property="Command" 
+                Value="{Binding Path=DataContext.StartBackupOperationCommand, RelativeSource={RelativeSource AncestorType={x:Type mah:DropDownButton}}}" />
+            <Setter Property="CommandParameter" Value="{Binding Operation}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding}" Value="{x:Type local:SeparatorBackupOperationOption}">
+                    <Setter Property="Command" Value="{x:Null}" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type MenuItem}">
+                                <ContentControl Focusable="False" IsTabStop="False" Foreground="{DynamicResource MahApps.Brushes.Separator}" Height="5" Margin="0">
+                                    <Separator Height="5" MinHeight="5" MaxHeight="5" Margin="5,0" />
+                                </ContentControl>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <mah:MetroWindow.LeftWindowCommands>
@@ -40,7 +121,7 @@
                 <iconPacks:PackIconBootstrapIcons 
                     Width="22"
                     Height="18"
-                    Kind="FilePlus" />
+                    Kind="FileEarmarkPlusFill" />
             </Button>
             <mah:DropDownButton
                 ItemsSource="{Binding PageSortOptions}">
@@ -73,10 +154,10 @@
                     </Style>
                 </mah:DropDownButton.ItemContainerStyle>
                 <mah:DropDownButton.Icon>
-                    <iconPacks:PackIconBoxIcons 
+                    <iconPacks:PackIconMaterial
                         Width="18"
                         Height="12"
-                        Kind="RegularSortAlt2" />
+                        Kind="SortBoolAscendingVariant" />
                 </mah:DropDownButton.Icon>
             </mah:DropDownButton>
             <Button Command="{Binding RefreshPagesCommand}" ToolTip="Refreshes the page list">
@@ -106,45 +187,26 @@
                     </DataTemplate>
                 </Button.ContentTemplate>
             </Button>
-            <Button Command="{Binding GenerateReportCommand}" ToolTip="Generates a report of the features">
-                <iconPacks:PackIconEntypo 
+            <mah:DropDownButton
+                ItemsSource="{Binding EntriesForReports}"
+                ItemTemplateSelector="{StaticResource EntryForReportTemplateSelector}"
+                ItemContainerStyle="{StaticResource EntryForReportItemContainerStyle}">
+                <mah:DropDownButton.Icon>
+                    <iconPacks:PackIconEntypo 
                         Width="22"
                         Height="22"
                         Kind="Book" />
-            </Button>
+                </mah:DropDownButton.Icon>
+            </mah:DropDownButton>
             <mah:DropDownButton
-                ItemsSource="{Binding BackupOperationOptions}">
-                <mah:DropDownButton.ItemTemplate>
-                    <DataTemplate DataType="local:BackupOperationOption">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <iconPacks:PackIconMaterial
-                                Grid.Column="0"
-                                Width="18"
-                                Height="18"
-                                Kind="{Binding IconKind}"
-                                VerticalAlignment="Center"
-                                HorizontalAlignment="Left" />
-                            <TextBlock
-                                Grid.Column="1"
-                                Text="{Binding Label}" />
-                        </Grid>
-                    </DataTemplate>
-                </mah:DropDownButton.ItemTemplate>
-                <mah:DropDownButton.ItemContainerStyle>
-                    <Style BasedOn="{StaticResource {x:Type MenuItem}}" TargetType="{x:Type MenuItem}">
-                        <Setter Property="Command" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type mah:DropDownButton}}, Path=DataContext.StartBackupOperationCommand}" />
-                        <Setter Property="CommandParameter" Value="{Binding Operation}" />
-                    </Style>
-                </mah:DropDownButton.ItemContainerStyle>
+                ItemsSource="{Binding BackupOperationOptions}"
+                ItemTemplateSelector="{StaticResource BackupOperationOptionTemplateSelector}"
+                ItemContainerStyle="{StaticResource BackupOperationOptionItemContainerStyle}">
                 <mah:DropDownButton.Icon>
                     <iconPacks:PackIconMaterial 
-                        Width="22"
-                        Height="22"
-                        Kind="Safe" />
+                            Width="22"
+                            Height="22"
+                            Kind="Safe" />
                 </mah:DropDownButton.Icon>
             </mah:DropDownButton>
         </mah:WindowCommands>
@@ -155,8 +217,6 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-
-        <notifications:NotificationArea x:Name="WindowArea" Grid.Row="0" Position="TopRight" MaxItems="4" />
 
         <mah:SplitView x:Name="PageSplitview"
                        Grid.Row="0" 
@@ -179,8 +239,8 @@
                                     Margin="12,6">
                                     <StackPanel Grid.Row="0" Orientation="Horizontal">
                                         <iconPacks:PackIconModern Kind="{Binding IconKind, Mode=OneWay}" Width="14" Height="14" VerticalAlignment="Center" Foreground="{DynamicResource MahApps.Brushes.Accent}" />
-                                        <TextBlock Text="{Binding Title, Mode=OneWay}" Margin="8,0,0,0" FontSize="16" TextTrimming="WordEllipsis" FontWeight="{Binding FontWeight, Mode=OneWay}" VerticalAlignment="Center" />
-                                        <TextBlock Text="{Binding AlternativeTitle, Mode=OneWay}" Margin="8,0,0,0" FontSize="14" TextTrimming="WordEllipsis" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Title, Mode=OneWay}" Margin="8,0,0,0" FontSize="13" TextTrimming="WordEllipsis" FontWeight="{Binding FontWeight, Mode=OneWay}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding AlternativeTitle, Mode=OneWay}" Margin="8,0,0,0" FontSize="12" TextTrimming="WordEllipsis" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>
@@ -199,14 +259,16 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="1" Text="{Binding Summary.ShortFeatures}" FontWeight="Bold" ToolTip="{Binding Summary.Features}" />
+                        <TextBlock Grid.Column="2" Text="|" Margin="40,0" Visibility="{Binding Summary.ShortPages, Converter={StaticResource StringToVisibilityConverter}}" />
                         <TextBlock Grid.Column="3" Text="{Binding Summary.ShortPages}" FontWeight="Bold" ToolTip="{Binding Summary.Pages}" />
+                        <TextBlock Grid.Column="4" Text="|" Margin="40,0" Visibility="{Binding Summary.Membership, Converter={StaticResource StringToVisibilityConverter}}" />
                         <TextBlock Grid.Column="5" Text="{Binding Summary.Membership}" FontWeight="Bold" />
                     </Grid>
                 </Border>
@@ -214,6 +276,8 @@
             </Grid>
 
         </mah:SplitView>
+
+        <notifications:NotificationArea x:Name="WindowArea" Grid.Row="0" Position="TopRight" MaxItems="4" />
 
         <Grid Margin="0" Grid.Row="2" Background="{Binding StatusBarBrush}">
             <Grid.ColumnDefinitions>
@@ -264,18 +328,28 @@
             </StackPanel>
             <TextBlock Grid.Column="2" Text="|" Margin="8,0,8,2" VerticalAlignment="Center" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}" Opacity="0.5" />
             <StackPanel Grid.Column="3" Orientation="Horizontal">
-                <StackPanel.Style>
-                    <Style TargetType="StackPanel">
-                        <Setter Property= "Opacity" Value="0.5" />
-                        <Style.Triggers>
-                            <Trigger Property ="IsMouseOver" Value="True">
-                                <Setter Property= "Opacity" Value="1" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </StackPanel.Style>
-                <TextBlock Text="Version:" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}" />
-                <TextBlock Text="{Binding Version}" VerticalAlignment="Center" Margin="0,0,24,0" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}" />
+                <mah:WindowCommands>
+                    <Button
+                        BorderThickness="0"
+                        Command="{Binding LaunchAboutCommand}"
+                        Content="{Binding Version}"
+                        Style="{DynamicResource MahApps.Styles.Button.WindowCommands}">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock 
+                                        Margin="0,0,8,0" 
+                                        VerticalAlignment="Center" 
+                                        Text="Version:" />
+                                    <TextBlock 
+                                        Margin="0,0,24,0"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+                </mah:WindowCommands>
             </StackPanel>
         </Grid>
 

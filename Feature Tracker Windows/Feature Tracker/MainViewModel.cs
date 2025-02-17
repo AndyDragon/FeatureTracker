@@ -1,6 +1,7 @@
 ﻿using ControlzEx.Theming;
 using MahApps.Metro.Controls.Dialogs;
 using MahApps.Metro.IconPacks;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using Notification.Wpf;
 using System.Collections.ObjectModel;
@@ -12,13 +13,13 @@ using System.Reflection;
 using System.Security.Principal;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace FeatureTracker
 {
-
     public class MainViewModel : NotifyPropertyChanged, IDataManager
     {
         private int operationCount = 0;
@@ -28,7 +29,7 @@ namespace FeatureTracker
             ToggleSplitViewCommand = new Command(() => this.IsSplitViewPaneOpen = !this.IsSplitViewPaneOpen);
             AddPageCommand = new Command(() =>
             {
-                var page = new Page() { Name = "new page" };
+                var page = new Page() { Name = "new page", Hub = "" };
                 AddModel(page);
                 Pages.Add(page);
                 SelectedPage = page;
@@ -55,28 +56,49 @@ namespace FeatureTracker
             });
             RefreshPagesCommand = new Command(RefreshPages);
             PopulateDefaultsCommand = new Command(PopulateDefaultPages);
-            GenerateReportCommand = new Command(GenerateReport);
+            GenerateReportCommand = new CommandWithParameter((parameter) =>
+            {
+                if (parameter is EntryForReport entryForReport && entryForReport.Type != EntryType.Separator)
+                {
+                    switch (entryForReport.Type)
+                    {
+                        case EntryType.Hub:
+                            GenerateReportForHub(entryForReport.Entry!);
+                            break;
+
+                        case EntryType.Page:
+                            GenerateReportForPage(entryForReport.Entry!);
+                            break;
+                    }
+                }
+            }, (parameter) => parameter is EntryForReport entryForReport && entryForReport.Type != EntryType.Separator);
             StartBackupOperationCommand = new CommandWithParameter((parameter) =>
             {
-                var operation = (parameter != null)
-                    ? (BackupOperation)parameter
-                    : BackupOperation.BackupToClipboard;
-                switch (operation)
+                if (parameter is BackupOperation operation && operation != BackupOperation.Separator)
                 {
-                    case BackupOperation.BackupToClipboard:
-                        BackupToClipboard();
-                        break;
-                    case BackupOperation.BackupToDocuments:
-                        BackupToDocuments();
-                        break;
-                    case BackupOperation.RestoreFromClipboard:
-                        RestoreFromClipboard();
-                        break;
-                    case BackupOperation.RestoreFromDocuments:
-                        RestoreFromDocuments();
-                        break;
+                    switch (operation)
+                    {
+                        case BackupOperation.BackupToClipboard:
+                            BackupToClipboard();
+                            break;
+                        case BackupOperation.BackupToFile:
+                            BackupToFile();
+                            break;
+                        case BackupOperation.BackupToDocuments:
+                            BackupToDocuments();
+                            break;
+                        case BackupOperation.RestoreFromClipboard:
+                            RestoreFromClipboard();
+                            break;
+                        case BackupOperation.RestoreFromFile:
+                            RestoreFromFile();
+                            break;
+                        case BackupOperation.RestoreFromDocuments:
+                            RestoreFromDocuments();
+                            break;
+                    }
                 }
-            });
+            }, (parameter) => parameter is BackupOperation operation && operation != BackupOperation.Separator);
             SetThemeCommand = new CommandWithParameter((parameter) =>
             {
                 if (parameter is Theme theme)
@@ -102,6 +124,16 @@ namespace FeatureTracker
                 }
                 ShowToast("Deleted page", "Removed the page or challenge and all the features", NotificationType.Notification);
             });
+            LaunchAboutCommand = new Command(() =>
+            {
+                var panel = new AboutDialog
+                {
+                    DataContext = new AboutViewModel(),
+                    Owner = Application.Current.MainWindow,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                };
+                panel.ShowDialog();
+            });
 
             pageSort = (PageComparer.CompareMode)(UserSettings.GetInt("pageSort") ?? 0) switch
             {
@@ -119,7 +151,7 @@ namespace FeatureTracker
                 pageSortOption.IsSelected = pageSortOption.Comparer == pageSort;
             }
             OnPropertyChanged(nameof(PageSortOptions));
-            UpdateSummary();
+            UpdateSummary(SelectedPage);
         }
 
         private static string GetDataLocationPath()
@@ -168,7 +200,7 @@ namespace FeatureTracker
                                 AddModel(page);
                                 Pages.Add(page);
                             }
-                            UpdateSummary();
+                            UpdateSummary(SelectedPage);
                         }
                     }
                 }
@@ -184,14 +216,71 @@ namespace FeatureTracker
             }
         }
 
+        public string[] HubsWithFeatures
+        {
+            get
+            {
+                var hubs = new Dictionary<string, bool>();
+                foreach (var page in Pages)
+                {
+                    if (!string.IsNullOrEmpty(page.Hub) && page.Features.Count != 0)
+                    {
+                        hubs[page.Hub] = true;
+                    }
+                }
+                return [.. hubs.Keys];
+            }
+        }
+
+        public string[] PagesWithFeatures
+        {
+            get
+            {
+                var pages = new Dictionary<string, bool>();
+                foreach (var page in Pages)
+                {
+                    if (string.IsNullOrEmpty(page.Hub) && page.Features.Count != 0)
+                    {
+                        pages[page.Name] = true;
+                    }
+                }
+                return [.. pages.Keys];
+            }
+        }
+
+        public EntryForReport[] EntriesForReports
+        {
+            get
+            {
+                var list = new List<EntryForReport>();
+                list.AddRange(HubsWithFeatures.Order().Select(hub => new EntryForReport
+                {
+                    IconKind = PackIconMaterialKind.Book,
+                    Label = $"Generate report for {hub.ToLower()}",
+                    Type = EntryType.Hub,
+                    Entry = hub,
+                }));
+                list.Add(new SeparatorEntryForReport());
+                list.AddRange(PagesWithFeatures.Order().Select(page => new EntryForReport
+                {
+                    IconKind = PackIconMaterialKind.BookOutline,
+                    Label = $"Generate report for {page.ToLower()}",
+                    Type = EntryType.Page,
+                    Entry = page,
+                }));
+                return [.. list];
+            }
+        }
+
         private void StorePages()
         {
             try
             {
                 var dataPath = GetDataPath();
-                var jsonPages = Pages.Select(page => page.ToJson());
+                var jsonPages = Pages.Select(page => page.ToJson()).OrderBy(page => (page.Hub + "_" + page.Name).ToLower());
                 var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
                 File.WriteAllText(dataPath, json);
+                OnPropertyChanged(nameof(EntriesForReports));
             }
             catch (Exception ex)
             {
@@ -293,8 +382,11 @@ namespace FeatureTracker
 
         public BackupOperationOption[] BackupOperationOptions { get; } = [
             new BackupOperationOption { Label = "Backup to Clipboard", IconKind = PackIconMaterialKind.ClipboardArrowUpOutline, Operation = BackupOperation.BackupToClipboard },
+            new BackupOperationOption { Label = "Backup to File", IconKind = PackIconMaterialKind.BookArrowUpOutline, Operation = BackupOperation.BackupToFile },
             new BackupOperationOption { Label = "Backup to Documents", IconKind = PackIconMaterialKind.DatabaseArrowUpOutline, Operation = BackupOperation.BackupToDocuments },
+            new SeparatorBackupOperationOption(),
             new BackupOperationOption { Label = "Restore from Clipboard", IconKind = PackIconMaterialKind.ClipboardArrowDownOutline, Operation = BackupOperation.RestoreFromClipboard },
+            new BackupOperationOption { Label = "Restore from File", IconKind = PackIconMaterialKind.BookArrowDownOutline, Operation = BackupOperation.RestoreFromFile },
             new BackupOperationOption { Label = "Restore from Documents", IconKind = PackIconMaterialKind.DatabaseArrowDownOutline, Operation = BackupOperation.RestoreFromDocuments },
         ];
 
@@ -307,6 +399,7 @@ namespace FeatureTracker
                 if (Set(ref selectedPage, value))
                 {
                     OnPropertyChanged(nameof(SummaryHeaderVisibility));
+                    UpdateSummary(SelectedPage);
                 }
             }
         }
@@ -340,6 +433,8 @@ namespace FeatureTracker
         public ICommand ClosePageCommand { get; }
 
         public ICommand DeletePageCommand { get; }
+
+        public ICommand LaunchAboutCommand { get; }
 
         private Theme? theme = ThemeManager.Current.DetectTheme();
         public Theme? Theme
@@ -383,7 +478,7 @@ namespace FeatureTracker
 
         private async void PopulateDefaultPages()
         {
-            var singleFeaturePages = new[] {
+            var singleFeaturePagesForSnap = new[] {
                 "abandoned",
                 "abstract",
                 "africa",
@@ -488,21 +583,51 @@ namespace FeatureTracker
             }
             Pages.Clear();
 
-            foreach (var pageName in singleFeaturePages)
+            foreach (var pageName in singleFeaturePagesForSnap)
             {
-                var page = new Page { Name = pageName };
+                var page = new Page { Name = pageName, Hub = "snap" };
                 AddModel(page);
                 Pages.Add(page);
             }
 
-            var papaNoelPage = new Page { Name = "papanoel", Count = 3 };
+            var papaNoelPage = new Page { Name = "papanoel", Hub = "snap", Count = 3 };
             AddModel(papaNoelPage);
             Pages.Add(papaNoelPage);
+
+            var singleFeaturePagesForClick = new[] {
+                "astro",
+                "dogs",
+                "machines"
+            };
+
+            foreach (var pageName in singleFeaturePagesForClick)
+            {
+                var page = new Page { Name = pageName, Hub = "click" };
+                AddModel(page);
+                Pages.Add(page);
+            }
+
+            var singleFeaturePagesForPodium = new[] {
+                "podium",
+                "macro",
+                "mono",
+                "night",
+                "portraits",
+                "street",
+                "wildlife",
+            };
+
+            foreach (var pageName in singleFeaturePagesForPodium)
+            {
+                var page = new Page { Name = pageName, Hub = "podium" };
+                AddModel(page);
+                Pages.Add(page);
+            }
 
             Pages.SortBy(pageSort);
 
             StopOperation(true);
-            UpdateSummary();
+            UpdateSummary(SelectedPage);
 
             ShowToast("Populated the defaults", $"Populated {Pages.Count} default pages and challenges");
         }
@@ -517,12 +642,64 @@ namespace FeatureTracker
             return count;
         }
 
+        private int GetFeatures(string hub)
+        {
+            int count = 0;
+            foreach (var page in Pages)
+            {
+                if (page.Hub.Equals(hub, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    count += page.Features.Count;
+                }
+            }
+            return count;
+        }
+
+        private int GetFeaturesForPage(string lonePage)
+        {
+            int count = 0;
+            foreach (var page in Pages)
+            {
+                if (string.IsNullOrEmpty(page.Hub) && page.Name.Equals(lonePage, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    count += page.Features.Count;
+                }
+            }
+            return count;
+        }
+
         private int GetTotalFeatures()
         {
             int count = 0;
             foreach (var page in Pages)
             {
                 count += page.Features.Count * page.Count;
+            }
+            return count;
+        }
+
+        private int GetTotalFeatures(string hub)
+        {
+            int count = 0;
+            foreach (var page in Pages)
+            {
+                if (page.Hub.Equals(hub, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    count += page.Features.Count * page.Count;
+                }
+            }
+            return count;
+        }
+
+        private int GetTotalFeaturesForPage(string lonePage)
+        {
+            int count = 0;
+            foreach (var page in Pages)
+            {
+                if (string.IsNullOrEmpty(page.Hub) && page.Name.Equals(lonePage, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    count += page.Features.Count * page.Count;
+                }
             }
             return count;
         }
@@ -537,12 +714,38 @@ namespace FeatureTracker
             return count;
         }
 
+        private int GetPages(string hub)
+        {
+            int count = 0;
+            foreach (var page in Pages)
+            {
+                if (page.Hub.Equals(hub, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    count += page.Features.Count != 0 ? 1 : 0;
+                }
+            }
+            return count;
+        }
+
         private int GetTotalPages()
         {
             int count = 0;
             foreach (var page in Pages)
             {
                 count += page.Features.Count != 0 ? page.Count : 0;
+            }
+            return count;
+        }
+
+        private int GetTotalPages(string hub)
+        {
+            int count = 0;
+            foreach (var page in Pages)
+            {
+                if (page.Hub.Equals(hub, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    count += page.Features.Count != 0 ? page.Count : 0;
+                }
             }
             return count;
         }
@@ -560,76 +763,185 @@ namespace FeatureTracker
             return string.Format("{0} {1}", count, pluralString);
         }
 
-        private string GetMembership()
+        private string GetMembership(string hub)
         {
-            var features = GetTotalFeatures();
-            var pages = GetTotalPages();
-            if (features < 5)
+            var features = GetTotalFeatures(hub);
+            var pages = GetTotalPages(hub);
+            if (hub == "snap")
             {
-                return "Artist";
+                if (features < 5)
+                {
+                    return "Artist";
+                }
+                if (features < 15)
+                {
+                    return "Member";
+                }
+                if (pages < 15)
+                {
+                    return "VIP Member";
+                }
+                if (pages < 35)
+                {
+                    return "VIP Gold Member";
+                }
+                if (pages < 55)
+                {
+                    return "Platinum Member";
+                }
+                if (pages < 80)
+                {
+                    return "Elite Member";
+                }
+                return "Hall of Fame Member";
             }
-            if (features < 15)
+            if (hub == "click")
             {
-                return "Member";
-            }
-            if (pages < 15)
-            {
-                return "VIP Member";
-            }
-            if (pages < 35)
-            {
-                return "VIP Gold Member";
-            }
-            if (pages < 55)
-            {
+                if (features < 5)
+                {
+                    return "Artist";
+                }
+                if (features < 15)
+                {
+                    return "Bronze member";
+                }
+                if (features < 30)
+                {
+                    return "Silver Member";
+                }
+                if (features < 50)
+                {
+                    return "Gold Member";
+                }
                 return "Platinum Member";
             }
-            if (pages < 80)
-            {
-                return "Elite Member";
-            }
-            return "Hall of Fame Member";
+            return "Artist";
         }
 
-        private void UpdateSummary()
+        private void UpdateSummary(Page? page)
         {
-            var featuresCount = GetFeatures();
-            var totalFeaturesCount = GetTotalFeatures();
-            if (featuresCount != totalFeaturesCount)
+            if (page != null)
             {
-                Summary.Features = $"Total features: {featuresCount} (counts as {totalFeaturesCount})";
-                Summary.ShortFeatures = $"Features: {featuresCount} ({totalFeaturesCount})";
+                if (!string.IsNullOrEmpty(page.Hub))
+                {
+                    var featuresCount = GetFeatures(page.Hub);
+                    var totalFeaturesCount = GetTotalFeatures(page.Hub);
+                    if (featuresCount != totalFeaturesCount)
+                    {
+                        Summary.Features = $"Total features: {featuresCount} (counts as {totalFeaturesCount})";
+                        Summary.ShortFeatures = $"Features: {featuresCount} ({totalFeaturesCount})";
+                    }
+                    else
+                    {
+                        Summary.Features = $"Total features: {featuresCount}";
+                        Summary.ShortFeatures = $"Features: {featuresCount}";
+                    }
+                    var pagesCount = GetPages(page.Hub);
+                    var totalPagesCount = GetTotalPages(page.Hub);
+                    if (pagesCount != totalPagesCount)
+                    {
+                        Summary.Pages = $"Total pages with features: {pagesCount} (counts as {totalPagesCount})";
+                        Summary.ShortPages = $"Pages: {pagesCount} ({totalPagesCount})";
+                    }
+                    else
+                    {
+                        Summary.Pages = $"Total pages with features: {pagesCount}";
+                        Summary.ShortPages = $"Pages: {pagesCount}";
+                    }
+                    if (HasMembershipLevels(page.Hub))
+                    {
+                        Summary.Membership = $"Membership level: {GetMembership(page.Hub)}";
+                    }
+                    else
+                    {
+                        Summary.Membership = "";
+                    }
+                }
+                else
+                {
+                    var featuresCount = GetFeaturesForPage(page.Name);
+                    var totalFeaturesCount = GetTotalFeaturesForPage(page.Name);
+                    if (featuresCount != totalFeaturesCount)
+                    {
+                        Summary.Features = $"Total features: {featuresCount} (counts as {totalFeaturesCount})";
+                        Summary.ShortFeatures = $"Features: {featuresCount} ({totalFeaturesCount})";
+                    }
+                    else
+                    {
+                        Summary.Features = $"Total features: {featuresCount}";
+                        Summary.ShortFeatures = $"Features: {featuresCount}";
+                    }
+                    Summary.Pages = "";
+                    Summary.ShortPages = "";
+                    Summary.Membership = "";
+                }
             }
             else
             {
-                Summary.Features = $"Total features: {featuresCount}";
-                Summary.ShortFeatures = $"Features: {featuresCount}";
+                Summary.HubSummaries.Clear();
+                var globalFeaturesCount = GetFeatures();
+                var globalTotalFeaturesCount = GetTotalFeatures();
+                var totalSummary = new HubSummary();
+                if (globalFeaturesCount != globalTotalFeaturesCount)
+                {
+                    totalSummary.Features = $"Total features: {globalFeaturesCount} (counts as {globalTotalFeaturesCount})";
+                }
+                else
+                {
+                    totalSummary.Features = $"Total features: {globalFeaturesCount}";
+                }
+                Summary.HubSummaries.Add(totalSummary);
+
+                var hubs = HubsWithFeatures;
+                foreach (var hub in hubs.OrderBy(hub => GetFeatures(hub)).Reverse())
+                {
+                    var hubSummary = new HubSummary()
+                    {
+                        Hub = hub
+                    };
+                    var featuresCount = GetFeatures(hub);
+                    var totalFeaturesCount = GetTotalFeatures(hub);
+                    if (featuresCount != totalFeaturesCount)
+                    {
+                        hubSummary.Features = $"Total features: {featuresCount} (counts as {totalFeaturesCount})";
+                    }
+                    else
+                    {
+                        hubSummary.Features = $"Total features: {featuresCount}";
+                    }
+                    var pagesCount = GetPages(hub);
+                    var totalPagesCount = GetTotalPages(hub);
+                    if (pagesCount != totalPagesCount)
+                    {
+                        hubSummary.Pages = $"Total pages with features: {pagesCount} (counts as {totalPagesCount})";
+                    }
+                    else
+                    {
+                        hubSummary.Pages = $"Total pages with features: {pagesCount}";
+                    }
+                    if (HasMembershipLevels(hub))
+                    {
+                        hubSummary.Membership = $"Membership level: {GetMembership(hub)}";
+                    }
+                    else
+                    {
+                        hubSummary.Membership = "";
+                    }
+                    Summary.HubSummaries.Add(hubSummary);
+                }
             }
-            var pagesCount = GetPages();
-            var totalPagesCount = GetTotalPages();
-            if (pagesCount != totalPagesCount)
-            {
-                Summary.Pages = $"Total pages with features: {pagesCount} (counts as {totalPagesCount})";
-                Summary.ShortPages = $"Pages: {pagesCount} ({totalPagesCount})";
-            }
-            else
-            {
-                Summary.Pages = $"Total pages with features: {pagesCount}";
-                Summary.ShortPages = $"Pages: {pagesCount}";
-            }
-            Summary.Membership = $"Membership level: {GetMembership()}";
         }
 
-        private void GenerateReport()
+        private void GenerateReportForHub(string hub)
         {
             SetBusy(true);
 
             var builder = new StringBuilder();
-            builder.AppendLine("Report of features");
-            builder.AppendLine("------------------");
+            builder.AppendLine("Report of features for " + hub.Capitalize());
+            builder.AppendLine(new string('-', 23 + hub.Length));
             builder.AppendLine();
-            var featuresCount = GetFeatures();
-            var totalFeaturesCount = GetTotalFeatures();
+            var featuresCount = GetFeatures(hub);
+            var totalFeaturesCount = GetTotalFeatures(hub);
             if (featuresCount != totalFeaturesCount)
             {
                 builder.AppendLine($"Total features: {featuresCount} (counts as {totalFeaturesCount})");
@@ -639,8 +951,8 @@ namespace FeatureTracker
                 builder.AppendLine($"Total features: {featuresCount}");
             }
             builder.AppendLine();
-            var pagesCount = GetPages();
-            var totalPagesCount = GetTotalPages();
+            var pagesCount = GetPages(hub);
+            var totalPagesCount = GetTotalPages(hub);
             if (pagesCount != totalPagesCount)
             {
                 builder.AppendLine($"Total pages with features: {pagesCount} (counts as {totalPagesCount})");
@@ -649,9 +961,12 @@ namespace FeatureTracker
             {
                 builder.AppendLine($"Total pages with features: {pagesCount}");
             }
-            builder.AppendLine();
-            builder.AppendLine($"Membership level: {GetMembership()}");
-            foreach (var page in Pages.OrderBy(page => page, PageComparer.FeaturesComparer))
+            if (HasMembershipLevels(hub))
+            {
+                builder.AppendLine();
+                builder.AppendLine($"Membership level: {GetMembership(hub)}");
+            }
+            foreach (var page in Pages.Where(page => string.Equals(page.Hub, hub, StringComparison.OrdinalIgnoreCase)).OrderBy(page => page, PageComparer.FeaturesComparer))
             {
                 if (page.Features.Count != 0)
                 {
@@ -660,36 +975,104 @@ namespace FeatureTracker
                     if (page.Count != 1)
                     {
                         builder.AppendLine(
-                            $"{pageType}: {page.Name.ToUpper()} - {GetStringForCount(page.Features.Count, "feature")} (counts as {page.Count * page.Features.Count})");
+                            $"{pageType}: {page.Name.ToLower()} - {GetStringForCount(page.Features.Count, "feature")} (counts as {page.Count * page.Features.Count})");
                     }
                     else
                     {
                         builder.AppendLine(
-                            $"{pageType}: {page.Name.ToUpper()} - {GetStringForCount(page.Features.Count, "feature")}");
+                            $"{pageType}: {page.Name.ToLower()} - {GetStringForCount(page.Features.Count, "feature")}");
                     }
                     foreach (var feature in page.Features.OrderBy(feature => feature, FeatureComparer.DateComparer))
                     {
-                        var hub = feature.Raw ? "RAW" : "Snap";
-                        builder.AppendLine($"\tFeature: {feature.Date.ToLocalTime():D} on {hub}:");
-                        builder.AppendLine($"\t\t{feature.Notes}");
+                        if (hub == "snap")
+                        {
+                            var rawHub = feature.Raw ? " [RAW]" : "";
+                            builder.AppendLine($"    Feature: {feature.Date.ToLocalTime():D}{rawHub} - {feature.Notes}");
+                        }
+                        else
+                        {
+                            builder.AppendLine($"    Feature: {feature.Date.ToLocalTime():D} - {feature.Notes}");
+                        }
                     }
                 }
             }
 
             Clipboard.SetText(builder.ToString());
 
-            ShowToast("Report generated", "Copied the report of features to the clipboard");
+            ShowToast("Report generated", $"Copied the report of features to the clipboard for the {hub.Capitalize()} hub");
+        }
+
+        private void GenerateReportForPage(string lonePage)
+        {
+            SetBusy(true);
+
+            var builder = new StringBuilder();
+            builder.AppendLine("Report of features for " + lonePage.ToLower());
+            builder.AppendLine(new string('-', 23 + lonePage.Length));
+            builder.AppendLine();
+            var featuresCount = GetFeaturesForPage(lonePage);
+            var totalFeaturesCount = GetTotalFeaturesForPage(lonePage);
+            if (featuresCount != totalFeaturesCount)
+            {
+                builder.AppendLine($"Total features: {featuresCount} (counts as {totalFeaturesCount})");
+            }
+            else
+            {
+                builder.AppendLine($"Total features: {featuresCount}");
+            }
+            builder.AppendLine();
+            var page = Pages.FirstOrDefault(p => string.IsNullOrEmpty(p.Hub) && p.Name.Equals(lonePage, StringComparison.CurrentCultureIgnoreCase));
+            if (page != null)
+            {
+                if (page.Features.Count != 0)
+                {
+                    foreach (var feature in page.Features.OrderBy(feature => feature, FeatureComparer.DateComparer))
+                    {
+                        builder.AppendLine($"Feature: {feature.Date.ToLocalTime():D} - {feature.Notes}");
+                    }
+                }
+            }
+
+            Clipboard.SetText(builder.ToString());
+
+            ShowToast("Report generated", $"Copied the report of features to the clipboard for the {lonePage.ToLower()} page");
+        }
+
+        private static bool HasMembershipLevels(string hub)
+        {
+            return hub == "snap" || hub == "click";
         }
 
         private void BackupToClipboard()
         {
             SetBusy(true);
 
-            var jsonPages = Pages.OrderBy(page => page.Name).Select(page => page.ToJson());
+            var jsonPages = Pages.OrderBy(page => page.OptionalHubAndName.ToLower()).Select(page => page.ToJson());
             var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
             Clipboard.SetText(json);
 
             ShowToast("Backup complete", "Copied a backup of the pages and features to the clipboard");
+        }
+
+        private void BackupToFile()
+        {
+            SaveFileDialog dialog = new()
+            {
+                Filter = "Backup files (*.json)|*.json|All files (*.*)|*.*",
+                Title = "Backup the pages and features to a backup file",
+                OverwritePrompt = true,
+                FileName = $"Feature Tracker backup - {DateTime.Now:yyyy-MM-dd}",
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                SetBusy(true);
+
+                var jsonPages = Pages.OrderBy(page => page.OptionalHubAndName.ToLower()).Select(page => page.ToJson());
+                var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
+                File.WriteAllText(dialog.FileName, json, Encoding.UTF8);
+
+                ShowToast("Backup complete", "Copied a backup of the pages and features to the file");
+            }
         }
 
         private void BackupToDocuments()
@@ -697,7 +1080,7 @@ namespace FeatureTracker
             var backupFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FeatureTrackerBackup.json");
             SetBusy(true);
 
-            var jsonPages = Pages.OrderBy(page => page.Name).Select(page => page.ToJson());
+            var jsonPages = Pages.OrderBy(page => page.OptionalHubAndName.ToLower()).Select(page => page.ToJson());
             var json = JsonConvert.SerializeObject(jsonPages, Formatting.Indented);
             File.WriteAllText(backupFilePath, json, Encoding.UTF8);
 
@@ -737,7 +1120,7 @@ namespace FeatureTracker
                         }
                         Pages.SortBy(pageSort);
                         StopOperation(true);
-                        UpdateSummary();
+                        UpdateSummary(SelectedPage);
 
                         ShowToast("Restore complete", $"Restored {Pages.Count} pages and challenges from the clipboard");
                     }
@@ -767,6 +1150,80 @@ namespace FeatureTracker
                     "The clipboard did not include any text to restore",
                     NotificationType.Error,
                     TimeSpan.FromSeconds(5));
+            }
+        }
+
+        private async void RestoreFromFile()
+        {
+            OpenFileDialog dialog = new()
+            {
+                Filter = "Backup files (*.json)|*.json|All files (*.*)|*.*",
+                Title = "Restore the pages and features from a backup file",
+                CheckFileExists = true
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                if (File.Exists(dialog.FileName))
+                {
+                    SetBusy(true);
+
+                    try
+                    {
+                        if (!await ShowConfirmationMessage(
+                            "Restore from file",
+                            "Are you sure you want to reset all features and pages to the backup, this cannot be undone!"))
+                        {
+                            return;
+                        }
+
+                        var json = File.ReadAllText(dialog.FileName);
+                        var loadedPages = JsonConvert.DeserializeObject<List<JsonPage>>(json);
+                        if (loadedPages != null)
+                        {
+                            StartOperation();
+                            foreach (var page in Pages)
+                            {
+                                RemoveModel(page);
+                            }
+                            Pages.Clear();
+                            foreach (var loadedPage in loadedPages)
+                            {
+                                var page = new Page(loadedPage);
+                                AddModel(page);
+                                Pages.Add(page);
+                            }
+                            Pages.SortBy(pageSort);
+                            StopOperation(true);
+
+                            ShowToast("Restore complete", $"Restored {Pages.Count} pages and challenges from the file");
+                        }
+                        else
+                        {
+                            ShowToast(
+                                "Restore failed",
+                                "Failed to restore from file, there were no pages loaded",
+                                NotificationType.Error,
+                                TimeSpan.FromSeconds(5));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex.Message);
+                        ShowToast(
+                            "Restore failed",
+                            "An error occurred restoring from file, invalid data: " + ex.Message,
+                            NotificationType.Error,
+                            TimeSpan.FromSeconds(5));
+                    }
+                }
+                else
+                {
+                    ShowToast(
+                        "Restore failed",
+                        "Could not find the backup file",
+                        NotificationType.Error,
+                        TimeSpan.FromSeconds(5));
+                }
             }
         }
 
@@ -805,13 +1262,13 @@ namespace FeatureTracker
                         Pages.SortBy(pageSort);
                         StopOperation(true);
 
-                        ShowToast("Restore complete", $"Restored {Pages.Count} pages and challenges from the clipboard");
+                        ShowToast("Restore complete", $"Restored {Pages.Count} pages and challenges from your documents folder");
                     }
                     else
                     {
                         ShowToast(
                             "Restore failed",
-                            "Failed to restore from clipboard, there were no pages loaded",
+                            "Failed to restore from your documents folder, there were no pages loaded",
                             NotificationType.Error,
                             TimeSpan.FromSeconds(5));
                     }
@@ -821,7 +1278,7 @@ namespace FeatureTracker
                     Debug.WriteLine(ex.Message);
                     ShowToast(
                         "Restore failed",
-                        "An error occurred restoring from clipboard, invalid data: " + ex.Message,
+                        "An error occurred restoring from your documents folder, invalid data: " + ex.Message,
                         NotificationType.Error,
                         TimeSpan.FromSeconds(5));
                 }
@@ -857,14 +1314,14 @@ namespace FeatureTracker
         {
             model.PropertyChanged += OnModelChanged;
             model.DataManager = this;
-            UpdateSummary();
+            UpdateSummary(SelectedPage);
         }
 
         public void RemoveModel(Model model)
         {
             model.DataManager = null;
             model.PropertyChanged -= OnModelChanged;
-            UpdateSummary();
+            UpdateSummary(SelectedPage);
         }
 
         private void OnModelCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -874,20 +1331,20 @@ namespace FeatureTracker
             {
                 Debug.WriteLine("Saving data from collection changed...");
                 StorePages();
-                UpdateSummary();
+                UpdateSummary(SelectedPage);
             }
         }
 
         public void AddModelCollection<T>(ObservableCollection<T> collection) where T : Model
         {
             collection.CollectionChanged += OnModelCollectionChanged;
-            UpdateSummary();
+            UpdateSummary(SelectedPage);
         }
 
         public void RemoveModelCollection<T>(ObservableCollection<T> collection) where T : Model
         {
             collection.CollectionChanged -= OnModelCollectionChanged;
-            UpdateSummary();
+            UpdateSummary(SelectedPage);
         }
 
         public void StartOperation()
@@ -946,7 +1403,8 @@ namespace FeatureTracker
                 AlternativeTitle = (Count > 1) ? $"({Features.Count} x {Count})" : $"({Features.Count})";
                 OnPropertyChanged(nameof(FeaturesCount));
             };
-            Title = Name.ToUpper();
+            Id = Guid.NewGuid();
+            Title = OptionalHubAndName;
             FontWeight = Features.Count > 0 ? FontWeights.SemiBold : FontWeights.Light;
             AlternativeTitle = (Count > 1) ? $"({Features.Count} x {Count})" : $"({Features.Count})";
             IconKind = IsChallenge ? PackIconModernKind.Calendar : PackIconModernKind.Page;
@@ -957,6 +1415,7 @@ namespace FeatureTracker
         {
             Id = jsonPage.Id;
             Name = jsonPage.Name;
+            Hub = jsonPage.Hub;
             Notes = jsonPage.Notes;
             Count = jsonPage.Count;
             IsChallenge = jsonPage.IsChallenge;
@@ -973,10 +1432,11 @@ namespace FeatureTracker
             {
                 Id = Id,
                 Name = Name,
+                Hub = Hub,
                 Notes = Notes,
                 Count = Count,
                 IsChallenge = IsChallenge,
-                Features = new List<JsonFeature>(Features.Select(feature => feature.ToJson()))
+                Features = [.. Features.Select(feature => feature.ToJson())]
             };
         }
 
@@ -1011,6 +1471,19 @@ namespace FeatureTracker
 
         public Guid Id { get; private set; }
 
+        public string HubAndName => $"{Hub}_{Name}".ToUpper();
+        public string OptionalHubAndName
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Hub) || string.Equals(Hub, Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Name.ToUpper();
+                }
+                return $"{Hub}_{Name}".ToUpper();
+            }
+        }
+
         private string name = "";
         public string Name
         {
@@ -1019,7 +1492,20 @@ namespace FeatureTracker
             {
                 if (Set(ref name, value))
                 {
-                    Title = Name.ToUpper();
+                    Title = OptionalHubAndName;
+                }
+            }
+        }
+
+        private string hub = "";
+        public string Hub
+        {
+            get => hub;
+            set
+            {
+                if (Set(ref hub, value))
+                {
+                    Title = OptionalHubAndName;
                 }
             }
         }
@@ -1065,7 +1551,7 @@ namespace FeatureTracker
 
         public ICommand DeleteFeatureCommand { get; }
 
-        public override string[] ModelProperties => [nameof(Name), nameof(Notes), nameof(Count), nameof(IsChallenge)];
+        public override string[] ModelProperties => [nameof(Name), nameof(Hub), nameof(Notes), nameof(Count), nameof(IsChallenge)];
 
         public override string[] ModelCollectionProperties => [nameof(Features)];
 
@@ -1182,6 +1668,9 @@ namespace FeatureTracker
         [JsonProperty(PropertyName = "features", NullValueHandling = NullValueHandling.Ignore)]
         public IList<JsonFeature> Features { get; set; } = [];
 
+        [JsonProperty(PropertyName = "hub")]
+        public string Hub { get; set; } = "snap";
+
         [JsonProperty(PropertyName = "id"), JsonConverter(typeof(UppercaseGuidConverter))]
         public Guid Id { get; set; } = Guid.NewGuid();
 
@@ -1239,21 +1728,75 @@ namespace FeatureTracker
         public int CompareMode { get; set; }
     }
 
+    public enum EntryType
+    {
+        Separator,
+        Hub,
+        Page,
+    }
+
+    public class OptionBaseItem
+    {
+        public PackIconMaterialKind IconKind { get; set; }
+
+        public string? Label { get; set; }
+    }
+
+    public class EntryForReport : OptionBaseItem
+    {
+        public EntryType Type { get; set; }
+
+        public string? Entry { get; set; }
+    }
+
+    public class SeparatorEntryForReport : EntryForReport { }
+
+    public class EntryForReportTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate? EntryForReportTemplate { get; set; }
+        public DataTemplate? SeparatorTemplate { get; set; }
+
+        public override DataTemplate SelectTemplate(object item, DependencyObject container)
+        {
+            if (item is SeparatorEntryForReport)
+            {
+                return SeparatorTemplate ?? base.SelectTemplate(item, container);
+            }
+            return EntryForReportTemplate ?? base.SelectTemplate(item, container);
+        }
+    }
+
     public enum BackupOperation
     {
+        Separator,
         BackupToClipboard,
+        BackupToFile,
         BackupToDocuments,
         RestoreFromClipboard,
+        RestoreFromFile,
         RestoreFromDocuments,
     }
 
-    public class BackupOperationOption
+    public class BackupOperationOption : OptionBaseItem
     {
-        public string? Label { get; set; }
-
-        public PackIconMaterialKind IconKind { get; set; }
-
         public BackupOperation Operation { get; set; }
+    }
+
+    public class SeparatorBackupOperationOption : BackupOperationOption { }
+
+    public class BackupOperationOptionTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate? BackupOperationOptionTemplate { get; set; }
+        public DataTemplate? SeparatorTemplate { get; set; }
+
+        public override DataTemplate SelectTemplate(object item, DependencyObject container)
+        {
+            if (item is SeparatorBackupOperationOption)
+            {
+                return SeparatorTemplate ?? base.SelectTemplate(item, container);
+            }
+            return BackupOperationOptionTemplate ?? base.SelectTemplate(item, container);
+        }
     }
 
     public class ThemeOption(Theme theme, bool isSelected = false)
@@ -1263,8 +1806,15 @@ namespace FeatureTracker
         public bool IsSelected { get; } = isSelected;
     }
 
-    public class Summary : NotifyPropertyChanged
+    public class HubSummary : NotifyPropertyChanged
     {
+        private string? hub;
+        public string? Hub
+        {
+            get => hub;
+            set => Set(ref hub, value);
+        }
+
         private string? features;
         public string? Features
         {
@@ -1285,6 +1835,19 @@ namespace FeatureTracker
             get => membership;
             set => Set(ref membership, value);
         }
+    }
+
+    public class Summary : NotifyPropertyChanged
+    {
+        private readonly ObservableCollection<HubSummary> hubSummaries = [];
+        public ObservableCollection<HubSummary> HubSummaries => hubSummaries;
+
+        private string? features;
+        public string? Features
+        {
+            get => features;
+            set => Set(ref features, value);
+        }
 
         private string? shortFeatures;
         public string? ShortFeatures
@@ -1293,11 +1856,41 @@ namespace FeatureTracker
             set => Set(ref shortFeatures, value);
         }
 
+        private string? pages;
+        public string? Pages
+        {
+            get => pages;
+            set => Set(ref pages, value);
+        }
+
         private string? shortPages;
         public string? ShortPages
         {
             get => shortPages;
             set => Set(ref shortPages, value);
+        }
+
+        private string? membership;
+        public string? Membership
+        {
+            get => membership;
+            set => Set(ref membership, value);
+        }
+    }
+
+    public static class StringExtensions
+    {
+        public static string Capitalize(this string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
+            char firstChar = char.ToUpper(input[0]);
+            string restOfString = input.Length > 1 ? input[1..].ToLower() : string.Empty;
+
+            return firstChar + restOfString;
         }
     }
 }

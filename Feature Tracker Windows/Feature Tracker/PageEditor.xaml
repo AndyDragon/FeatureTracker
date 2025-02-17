@@ -14,16 +14,11 @@
     Foreground="{DynamicResource MahApps.Brushes.Text}">
     <Grid Margin="20,10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <!-- Header -->
-            <RowDefinition Height="Auto" />
-            <!-- Page properties -->
-            <RowDefinition Height="Auto" />
-            <!-- Features header -->
-            <RowDefinition Height="*" />
-            <!-- Features list -->
-            <RowDefinition Height="Auto" />
-            <!-- Feature editor -->
+            <RowDefinition Height="Auto" />         <!-- Header -->
+            <RowDefinition Height="Auto" />         <!-- Page properties -->
+            <RowDefinition Height="Auto" />         <!-- Features header -->
+            <RowDefinition Height="*" />            <!-- Features list -->
+            <RowDefinition Height="Auto" />         <!-- Feature editor -->
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
@@ -69,14 +64,18 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="4" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="4" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center" HorizontalAlignment="Right" />
             <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedPage.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="Notes:" VerticalAlignment="Center" HorizontalAlignment="Right" />
-            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedPage.Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <mah:ToggleSwitch Grid.Row="4" Grid.Column="1" IsOn="{Binding SelectedPage.IsChallenge, Mode=TwoWay}" OffContent="Page" OnContent="Challenge" Margin="8,0,0,0" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="6" Grid.Column="0" Text="Count as:" VerticalAlignment="Center" HorizontalAlignment="Right" />
-            <Grid Grid.Row="6" Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Hub:" VerticalAlignment="Center" HorizontalAlignment="Right" />
+            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedPage.Hub, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Notes:" VerticalAlignment="Center" HorizontalAlignment="Right" />
+            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding SelectedPage.Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" VerticalAlignment="Center" />
+            <mah:ToggleSwitch Grid.Row="6" Grid.Column="1" IsOn="{Binding SelectedPage.IsChallenge, Mode=TwoWay}" OffContent="Page" OnContent="Challenge" Margin="8,0,0,0" VerticalAlignment="Center" />
+            <TextBlock Grid.Row="8" Grid.Column="0" Text="Count as:" VerticalAlignment="Center" HorizontalAlignment="Right" />
+            <Grid Grid.Row="8" Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />

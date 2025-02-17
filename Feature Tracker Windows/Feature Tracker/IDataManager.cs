@@ -80,9 +80,9 @@ namespace FeatureTracker
             if (y == null) return 1;
             return mode switch
             {
-                CompareMode.Name => string.Compare(x.Name, y.Name),
-                CompareMode.Features => (x.Features.Count != y.Features.Count) ? (y.Features.Count - x.Features.Count) : string.Compare(x.Name, y.Name),
-                CompareMode.Count => (x.Count != y.Count) ? (y.Count - x.Count) : string.Compare(x.Name, y.Name),
+                CompareMode.Name => string.Compare(x.OptionalHubAndName, y.OptionalHubAndName),
+                CompareMode.Features => (x.Features.Count != y.Features.Count) ? (y.Features.Count - x.Features.Count) : string.Compare(x.OptionalHubAndName, y.OptionalHubAndName),
+                CompareMode.Count => (x.Count != y.Count) ? (y.Count - x.Count) : string.Compare(x.OptionalHubAndName, y.OptionalHubAndName),
                 _ => 0
             };
         }

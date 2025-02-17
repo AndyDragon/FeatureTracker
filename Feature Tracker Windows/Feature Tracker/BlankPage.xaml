@@ -4,70 +4,147 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+    xmlns:local="clr-namespace:FeatureTracker"
     mc:Ignorable="d" 
     d:DesignHeight="450" 
     d:DesignWidth="800"
     Title="Blank Page"
     Foreground="{DynamicResource MahApps.Brushes.Text}">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="2*" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <Grid Grid.Row="0" Visibility="{Binding SummaryVisibility}">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <TextBlock Grid.Row="1" Text="Summary" HorizontalAlignment="Center" FontSize="32px" FontWeight="Bold" Foreground="{DynamicResource MahApps.Brushes.Accent}">
+    <Page.DataContext>
+        <local:BlankViewModel />
+    </Page.DataContext>
+    <ScrollViewer
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel 
+            Orientation="Vertical" 
+            Visibility="{Binding SummaryVisibility}">
+            <TextBlock 
+                Text="{Binding Message}" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center" 
+                FontWeight="Bold" 
+                Margin="0,8,0,20">
                 <TextBlock.Effect>
                     <DropShadowEffect 
-                        ShadowDepth="0"
-                        Color="{DynamicResource MahApps.Colors.Accent4}"
-                        Opacity="0.8"
-                        BlurRadius="3"/>
-                </TextBlock.Effect>                
-            </TextBlock>
-            <TextBlock Grid.Row="2" Text="{Binding MainViewModel.Summary.Features}" HorizontalAlignment="Center" FontSize="20px" FontWeight="Bold" Foreground="{DynamicResource MahApps.Brushes.Accent}">
-                <TextBlock.Effect>
-                    <DropShadowEffect 
-                        ShadowDepth="0"
-                        Color="{DynamicResource MahApps.Colors.Accent4}"
-                        Opacity="0.8"
-                        BlurRadius="3"/>
+                            ShadowDepth="0"
+                            Color="{DynamicResource MahApps.Colors.ThemeForeground}"
+                            Opacity="0.7"
+                            BlurRadius="0.5"/>
                 </TextBlock.Effect>
             </TextBlock>
-            <TextBlock Grid.Row="3" Text="{Binding MainViewModel.Summary.Pages}" HorizontalAlignment="Center" FontSize="20px" FontWeight="Bold" Foreground="{DynamicResource MahApps.Brushes.Accent}">
-                <TextBlock.Effect>
-                    <DropShadowEffect 
-                        ShadowDepth="0"
-                        Color="{DynamicResource MahApps.Colors.Accent4}"
-                        Opacity="0.8"
-                        BlurRadius="3"/>
-                </TextBlock.Effect>
-            </TextBlock>
-            <TextBlock Grid.Row="4" Text="{Binding MainViewModel.Summary.Membership}" HorizontalAlignment="Center" FontSize="20px" FontWeight="ExtraBlack" Foreground="{DynamicResource MahApps.Brushes.Accent}">
-                <TextBlock.Effect>
-                    <DropShadowEffect 
-                        ShadowDepth="0"
-                        Color="{DynamicResource MahApps.Colors.Accent4}"
-                        Opacity="0.8"
-                        BlurRadius="3"/>
-                </TextBlock.Effect>
-            </TextBlock>
-        </Grid>
-        <TextBlock Grid.Row="1" Text="{Binding Message}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold">
-            <TextBlock.Effect>
-                <DropShadowEffect 
-                        ShadowDepth="0"
-                        Color="{DynamicResource MahApps.Colors.ThemeForeground}"
-                        Opacity="0.7"
-                        BlurRadius="0.5"/>
-            </TextBlock.Effect>
-        </TextBlock>
-    </Grid>
+            <ItemsControl ItemsSource="{Binding MainViewModel.Summary.HubSummaries}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="local:HubSummary">
+                        <Grid
+                            Margin="0,4">
+                            <Border Background="{DynamicResource MahApps.Brushes.Accent}" Opacity="0.05" CornerRadius="8" />
+                            <Grid Margin="8">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock 
+                                        Text="Summary" 
+                                        HorizontalAlignment="Center" 
+                                        FontSize="24px" 
+                                        FontWeight="Bold" 
+                                        Foreground="{DynamicResource MahApps.Brushes.Accent1}">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect 
+                                                ShadowDepth="0"
+                                                Color="{DynamicResource MahApps.Colors.Accent4}"
+                                                Opacity="0.8"
+                                                BlurRadius="3"/>
+                                        </TextBlock.Effect>
+                                    </TextBlock>
+                                    <TextBlock 
+                                        Text=" for " 
+                                        HorizontalAlignment="Center" 
+                                        FontSize="24px" 
+                                        FontWeight="Bold" 
+                                        Foreground="{DynamicResource MahApps.Brushes.Accent1}"
+                                        Visibility="{Binding Hub, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=false}">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect 
+                                                ShadowDepth="0"
+                                                Color="{DynamicResource MahApps.Colors.Accent4}"
+                                                Opacity="0.8"
+                                                BlurRadius="3"/>
+                                        </TextBlock.Effect>
+                                    </TextBlock>
+                                    <TextBlock 
+                                        Text="{Binding Hub}" 
+                                        HorizontalAlignment="Center" 
+                                        FontSize="24px" 
+                                        FontWeight="Bold" 
+                                        Foreground="{DynamicResource MahApps.Brushes.Accent1}"
+                                        Visibility="{Binding Hub, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=false}">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect 
+                                                ShadowDepth="0"
+                                                Color="{DynamicResource MahApps.Colors.Accent4}"
+                                                Opacity="0.8"
+                                                BlurRadius="3"/>
+                                        </TextBlock.Effect>
+                                    </TextBlock>
+                                </StackPanel>
+                                <TextBlock 
+                                    Grid.Row="2" 
+                                    Text="{Binding Features}" 
+                                    HorizontalAlignment="Center" 
+                                    FontSize="18px" 
+                                    FontWeight="Bold" 
+                                    Foreground="{DynamicResource MahApps.Brushes.Accent}">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect 
+                                            ShadowDepth="0"
+                                            Color="{DynamicResource MahApps.Colors.Accent4}"
+                                            Opacity="0.8"
+                                            BlurRadius="3"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                                <TextBlock 
+                                    Grid.Row="3" 
+                                    Text="{Binding Pages}" 
+                                    HorizontalAlignment="Center" 
+                                    FontSize="18px" 
+                                    FontWeight="Bold" 
+                                    Foreground="{DynamicResource MahApps.Brushes.Accent}"
+                                    Visibility="{Binding Pages, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=false}">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect 
+                                            ShadowDepth="0"
+                                            Color="{DynamicResource MahApps.Colors.Accent4}"
+                                            Opacity="0.8"
+                                            BlurRadius="3"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                                <TextBlock 
+                                    Grid.Row="4" 
+                                    Text="{Binding Membership}" 
+                                    HorizontalAlignment="Center" 
+                                    FontSize="18px" 
+                                    FontWeight="ExtraBlack" 
+                                    Foreground="{DynamicResource MahApps.Brushes.Accent1}"
+                                    Visibility="{Binding Membership, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=false}">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect 
+                                            ShadowDepth="0"
+                                            Color="{DynamicResource MahApps.Colors.Accent4}"
+                                            Opacity="0.8"
+                                            BlurRadius="3"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
 </Page>
