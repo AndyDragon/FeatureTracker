@@ -23,20 +23,20 @@ export const enum PlatformLocation {
     AppStore,
 }
 
-export const showMacInfo: PlatformLocation = PlatformLocation.AppStore
-export const macAppStoreLocation = "https://apps.apple.com/ca/app/feature-tracker/id6477620474";
+export const showMacInfo: PlatformLocation = PlatformLocation.AppStore;
+export const macAppStoreLocation = "https://apps.apple.com/us/app/feature-tracker/id6477620474";
 export const macReleaseNotesLocation = "releaseNotes-mac.json";
 
 export const showIosInfo: PlatformLocation = PlatformLocation.DoNotShow;
-export const iosAppStoreLocation = "https://apps.apple.com/ca/app/vero-scripts/id6475614720";
+export const iosAppStoreLocation = "TODO";
 export const iosReleaseNotesLocation = "releaseNotes-ios.json";
 
-export const showWindowsInfo: PlatformLocation = PlatformLocation.AppPortal;
-export const windowsInstallerLocation = "featuretracker/windows";
+export const showWindowsInfo: PlatformLocation = PlatformLocation.AppStore;
+export const windowsAppStoreLocation = "https://apps.microsoft.com/store/detail/9N8KQXBLW9PJ";
 export const windowsReleaseNotesLocation = "releaseNotes-windows.json";
 
 export const showAndroidInfo: PlatformLocation = PlatformLocation.DoNotShow;
-export const androidInstallerLocation = "https://play.google.com/store/apps/details?id=com.andydragon.vero_scripts";
+export const androidInstallerLocation = "TODO";
 export const androidReleaseNotesLocation = "releaseNotes-android.json";
 
 export const supportEmail = "andydragon@live.com";
@@ -68,7 +68,7 @@ export const links: Record<Platform, Links | undefined> = {
         location: (_version, _suffix) => macAppStoreLocation,
         actions: [
             {
-                action: "install from app store",
+                action: "install from Apple app store",
                 target: "_blank",
                 suffix: "",
             }
@@ -79,22 +79,18 @@ export const links: Record<Platform, Links | undefined> = {
         location: (_version, _suffix) => iosAppStoreLocation,
         actions: [
             {
-                action: "install from app store",
+                action: "install from Apple app store",
                 target: "_blank",
                 suffix: "",
             }
         ]
     },
     windows: {
-        location: (_version, suffix) => `${windowsInstallerLocation}${suffix}`,
+        useAppStore: true,
+        location: (_version, _suffix) => windowsAppStoreLocation,
         actions: [
             {
-                action: "install the current version",
-                target: "",
-                suffix: "/setup.exe",
-            },
-            {
-                action: "read more about the app",
+                action: "install from Microsoft store",
                 target: "_blank",
                 suffix: "",
             }
@@ -105,7 +101,7 @@ export const links: Record<Platform, Links | undefined> = {
         location: (_version, _suffix) => androidInstallerLocation,
         actions: [
             {
-                action: "install from app store",
+                action: "install from Google Play store",
                 target: "_blank",
                 suffix: "",
             }
