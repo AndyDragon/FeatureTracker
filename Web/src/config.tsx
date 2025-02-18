@@ -24,7 +24,7 @@ export const enum PlatformLocation {
 }
 
 export const showMacInfo: PlatformLocation = PlatformLocation.AppStore
-export const macAppStoreLocation = "https://apps.apple.com/us/app/feature-tracker/id6477620474";
+export const macAppStoreLocation = "https://apps.apple.com/ca/app/feature-tracker/id6477620474";
 export const macReleaseNotesLocation = "releaseNotes-mac.json";
 
 export const showIosInfo: PlatformLocation = PlatformLocation.DoNotShow;
@@ -64,10 +64,11 @@ export interface Links {
 
 export const links: Record<Platform, Links | undefined> = {
     macOS: {
+        useAppStore: true,
         location: (_version, _suffix) => macAppStoreLocation,
         actions: [
             {
-                action: "install for app store",
+                action: "install from app store",
                 target: "_blank",
                 suffix: "",
             }
