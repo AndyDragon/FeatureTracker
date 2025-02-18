@@ -23,9 +23,8 @@ export const enum PlatformLocation {
     AppStore,
 }
 
-export const showMacInfo: PlatformLocation = PlatformLocation.AppPortal;
-export const macAppStoreLocation = "https://apps.apple.com/ca/app/vero-scripts/id6475614720";
-export const macDmgLocation = "featuretracker/macos/Feature%20Tracker%20";
+export const showMacInfo: PlatformLocation = PlatformLocation.AppStore
+export const macAppStoreLocation = "https://apps.apple.com/us/app/feature-tracker/id6477620474";
 export const macReleaseNotesLocation = "releaseNotes-mac.json";
 
 export const showIosInfo: PlatformLocation = PlatformLocation.DoNotShow;
@@ -65,11 +64,11 @@ export interface Links {
 
 export const links: Record<Platform, Links | undefined> = {
     macOS: {
-        location: (version, suffix) => `${macDmgLocation}${suffix}v${version}.dmg`,
+        location: (_version, _suffix) => macAppStoreLocation,
         actions: [
             {
-                action: "download the current version",
-                target: "",
+                action: "install for app store",
+                target: "_blank",
                 suffix: "",
             }
         ]
