@@ -116,6 +116,7 @@
 				49B4C4A82B7C4E6D0068B8C9 /* FeatureEditor.swift */,
 				493E4E852B97DE3100C30717 /* DataProvider.swift */,
 				49B4C4AA2B7C53330068B8C9 /* Helpers.swift */,
+				492F95B32D6283E50093C532 /* MenuButton.swift */,
 				492F95B52D628B960093C532 /* BackupDocument.swift */,
 				491434412B7FED6E0031FC0D /* Types.swift */,
 				49A6DA7C2B8295680008A319 /* VersionCheckAppState.swift */,
@@ -124,7 +125,6 @@
 				494202BB2B745BED00227660 /* FeatureTracker.entitlements */,
 				49F357502D5052A1006F8293 /* Standalone.xcconfig */,
 				494202B82B745BED00227660 /* Preview Content */,
-				492F95B32D6283E50093C532 /* MenuButton.swift */,
 			);
 			path = "Feature Tracker";
 			sourceTree = "<group>";
@@ -397,7 +397,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -413,7 +413,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.andydragon.FeatureTracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -432,7 +432,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -448,7 +448,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.andydragon.FeatureTracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -525,7 +525,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 27;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Feature Tracker/Preview Content\"";
 				DEVELOPMENT_TEAM = 7U6K972H9Q;
@@ -541,7 +541,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.andydragon.FeatureTracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

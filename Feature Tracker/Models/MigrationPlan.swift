@@ -47,6 +47,9 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
         willMigrate: { context in
             SwiftyBeaver.self.info("Running migration state V1 to V2...", context: "Data")
             var pages = try? context.fetch(FetchDescriptor<SchemaV1.Page>())
+            var features = try? context.fetch(FetchDescriptor<SchemaV1.Feature>())
+            var featuresInStore = [SchemaV1.Feature]()
+            features?.forEach { featuresInStore.append($0) }
             var idUsed = Set<UUID>()
 
             // Check for pages with duplicate IDs
@@ -90,10 +93,13 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
                 }
 
                 // Check for page id already used
-                if idUsed.contains(page.id) {
+                let pageId = page.id
+                if idUsed.contains(pageId) {
                     if !pagesForNewId.contains(page) {
                         SwiftyBeaver.self.info("Found page with used id \(page.name), changing ID", context: "Data")
                         pagesForNewId.append(page)
+                    } else {
+                        SwiftyBeaver.self.info("Found page with used id \(page.name) but already marked for new id", context: "Data")
                     }
                 } else {
                     idUsed.insert(page.id)
@@ -107,6 +113,7 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
                         // Already marked for deletion
                         return
                     }
+                    featuresInStore.removeAll { $0.id == feature.id }
                     let featuresWithId = page.features?.filter { $0.id == feature.id } ?? []
                     if featuresWithId.count > 1 {
                         // There were duplicate IDs, now the fun begins again...
@@ -130,10 +137,13 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
                     }
 
                     // Check for feature id already used
-                    if idUsed.contains(feature.id) {
+                    let featureId = feature.id
+                    if idUsed.contains(featureId) {
                         if !featuresForNewId.contains(feature) {
                             SwiftyBeaver.self.info("Found feature with used id \(feature.notes), changing ID", context: "Data")
                             featuresForNewId.append(feature)
+                        } else {
+                            SwiftyBeaver.self.info("Found feature with used id \(feature.notes) but already marked for new id", context: "Data")
                         }
                     } else {
                         idUsed.insert(feature.id)
@@ -149,6 +159,11 @@ enum FeatureTrackerSchemaMigrationPlan: SchemaMigrationPlan {
                     page.features?.remove(element: featureToDelete)
                     context.delete(featureToDelete)
                 }
+            }
+            
+            featuresInStore.forEach { feature in
+                SwiftyBeaver.self.info("Found orphaned feature \(feature.notes), deleting orphan", context: "Data")
+                context.delete(feature)
             }
 
             // Apply new ID for different pages
